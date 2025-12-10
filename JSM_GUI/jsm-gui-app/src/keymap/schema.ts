@@ -39,6 +39,7 @@ export const CENTER_BUTTONS: ButtonDefinition[] = [
   { command: '+', description: 'Options / Menu (plus)', playstation: 'Options', xbox: 'Options' },
   { command: '-', description: 'Share / View (minus)', playstation: 'Share', xbox: 'View' },
   { command: 'MIC', description: 'Microphone button', playstation: 'Mic', xbox: 'Mic' },
+  { command: 'HOME', description: 'Home / Guide', playstation: 'PS', xbox: 'Guide' },
 ]
 
 export const TOUCH_BUTTONS: ButtonDefinition[] = [

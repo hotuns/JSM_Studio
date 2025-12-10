@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { ensureHeaderLines, sanitizeImportedConfig } from '../utils/config'
+import { parseConfigText, serializeConfig } from '../utils/configSerializer'
 import {
   APPLY_KEYMAP_FAILED,
   CREATE_PROFILE_FAILED,
@@ -18,6 +19,7 @@ type ApplyConfigOptions = {
   profileNameOverride?: string
   textOverride?: string
   profilePathOverride?: string
+  normalize?: boolean
 }
 
 type UseProfileLibraryParams = {
@@ -94,20 +96,22 @@ export function useProfileLibrary({
     async (options?: ApplyConfigOptions) => {
       const sourceText = options?.textOverride ?? configText
       const sanitizedConfig = ensureHeaderLines(sourceText)
+      const shouldNormalize = options?.normalize !== false
+      const normalizedConfig = shouldNormalize ? serializeConfig(parseConfigText(sanitizedConfig)) : sanitizedConfig
       if (options?.textOverride !== undefined) {
-        setConfigText(sanitizedConfig)
-      } else if (sanitizedConfig !== configText) {
-        setConfigText(sanitizedConfig)
+        setConfigText(normalizedConfig)
+      } else if (normalizedConfig !== configText) {
+        setConfigText(normalizedConfig)
       }
       try {
         const targetPath = options?.profilePathOverride ?? activeProfilePath
-        const result = await window.electronAPI?.applyProfile?.(targetPath, sanitizedConfig)
+        const result = await window.electronAPI?.applyProfile?.(targetPath, normalizedConfig)
         if (result?.path) {
           setActiveProfilePath(result.path)
         }
         const profileName = options?.profileNameOverride ?? currentLibraryProfile ?? 'Unsaved profile'
         setStatusMessage(formatAppliedProfileMessage(profileName, Boolean(result?.restarted)))
-        setAppliedConfig(sanitizedConfig)
+        setAppliedConfig(normalizedConfig)
         setTimeout(() => setStatusMessage(null), 3000)
       } catch (err) {
         console.error(err)

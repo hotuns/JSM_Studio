@@ -603,8 +603,6 @@ export function KeymapControls({
                 simPressWindowSeconds={simPressInputValue}
                 simPressWindowIsCustom={simPressWindowIsCustom}
                 onSimPressWindowChange={onSimPressWindowChange}
-                triggerThreshold={triggerThreshold}
-                onTriggerThresholdChange={onTriggerThresholdChange}
                 {...actionsProps}
               />
             ),
@@ -658,19 +656,40 @@ export function KeymapControls({
                 buttons={TRIGGER_BUTTONS}
                 renderButton={renderButtonCard}
                 extraContent={
-                  <div className="adaptive-toggle" data-capture-ignore="true">
-                    <label>
-                      Adaptive triggers (DualSense)
-                      <select
-                        className="app-select"
-                        value={adaptiveTriggerValue}
-                        onChange={(event) => onAdaptiveTriggerChange?.(event.target.value)}
-                        disabled={isCalibrating}
-                      >
-                        <option value="">Default (ON)</option>
-                        <option value="OFF">Off</option>
-                      </select>
-                    </label>
+                  <div className="trigger-settings" data-capture-ignore="true">
+                    <div className="adaptive-toggle">
+                      <label>
+                        Adaptive triggers (DualSense)
+                        <select
+                          className="app-select"
+                          value={adaptiveTriggerValue}
+                          onChange={(event) => onAdaptiveTriggerChange?.(event.target.value)}
+                          disabled={isCalibrating}
+                        >
+                          <option value="">Default (ON)</option>
+                          <option value="OFF">Off</option>
+                        </select>
+                      </label>
+                    </div>
+                    <div className="global-control-row">
+                      <div className="global-control-text">
+                        <span className="global-control-title">Trigger threshold</span>
+                        <span className="global-control-caption">
+                          {triggerThreshold > 0 ? `Custom TRIGGER_THRESHOLD = ${triggerThreshold.toFixed(2)}` : 'Default (0.00)'}
+                        </span>
+                      </div>
+                      <div className="global-control-input-group">
+                        <input
+                          type="number"
+                          min="0"
+                          max="1"
+                          step="0.01"
+                          value={triggerThreshold}
+                          onChange={(event) => onTriggerThresholdChange?.(event.target.value)}
+                        />
+                        <span className="global-control-unit">seconds</span>
+                      </div>
+                    </div>
                   </div>
                 }
                 {...actionsProps}
