@@ -259,6 +259,7 @@ const serializeBlock = (header: string, lines: string[]) => {
 
 export function serializeConfig(parsed: ParsedConfig): string {
   const output: string[] = []
+  const miscKeymapLines: string[] = []
 
   if (parsed.directives.length) {
     output.push('# Required Settings')
@@ -329,9 +330,13 @@ export function serializeConfig(parsed: ParsedConfig): string {
             return 0
           })
         if (subLines.length === 0) return
-        output.push(KEYMAP_SUB_HEADERS[sub])
-        output.push(...subLines)
-        output.push('')
+        if (sub === 'misc') {
+          miscKeymapLines.push(...subLines)
+        } else {
+          output.push(KEYMAP_SUB_HEADERS[sub])
+          output.push(...subLines)
+          output.push('')
+        }
       })
       return
     }
@@ -380,6 +385,12 @@ export function serializeConfig(parsed: ParsedConfig): string {
     }
     output.push(...serializeBlock(SECTION_HEADERS[sectionKey], lines))
   })
+
+  if (miscKeymapLines.length) {
+    output.push(KEYMAP_SUB_HEADERS.misc)
+    output.push(...miscKeymapLines)
+    output.push('')
+  }
 
   // Remove trailing blank lines
   while (output.length && output[output.length - 1].trim() === '') {
