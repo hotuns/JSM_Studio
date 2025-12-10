@@ -12,8 +12,6 @@ type GlobalControlsSectionProps = {
   simPressWindowSeconds: number
   simPressWindowIsCustom: boolean
   onSimPressWindowChange: (value: string) => void
-  triggerThreshold: number
-  onTriggerThresholdChange: (value: string) => void
   hasPendingChanges: boolean
   statusMessage?: string | null
   onApply: () => void
@@ -32,8 +30,6 @@ export function GlobalControlsSection({
   simPressWindowSeconds,
   simPressWindowIsCustom,
   onSimPressWindowChange,
-  triggerThreshold,
-  onTriggerThresholdChange,
   hasPendingChanges,
   statusMessage,
   onApply,
@@ -79,12 +75,6 @@ export function GlobalControlsSection({
             simPressWindowIsCustom ? 'Custom SIM_PRESS_WINDOW saved' : `Using default (${Math.round(holdPressTimeDefault * 1000)} ms)`,
             simPressWindowSeconds,
             onSimPressWindowChange
-          )}
-          {renderRow(
-            'Trigger threshold',
-            triggerThreshold > 0 ? `Custom TRIGGER_THRESHOLD = ${triggerThreshold.toFixed(2)}` : 'Default (0.00)',
-            triggerThreshold,
-            onTriggerThresholdChange
           )}
         </div>
       </KeymapSection>
