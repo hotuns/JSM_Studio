@@ -197,6 +197,7 @@ function App() {
     omega: formatNumber(asNumber(sample?.omega)),
     sensX: formatNumber(asNumber(sample?.sensX)),
     sensY: formatNumber(asNumber(sample?.sensY)),
+    sampleHz: formatNumber(asNumber(sample?.sampleHz), 0),
     timestamp: formatTimestamp(sample?.ts),
   }
   const currentMode: 'static' | 'accel' =
@@ -343,13 +344,13 @@ function App() {
               onApply={applyConfig}
               onCancel={handleCancel}
               lockMessage={lockMessage}
-              onCutoffSpeedChange={handleCutoffSpeedChange}
-              onCutoffRecoveryChange={handleCutoffRecoveryChange}
-              onSmoothTimeChange={handleSmoothTimeChange}
-              onSmoothThresholdChange={handleSmoothThresholdChange}
-              telemetry={{ omega: telemetryValues.omega, timestamp: telemetryValues.timestamp }}
-            />
-          )}
+          onCutoffSpeedChange={handleCutoffSpeedChange}
+          onCutoffRecoveryChange={handleCutoffRecoveryChange}
+          onSmoothTimeChange={handleSmoothTimeChange}
+          onSmoothThresholdChange={handleSmoothThresholdChange}
+          telemetry={{ omega: telemetryValues.omega, timestamp: telemetryValues.timestamp, sampleHz: telemetryValues.sampleHz }}
+        />
+      )}
         </>
       )
     }

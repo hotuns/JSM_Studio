@@ -96,7 +96,8 @@ public:
 		    << ",\"SminY\":" << sample.sMinY
 		    << ",\"SmaxY\":" << sample.sMaxY
 		    << ",\"curve\":\"" << sample.curve << "\""
-		    << ",\"params\":" << (sample.paramsJson.empty() ? "{}" : sample.paramsJson);
+		    << ",\"params\":" << (sample.paramsJson.empty() ? "{}" : sample.paramsJson)
+		    << ",\"sampleHz\":" << sample.sampleRateHz;
 
 		if (!sample.devices.empty())
 		{

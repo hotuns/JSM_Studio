@@ -19,6 +19,8 @@
 #include <filesystem>
 #include <algorithm>
 #include <atomic>
+#include <deque>
+#include <unordered_map>
 #include <sstream>
 #define _USE_MATH_DEFINES
 #include <math.h> // M_PI
@@ -1002,6 +1004,77 @@ void joyShockPollCallback(int jcHandle, JOY_SHOCK_STATE state, JOY_SHOCK_STATE l
 	telemetrySample.sMaxX = hiSensXY.first;
 	telemetrySample.sMinY = lowSensXY.second;
 	telemetrySample.sMaxY = hiSensXY.second;
+	// Derive sample rate from backend report timestamps (JSL): count reports over a short window.
+	{
+		struct ReportWindow
+		{
+			std::deque<double> timestampsMs;
+			double lastReportMs = -1.0;
+		};
+		static std::unordered_map<int, ReportWindow> s_reportWindows;
+		constexpr double kWindowMs = 2000.0; // 2 seconds
+		constexpr double kMinStepMs = 0.1;   // ignore duplicate timestamps within 0.1ms
+
+		const auto nowUs = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
+		const double nowMs = nowUs / 1000.0;
+		const float deltaSinceUpdate = jsl->GetTimeSinceLastUpdate(jc->_handle);
+		if (deltaSinceUpdate > 0.0f)
+		{
+			const double reportTsMs = nowMs - (static_cast<double>(deltaSinceUpdate) * 1000.0);
+			auto &window = s_reportWindows[jc->_handle];
+			if (window.lastReportMs < 0.0 || (reportTsMs - window.lastReportMs) >= kMinStepMs)
+			{
+				window.timestampsMs.push_back(reportTsMs);
+				window.lastReportMs = reportTsMs;
+			}
+			// Drop old entries outside the window
+			while (!window.timestampsMs.empty() && (nowMs - window.timestampsMs.front()) > kWindowMs)
+			{
+				window.timestampsMs.pop_front();
+			}
+			const double windowSeconds = kWindowMs / 1000.0;
+			const double rate = window.timestampsMs.size() / windowSeconds;
+			telemetrySample.sampleRateHz = static_cast<float>(rate);
+		}
+	}
+#ifdef SDL
+	// SDL path: fall back to applied update rate (loop iterations over a short window).
+	{
+		static size_t s_loopCount = 0;
+		static auto s_windowStart = std::chrono::steady_clock::now();
+		static double s_lastAppliedRate = 0.0;
+		constexpr double kWindowSeconds = 2.0;
+
+		s_loopCount++;
+		const auto now = std::chrono::steady_clock::now();
+		const double elapsedSeconds =
+		  std::chrono::duration_cast<std::chrono::milliseconds>(now - s_windowStart).count() / 1000.0;
+		if (elapsedSeconds >= kWindowSeconds)
+		{
+			const double rate = s_loopCount / elapsedSeconds;
+			if (rate > 0.0)
+			{
+				s_lastAppliedRate = rate;
+			}
+			s_loopCount = 0;
+			s_windowStart = now;
+		}
+		if (telemetrySample.sampleRateHz <= 0.0f && s_lastAppliedRate > 0.0)
+		{
+			telemetrySample.sampleRateHz = static_cast<float>(s_lastAppliedRate);
+		}
+	}
+#else
+	// SDL path: measured sample rate provided by wrapper (legacy returns 0 here).
+	if (telemetrySample.sampleRateHz <= 0.0f)
+	{
+		const float backendRate = jsl->GetSampleRateHz(jc->_handle);
+		if (backendRate > 0.0f)
+		{
+			telemetrySample.sampleRateHz = backendRate;
+		}
+	}
+#endif
 	for (const auto &entry : handle_to_joyshock)
 	{
 		const auto &device = entry.second;

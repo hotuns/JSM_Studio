@@ -28,9 +28,9 @@ This repo bundles a modded JoyShockMapper build with a new GUI. For full JSM com
 
 - Note: I only kept installation instructions for windows because I don't personally use Linux or know anything about development for Linux. If you're a developer who wants to add support for it feel free to do so.
 
-### Build JoyShockMapper core
+### Build JoyShockMapper SDL version
 ```bash
-mkdir build && cd build
+mkdir build-jsm-sdl && cd build-jsm-sdl
 cmake .. -G "Visual Studio 17 2022" -A x64 -D SDL=ON
 cmake --build . --config Release
 ```
@@ -42,6 +42,20 @@ cd JoyShockMapper
 ctest --build-config Release
 ```
 Copy the built JoyShockMapper.exe and replace the one found in JSM_custom_curve/JSM_GUI/jsm-gui-app/bin
+
+### Build JoyShockMapper Legacy version
+```bash
+mkdir build-jsm-legacy && cd build-jsm-legacy
+cmake .. -G "Visual Studio 17 2022" -A x64 -D SDL=OFF -DBUILD_SHARED_LIBS=ON
+cmake --build . --config Release
+```
+Optional tests:
+```bash
+cmake .. -G "Visual Studio 17 2022" -A x64 -D SDL=OFF -DBUILD_JSM_TESTS=ON
+cmake --build . --config Release
+cd JoyShockMapper
+ctest --build-config Release
+```
 
 ### GUI app
 ```bash

@@ -19,6 +19,7 @@ type NoiseSteadyingControlsProps = {
   telemetry: {
     omega: string
     timestamp: string
+    sampleHz?: string
   }
 }
 
