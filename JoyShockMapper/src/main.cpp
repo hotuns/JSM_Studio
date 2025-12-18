@@ -919,6 +919,26 @@ void joyShockPollCallback(int jcHandle, JOY_SHOCK_STATE state, JOY_SHOCK_STATE l
 	float gyroXVelocity = gyroX * gyro_x_sign_to_use;
 	float gyroYVelocity = gyroY * gyro_y_sign_to_use;
 
+	const float gyroAngleSnapDeg = jc->getSetting(SettingID::GYRO_ANGLE_SNAP);
+	if (gyroAngleSnapDeg > 0.0f && (gyroXVelocity != 0.0f || gyroYVelocity != 0.0f))
+	{
+		const float snapRad = gyroAngleSnapDeg * float(M_PI) / 180.0f;
+		float referenceAngle = gyroXVelocity == 0.0f ? float(M_PI_2) : atan(fabs(gyroYVelocity / gyroXVelocity));
+
+		if (referenceAngle > float(M_PI_2) - snapRad)
+		{
+			const float mag = sqrtf(gyroXVelocity * gyroXVelocity + gyroYVelocity * gyroYVelocity);
+			gyroXVelocity = 0.0f;
+			gyroYVelocity = copysign(mag, gyroYVelocity);
+		}
+		else if (referenceAngle < snapRad)
+		{
+			const float mag = sqrtf(gyroXVelocity * gyroXVelocity + gyroYVelocity * gyroYVelocity);
+			gyroXVelocity = copysign(mag, gyroXVelocity);
+			gyroYVelocity = 0.0f;
+		}
+	}
+
 	pair<float, float> lowSensXY = jc->getSetting<FloatXY>(SettingID::MIN_GYRO_SENS);
 	pair<float, float> hiSensXY = jc->getSetting<FloatXY>(SettingID::MAX_GYRO_SENS);
 	const AccelCurve accelCurve = jc->getSetting<AccelCurve>(SettingID::ACCEL_CURVE);
@@ -933,7 +953,7 @@ void joyShockPollCallback(int jcHandle, JOY_SHOCK_STATE state, JOY_SHOCK_STATE l
 
 	// apply calibration factor
 	// get input velocity
-	float omega = sqrt(gyroX * gyroX + gyroY * gyroY);
+	float omega = sqrt(gyroXVelocity * gyroXVelocity + gyroYVelocity * gyroYVelocity);
 	// calculate position on minThreshold to maxThreshold scale
 	float minThreshold = jc->getSetting(SettingID::MIN_GYRO_THRESHOLD);
 	float maxThreshold = jc->getSetting(SettingID::MAX_GYRO_THRESHOLD);
@@ -2603,6 +2623,13 @@ void initJsmSettings(CmdRegistry *commandRegistry)
 	SettingsManager::add(gyro_cutoff_recovery);
 	commandRegistry->add((new JSMAssignment<float>(*gyro_cutoff_recovery))
 	                       ->setHelp("Below this threshold (in degrees per second), gyro sensitivity is pushed down towards zero. This can tighten and steady aim without a deadzone."));
+
+	auto gyro_angle_snap = new JSMSetting<float>(SettingID::GYRO_ANGLE_SNAP, 0.0f);
+	gyro_angle_snap->setFilter([](float current, float next)
+	  { return std::clamp(next, 0.0f, 45.0f); });
+	SettingsManager::add(gyro_angle_snap);
+	commandRegistry->add((new JSMAssignment<float>(*gyro_angle_snap))
+	                       ->setHelp("Degrees of angle snapping for gyro input. Snaps movement to horizontal/vertical when within this angle. 0 disables snapping. (Range: 0-45)"));
 
 	auto stick_acceleration_rate = new JSMSetting<float>(SettingID::STICK_ACCELERATION_RATE, 0.0f);
 	stick_acceleration_rate->setFilter(&filterPositive);

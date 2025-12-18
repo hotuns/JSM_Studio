@@ -16,6 +16,7 @@ type NoiseSteadyingControlsProps = {
   onCutoffRecoveryChange: (value: string) => void
   onSmoothTimeChange: (value: string) => void
   onSmoothThresholdChange: (value: string) => void
+  onAngleSnapChange: (value: string) => void
   telemetry: {
     omega: string
     timestamp: string
@@ -35,6 +36,7 @@ export function NoiseSteadyingControls({
   onCutoffRecoveryChange,
   onSmoothTimeChange,
   onSmoothThresholdChange,
+  onAngleSnapChange,
   telemetry,
 }: NoiseSteadyingControlsProps) {
   return (
@@ -127,6 +129,25 @@ export function NoiseSteadyingControls({
             step="1"
             value={sensitivity.smoothThreshold ?? 0}
             onChange={(e) => onSmoothThresholdChange(e.target.value)}
+          />
+        </label>
+        <label>
+          Angle Snapping (degrees)
+          <input
+            type="number"
+            step="0.1"
+            min="0"
+            max="45"
+            value={sensitivity.angleSnap ?? ''}
+            onChange={(e) => onAngleSnapChange(e.target.value)}
+          />
+          <input
+            type="range"
+            min="0"
+            max="45"
+            step="0.1"
+            value={sensitivity.angleSnap ?? 0}
+            onChange={(e) => onAngleSnapChange(e.target.value)}
           />
         </label>
       </div>

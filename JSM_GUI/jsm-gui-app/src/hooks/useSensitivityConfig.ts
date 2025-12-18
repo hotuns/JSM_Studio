@@ -168,6 +168,7 @@ export function useSensitivityConfig({ configText, setConfigText }: SensitivityA
   const handleCutoffRecoveryChange = makeScalarHandler(keyName.GYRO_CUTOFF_RECOVERY)
   const handleSmoothTimeChange = makeScalarHandler(keyName.GYRO_SMOOTH_TIME)
   const handleSmoothThresholdChange = makeScalarHandler(keyName.GYRO_SMOOTH_THRESHOLD)
+  const handleAngleSnapChange = makeScalarHandler(keyName.GYRO_ANGLE_SNAP)
   const handleTickTimeChange = makeScalarHandler(keyName.TICK_TIME)
   const handleHoldPressTimeChange = makeScalarHandler(keyName.HOLD_PRESS_TIME)
   const makeWindowHandler = (key: typeof keyName.DBL_PRESS_WINDOW | typeof keyName.SIM_PRESS_WINDOW) => (value: string) => {
@@ -581,6 +582,7 @@ export function useSensitivityConfig({ configText, setConfigText }: SensitivityA
     handleCutoffRecoveryChange,
     handleSmoothTimeChange,
     handleSmoothThresholdChange,
+    handleAngleSnapChange,
     handleTickTimeChange,
     handleHoldPressTimeChange,
     handleDoublePressWindowChange,

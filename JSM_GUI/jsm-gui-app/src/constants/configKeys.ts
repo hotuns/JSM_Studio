@@ -14,6 +14,7 @@ export const noiseKeys = [
   'GYRO_CUTOFF_RECOVERY',
   'GYRO_SMOOTH_TIME',
   'GYRO_SMOOTH_THRESHOLD',
+  'GYRO_ANGLE_SNAP',
 ] as const
 
 export const sensitivityKeys = [
@@ -64,7 +65,6 @@ export const stickKeys = [
   'FLICK_DEADZONE_ANGLE',
   'MOUSE_RING_RADIUS',
   'SCROLL_SENS',
-  'ADAPTIVE_TRIGGER',
 ] as const
 
 export const bindingSpecialKeys = [
@@ -103,6 +103,7 @@ export const keyName = {
   GYRO_CUTOFF_RECOVERY: 'GYRO_CUTOFF_RECOVERY',
   GYRO_SMOOTH_TIME: 'GYRO_SMOOTH_TIME',
   GYRO_SMOOTH_THRESHOLD: 'GYRO_SMOOTH_THRESHOLD',
+  GYRO_ANGLE_SNAP: 'GYRO_ANGLE_SNAP',
 
   // Sensitivity
   GYRO_SENS: 'GYRO_SENS',
