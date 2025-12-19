@@ -287,6 +287,7 @@ function App() {
               onApply={applyConfig}
               onCancel={handleCancel}
               lockMessage={lockMessage}
+                appliedSampleHz={telemetryValues.sampleHz}
             />
           </>
         )}

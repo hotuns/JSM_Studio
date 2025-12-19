@@ -687,6 +687,19 @@ header h1 {
   color: #ddd;
 }
 
+.label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.inline-helper {
+  margin: 0;
+  padding: 0;
+  line-height: 1;
+}
+
 .flex-inputs input:not([type='range']) {
   margin-top: 0.35rem;
   padding: 0.45rem 0.75rem;
