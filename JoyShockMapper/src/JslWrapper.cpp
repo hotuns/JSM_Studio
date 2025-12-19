@@ -1,6 +1,13 @@
 #define JSL_WRAPPER_SOURCE
 #include "JslWrapper.h"
 
+#ifndef JS_VENDOR_UNKNOWN
+#define JS_VENDOR_UNKNOWN 0
+#endif
+#ifndef JS_PRODUCT_UNKNOWN
+#define JS_PRODUCT_UNKNOWN 0
+#endif
+
 class JSlWrapperImpl : public JslWrapper
 {
 	int _deviceCount = 0;
@@ -152,6 +159,16 @@ public:
 	float GetPollRate(int deviceId) override
 	{
 		return JslGetPollRate(deviceId);
+	}
+
+	float GetTimeSinceLastUpdate(int deviceId) override
+	{
+		return JslGetTimeSinceLastUpdate(deviceId);
+	}
+
+	float GetSampleRateHz(int deviceId) override
+	{
+		return 0.0f; // Sample rate is computed in JSM for legacy path.
 	}
 
 	void ResetContinuousCalibration(int deviceId) override

@@ -20,6 +20,7 @@ export interface SensitivityValues {
   cutoffRecovery?: number
   smoothTime?: number
   smoothThreshold?: number
+  angleSnap?: number
   gyroSpace?: string
   gyroAxisX?: string
   gyroAxisY?: string
@@ -64,6 +65,7 @@ export function parseSensitivityValues(text: string, options?: { prefix?: string
   const minSens = get('MIN_GYRO_SENS', 2)
   const maxSens = get('MAX_GYRO_SENS', 2)
   const staticSens = get('GYRO_SENS', 2)
+  const angleSnap = single('GYRO_ANGLE_SNAP')
 
   const result: SensitivityValues = {
     inGameSens: single('IN_GAME_SENS'),
@@ -80,6 +82,7 @@ export function parseSensitivityValues(text: string, options?: { prefix?: string
     cutoffRecovery: single('GYRO_CUTOFF_RECOVERY'),
     smoothTime: single('GYRO_SMOOTH_TIME'),
     smoothThreshold: single('GYRO_SMOOTH_THRESHOLD'),
+    angleSnap,
     gyroSpace: raw('GYRO_SPACE'),
     gyroAxisX: raw('GYRO_AXIS_X'),
     gyroAxisY: raw('GYRO_AXIS_Y'),

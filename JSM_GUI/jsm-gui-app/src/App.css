@@ -84,6 +84,19 @@ body {
   gap: 0.5rem;
 }
 
+.inline-select {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #d8d8d8;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.inline-select select {
+  min-width: 140px;
+}
+
 .nav-brand {
   font-weight: 700;
   letter-spacing: 0.4px;
@@ -685,6 +698,19 @@ header h1 {
   flex-direction: column;
   font-weight: 600;
   color: #ddd;
+}
+
+.label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.inline-helper {
+  margin: 0;
+  padding: 0;
+  line-height: 1;
 }
 
 .flex-inputs input:not([type='range']) {

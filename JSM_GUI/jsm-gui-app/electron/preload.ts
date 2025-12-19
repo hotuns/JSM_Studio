@@ -20,6 +20,8 @@ const electronAPI = {
   readCalibrationPreset: () => ipcRenderer.invoke('read-calibration-preset'),
   saveCalibrationPreset: (content: string) => ipcRenderer.invoke('save-calibration-preset', content),
   runCalibrationCommand: (command: string) => ipcRenderer.invoke('calibration-run-command', command),
+  getBackendChoice: () => ipcRenderer.invoke('get-backend-choice'),
+  setBackendChoice: (choice: 'SDL' | 'legacy') => ipcRenderer.invoke('set-backend-choice', choice),
 }
 
 const telemetryListeners = new Set<(payload: unknown) => void>()

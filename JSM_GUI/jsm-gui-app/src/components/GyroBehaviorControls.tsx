@@ -5,9 +5,9 @@ import { LOCK_MESSAGE } from '../constants/messages'
 import { controllerLabel, formatVidPid } from '../utils/controllers'
 
 const TICK_TIME_OPTIONS = [
-  { value: '1', label: '500 Hz (1 ms)' },
-  { value: '2', label: '333 Hz (2 ms)' },
-  { value: '3', label: '250 Hz (3 ms)' },
+  { value: '1', label: '1 ms' },
+  { value: '2', label: '2 ms' },
+  { value: '3', label: '3 ms' },
 ]
 
 const GYRO_SPACE_OPTIONS = [
@@ -42,6 +42,8 @@ type GyroBehaviorControlsProps = {
   onApply: () => void
   onCancel: () => void
   lockMessage?: string
+  appliedSampleHz?: string
+  backendChoice?: 'SDL' | 'legacy'
 }
 
 export function GyroBehaviorControls({
@@ -64,6 +66,8 @@ export function GyroBehaviorControls({
   onApply,
   onCancel,
   lockMessage = LOCK_MESSAGE,
+  appliedSampleHz,
+  backendChoice = 'SDL',
 }: GyroBehaviorControlsProps) {
   return (
     <Card
@@ -102,7 +106,10 @@ export function GyroBehaviorControls({
       </div>
       <div className="flex-inputs">
         <label>
-          Polling Tick Time
+          <div className="label-row">
+            <span>Polling Tick Time</span>
+            {appliedSampleHz && <span className="field-description inline-helper">{appliedSampleHz} Hz</span>}
+          </div>
           <select
             value={sensitivity.tickTime?.toString() ?? ''}
             onChange={(e) => onTickTimeChange(e.target.value)}
@@ -167,7 +174,7 @@ export function GyroBehaviorControls({
           </select>
         </label>
       </div>
-      {devices && devices.length > 0 && (
+      {backendChoice !== 'legacy' && devices && devices.length > 0 && (
         <div className="flex-inputs">
           <label>
             Connected controllers

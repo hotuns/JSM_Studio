@@ -632,6 +632,16 @@ public:
 		return float();
 	}
 
+	float GetSampleRateHz(int deviceId) override
+	{
+		return 0.0f;
+	}
+
+	float GetTimeSinceLastUpdate(int deviceId) override
+	{
+		return 0.0f;
+	}
+
 	void ResetContinuousCalibration(int deviceId) override
 	{
 	}

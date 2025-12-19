@@ -151,6 +151,9 @@ const classify = (rawKey: string, value: string): { section: SectionKey; subsect
   if (key === keyName.TRIGGER_THRESHOLD) {
     return { section: 'keymap', subsection: 'triggers' }
   }
+  if (key === keyName.ADAPTIVE_TRIGGER) {
+    return { section: 'keymap', subsection: 'triggers' }
+  }
   // Global timing controls shown under keymap "Global controls"
   if (isKnownKey(key, timingKeys)) {
     return { section: 'keymap', subsection: 'global' }
@@ -352,7 +355,6 @@ export function serializeConfig(parsed: ParsedConfig): string {
         keyName.STICK_ACCELERATION_CAP,
         keyName.MOUSE_RING_RADIUS,
         keyName.SCROLL_SENS,
-        keyName.ADAPTIVE_TRIGGER,
         keyName.FLICK_TIME,
         keyName.FLICK_TIME_EXPONENT,
         keyName.FLICK_SNAP_MODE,

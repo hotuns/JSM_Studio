@@ -40,6 +40,20 @@ export function useProfileLibrary({
   const [editedLibraryNames, setEditedLibraryNames] = useState<Record<string, string>>({})
   const [currentLibraryProfile, setCurrentLibraryProfile] = useState<string | null>(null)
   const [activeProfilePath, setActiveProfilePath] = useState<string>('')
+  const refreshActiveProfile = useCallback(async () => {
+    if (!window.electronAPI?.getActiveProfile) return
+    try {
+      const result = await window.electronAPI.getActiveProfile()
+      if (result) {
+        setConfigText(result.content ?? '')
+        setAppliedConfig(result.content ?? '')
+        setCurrentLibraryProfile(result.name ?? null)
+        setActiveProfilePath(result.path ?? '')
+      }
+    } catch (err) {
+      console.error('Failed to load active profile', err)
+    }
+  }, [setAppliedConfig, setConfigText])
 
   const refreshLibraryProfiles = useCallback(async (): Promise<string[]> => {
     if (!window.electronAPI?.listLibraryProfiles) {
@@ -75,22 +89,8 @@ export function useProfileLibrary({
   }, [refreshLibraryProfiles])
 
   useEffect(() => {
-    const loadActiveProfile = async () => {
-      if (!window.electronAPI?.getActiveProfile) return
-      try {
-        const result = await window.electronAPI.getActiveProfile()
-        if (result) {
-          setConfigText(result.content ?? '')
-          setAppliedConfig(result.content ?? '')
-          setCurrentLibraryProfile(result.name ?? null)
-          setActiveProfilePath(result.path ?? '')
-        }
-      } catch (err) {
-        console.error('Failed to load active profile', err)
-      }
-    }
-    loadActiveProfile()
-  }, [setAppliedConfig, setConfigText])
+    refreshActiveProfile()
+  }, [refreshActiveProfile])
 
   const applyConfig = useCallback(
     async (options?: ApplyConfigOptions) => {
@@ -340,5 +340,6 @@ export function useProfileLibrary({
     handleDeleteLibraryProfile,
     handleImportProfile,
     setEditedLibraryNames,
+    refreshActiveProfile,
   }
 }
