@@ -43,6 +43,7 @@ type GyroBehaviorControlsProps = {
   onCancel: () => void
   lockMessage?: string
   appliedSampleHz?: string
+  backendChoice?: 'SDL' | 'legacy'
 }
 
 export function GyroBehaviorControls({
@@ -66,6 +67,7 @@ export function GyroBehaviorControls({
   onCancel,
   lockMessage = LOCK_MESSAGE,
   appliedSampleHz,
+  backendChoice = 'SDL',
 }: GyroBehaviorControlsProps) {
   return (
     <Card
@@ -172,7 +174,7 @@ export function GyroBehaviorControls({
           </select>
         </label>
       </div>
-      {devices && devices.length > 0 && (
+      {backendChoice !== 'legacy' && devices && devices.length > 0 && (
         <div className="flex-inputs">
           <label>
             Connected controllers

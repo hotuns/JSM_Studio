@@ -305,6 +305,7 @@ function App() {
                 onCancel={handleCancel}
                 lockMessage={lockMessage}
                 appliedSampleHz={telemetryValues.sampleHz}
+                backendChoice={backendChoice}
             />
           </>
         )}
