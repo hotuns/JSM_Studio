@@ -1,5 +1,5 @@
 import './App.css'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useTelemetry } from './hooks/useTelemetry'
 import { SensitivityControls } from './components/SensitivityControls'
 import { ConfigEditor } from './components/ConfigEditor'
@@ -132,6 +132,7 @@ function App() {
     handleRenameProfile,
     handleDeleteLibraryProfile,
     handleImportProfile,
+    refreshActiveProfile,
   } = useProfileLibrary({
     configText,
     setConfigText,
@@ -207,6 +208,22 @@ function App() {
   const activeProfileFile = activeProfilePath || 'No active profile'
   const profileFileLabel = `${activeProfileFile} — ${profileLabel}`
   const lockMessage = LOCK_MESSAGE
+  const [backendChoice, setBackendChoice] = useState<'SDL' | 'legacy'>('SDL')
+
+  useEffect(() => {
+    window.electronAPI?.getBackendChoice?.().then(choice => {
+      if (choice === 'SDL' || choice === 'legacy') {
+        setBackendChoice(choice)
+      }
+    }).catch(() => {})
+  }, [])
+
+  const handleBackendChange = (choice: 'SDL' | 'legacy') => {
+    setBackendChoice(choice)
+    window.electronAPI?.setBackendChoice?.(choice)
+      .then(() => refreshActiveProfile())
+      .catch(() => {})
+  }
 
   const renderGyroNav = () => (
     <div className="subnav">
@@ -276,17 +293,17 @@ function App() {
                 onToggleIgnoreDevice={handleToggleIgnoreGyroDevice}
                 onInGameSensChange={handleInGameSensChange}
                 onRealWorldCalibrationChange={handleRealWorldCalibrationChange}
-              onTickTimeChange={handleTickTimeChange}
-              onGyroSpaceChange={handleGyroSpaceChange}
-              onGyroAxisXChange={handleGyroAxisXChange}
-              onGyroAxisYChange={handleGyroAxisYChange}
-              counterOsMouseSpeed={counterOsMouseSpeedEnabled}
-              onCounterOsMouseSpeedChange={handleCounterOsMouseSpeedChange}
-              onOpenCalibration={handleOpenCalibration}
-              hasPendingChanges={hasPendingChanges}
-              onApply={applyConfig}
-              onCancel={handleCancel}
-              lockMessage={lockMessage}
+                onTickTimeChange={handleTickTimeChange}
+                onGyroSpaceChange={handleGyroSpaceChange}
+                onGyroAxisXChange={handleGyroAxisXChange}
+                onGyroAxisYChange={handleGyroAxisYChange}
+                counterOsMouseSpeed={counterOsMouseSpeedEnabled}
+                onCounterOsMouseSpeedChange={handleCounterOsMouseSpeedChange}
+                onOpenCalibration={handleOpenCalibration}
+                hasPendingChanges={hasPendingChanges}
+                onApply={applyConfig}
+                onCancel={handleCancel}
+                lockMessage={lockMessage}
                 appliedSampleHz={telemetryValues.sampleHz}
             />
           </>
@@ -570,7 +587,19 @@ function App() {
             {primaryTab === 'touchpad' && renderTouchpadNav()}
             {primaryTab === 'sticks' && renderSticksNav()}
           </div>
-          <div className="top-bar-right" />
+          <div className="top-bar-right">
+            <label className="inline-select">
+              <span>JSM Version</span>
+              <select
+                className="app-select"
+                value={backendChoice}
+                onChange={(e) => handleBackendChange(e.target.value as 'SDL' | 'legacy')}
+              >
+                <option value="SDL">SDL</option>
+                <option value="legacy">Legacy</option>
+              </select>
+            </label>
+          </div>
         </div>
         <div className="content-grid">
           <main className="main-pane">{renderPrimaryContent()}</main>

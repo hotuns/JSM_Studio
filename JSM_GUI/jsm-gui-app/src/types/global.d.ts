@@ -20,6 +20,8 @@ declare interface Window {
     readCalibrationPreset?: () => Promise<{ success: boolean; calibrationProfile?: string; content?: string }>
     saveCalibrationPreset?: (content: string) => Promise<{ success: boolean }>
     runCalibrationCommand?: (command: string) => Promise<{ success: boolean; output: string }>
+    getBackendChoice?: () => Promise<'SDL' | 'legacy'>
+    setBackendChoice?: (choice: 'SDL' | 'legacy') => Promise<{ success: boolean; backend: 'SDL' | 'legacy' }>
   }
   telemetry?: {
     onSample?: (callback: (payload: unknown) => void) => () => void

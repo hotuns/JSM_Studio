@@ -25,6 +25,7 @@ export const RENDERER_DIST = path.join(APP_ROOT, 'dist')
 
 process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, 'public') : RENDERER_DIST
 const DATA_DIR = app.getPath('userData')
+const BACKEND_FILE = path.join(DATA_DIR, 'backend.json')
 
 let win: BrowserWindow | null
 let telemetrySocket: dgram.Socket | null = null
@@ -33,18 +34,23 @@ let jsmProcess: ChildProcess | null = null
 let calibrationTimer: NodeJS.Timeout | null = null
 let calibrationSecondsSetting = 5
 
+type BackendChoice = 'SDL' | 'legacy'
 const TELEMETRY_PORT = 8974
-const BIN_DIR = app.isPackaged ? path.join(process.resourcesPath, 'bin') : path.join(APP_ROOT, 'bin')
-const STARTUP_FILE = path.join(BIN_DIR, 'OnStartUp.txt')
+let backendChoice: BackendChoice = 'SDL'
+let BIN_DIR = app.isPackaged ? path.join(process.resourcesPath, 'bin', backendChoice) : path.join(APP_ROOT, 'bin', backendChoice)
+let STARTUP_FILE = path.join(BIN_DIR, 'OnStartUp.txt')
 const STARTUP_COMMAND = 'OnStartUp.txt'
-const JSM_EXECUTABLE = path.join(BIN_DIR, process.platform === 'win32' ? 'JoyShockMapper.exe' : 'JoyShockMapper')
-const CONSOLE_INJECTOR = path.join(BIN_DIR, process.platform === 'win32' ? 'jsm-console-injector.exe' : 'jsm-console-injector')
+let JSM_EXECUTABLE = path.join(BIN_DIR, process.platform === 'win32' ? 'JoyShockMapper.exe' : 'JoyShockMapper')
+let CONSOLE_INJECTOR = path.join(BIN_DIR, process.platform === 'win32' ? 'jsm-console-injector.exe' : 'jsm-console-injector')
 const LOG_FILE = path.join(DATA_DIR, 'jsm-gui.log')
 const WINDOW_STATE_FILE = path.join(DATA_DIR, 'window-state.json')
 
-const PROFILE_LIBRARY_DIR = path.join(BIN_DIR, 'profiles-library')
+const PROFILE_LIBRARY_DIR = app.isPackaged
+  ? path.join(process.resourcesPath, 'bin', 'profiles-library')
+  : path.join(APP_ROOT, 'bin', 'profiles-library')
 const DEFAULT_PROFILE_NAME = 'Profile 1'
-const DEFAULT_PROFILE_RELATIVE = `profiles-library/${DEFAULT_PROFILE_NAME}.txt`
+const PROFILE_LIBRARY_RELATIVE = path.posix.join('..', 'profiles-library')
+const DEFAULT_PROFILE_RELATIVE = `${PROFILE_LIBRARY_RELATIVE}/${DEFAULT_PROFILE_NAME}.txt`
 const PROFILE_TEMPLATE_LINES = ['RESET_MAPPINGS', 'TELEMETRY_ENABLED = ON', 'TELEMETRY_PORT = 8974']
 const getStartupHeaderLines = () => [
   'TELEMETRY_ENABLED = ON',
@@ -78,6 +84,32 @@ async function ensureRequiredFiles() {
   await ensureActiveProfileExists()
 }
 
+async function loadBackendChoice() {
+  try {
+    const raw = await fs.readFile(BACKEND_FILE, 'utf8')
+    const parsed = JSON.parse(raw)
+    if (parsed === 'SDL' || parsed === 'legacy') {
+      backendChoice = parsed
+    }
+  } catch {
+    backendChoice = 'SDL'
+  }
+  BIN_DIR = app.isPackaged ? path.join(process.resourcesPath, 'bin', backendChoice) : path.join(APP_ROOT, 'bin', backendChoice)
+  STARTUP_FILE = path.join(BIN_DIR, 'OnStartUp.txt')
+  JSM_EXECUTABLE = path.join(BIN_DIR, process.platform === 'win32' ? 'JoyShockMapper.exe' : 'JoyShockMapper')
+  CONSOLE_INJECTOR = path.join(BIN_DIR, process.platform === 'win32' ? 'jsm-console-injector.exe' : 'jsm-console-injector')
+}
+
+async function saveBackendChoice(choice: BackendChoice) {
+  backendChoice = choice
+  await fs.mkdir(path.dirname(BACKEND_FILE), { recursive: true })
+  await fs.writeFile(BACKEND_FILE, JSON.stringify(choice), 'utf8')
+  BIN_DIR = app.isPackaged ? path.join(process.resourcesPath, 'bin', backendChoice) : path.join(APP_ROOT, 'bin', backendChoice)
+  STARTUP_FILE = path.join(BIN_DIR, 'OnStartUp.txt')
+  JSM_EXECUTABLE = path.join(BIN_DIR, process.platform === 'win32' ? 'JoyShockMapper.exe' : 'JoyShockMapper')
+  CONSOLE_INJECTOR = path.join(BIN_DIR, process.platform === 'win32' ? 'jsm-console-injector.exe' : 'jsm-console-injector')
+}
+
 async function ensureLibraryDir() {
   await fs.mkdir(PROFILE_LIBRARY_DIR, { recursive: true })
 }
@@ -88,9 +120,12 @@ const sanitizeProfileName = (rawName: string) => {
   return cleaned.length > 0 ? cleaned : 'Profile'
 }
 
-const relativeProfilePathFromName = (name: string) => `profiles-library/${name}.txt`
-const absoluteProfilePath = (relativePath: string) =>
-  path.join(BIN_DIR, relativePath.replace(/\//g, path.sep))
+const relativeProfilePathFromName = (name: string) => `${PROFILE_LIBRARY_RELATIVE}/${name}.txt`
+const absoluteProfilePath = (relativePath: string) => {
+  const normalized = relativePath.replace(/\\/g, '/')
+  const stripped = normalized.replace(/^(\.\.\/)?profiles-library\//, '')
+  return path.join(PROFILE_LIBRARY_DIR, stripped.replace(/\//g, path.sep))
+}
 
 async function generateUniqueProfileName(preferred?: string) {
   const existing = await listLibraryProfiles()
@@ -544,6 +579,7 @@ app.on('activate', () => {
 })
 
 app.whenReady().then(async () => {
+  await loadBackendChoice()
   await ensureRequiredFiles()
   await loadCalibrationSecondsFromStartup()
   startTelemetryListener()
@@ -563,14 +599,34 @@ app.on('will-quit', () => {
 const normalizeRelativeProfilePath = (input?: string | null) => {
   if (!input) return null
   const normalized = input.replace(/\\/g, '/')
-  if (!normalized.startsWith('profiles-library/')) {
+  const allowedPrefix = normalized.startsWith(PROFILE_LIBRARY_RELATIVE + '/') || normalized.startsWith('profiles-library/')
+  if (!allowedPrefix) {
     return null
   }
-  if (normalized.includes('..')) {
+  if (normalized.includes('../') || normalized.includes('..\\')) {
     return null
   }
   return normalized
 }
+
+ipcMain.handle('get-backend-choice', async () => backendChoice)
+
+ipcMain.handle('set-backend-choice', async (_event, choice: BackendChoice) => {
+  if (choice !== 'SDL' && choice !== 'legacy') {
+    return { success: false, backend: backendChoice }
+  }
+  if (choice === backendChoice) {
+    return { success: true, backend: backendChoice }
+  }
+  await terminateJoyShockMapper()
+  await saveBackendChoice(choice)
+  await ensureRequiredFiles()
+  await loadCalibrationSecondsFromStartup()
+  setTimeout(() => {
+    launchJoyShockMapper(calibrationSecondsSetting).catch(err => console.error('Auto-launch failed after backend switch', err))
+  }, 300)
+  return { success: true, backend: backendChoice }
+})
 
 ipcMain.handle('apply-profile', async (_event, profileRelativePath: string | undefined, content: string) => {
   await ensureRequiredFiles()
