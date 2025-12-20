@@ -922,20 +922,48 @@ void joyShockPollCallback(int jcHandle, JOY_SHOCK_STATE state, JOY_SHOCK_STATE l
 	const float gyroAngleSnapDeg = jc->getSetting(SettingID::GYRO_ANGLE_SNAP);
 	if (gyroAngleSnapDeg > 0.0f && (gyroXVelocity != 0.0f || gyroYVelocity != 0.0f))
 	{
+		const bool smoothSnap = jc->getSetting<Switch>(SettingID::GYRO_ANGLE_SNAP_SMOOTH) == Switch::ON;
 		const float snapRad = gyroAngleSnapDeg * float(M_PI) / 180.0f;
-		float referenceAngle = gyroXVelocity == 0.0f ? float(M_PI_2) : atan(fabs(gyroYVelocity / gyroXVelocity));
+		const float referenceAngle = gyroXVelocity == 0.0f ? float(M_PI_2) : atan(fabsf(gyroYVelocity / gyroXVelocity));
+		const float mag = sqrtf(gyroXVelocity * gyroXVelocity + gyroYVelocity * gyroYVelocity);
 
-		if (referenceAngle > float(M_PI_2) - snapRad)
+		if (mag > 0.0f)
 		{
-			const float mag = sqrtf(gyroXVelocity * gyroXVelocity + gyroYVelocity * gyroYVelocity);
-			gyroXVelocity = 0.0f;
-			gyroYVelocity = copysign(mag, gyroYVelocity);
-		}
-		else if (referenceAngle < snapRad)
-		{
-			const float mag = sqrtf(gyroXVelocity * gyroXVelocity + gyroYVelocity * gyroYVelocity);
-			gyroXVelocity = copysign(mag, gyroXVelocity);
-			gyroYVelocity = 0.0f;
+			if (smoothSnap)
+			{
+				auto smoothstep01 = [](float x) -> float {
+					x = fminf(fmaxf(x, 0.0f), 1.0f);
+					return x * x * (3.0f - 2.0f * x);
+				};
+
+				if (referenceAngle > float(M_PI_2) - snapRad)
+				{
+					float x = 1.0f - ((float(M_PI_2) - referenceAngle) / snapRad);
+					const float snap = smoothstep01(x);
+					gyroXVelocity *= (1.0f - snap);
+					gyroYVelocity = copysignf(mag, gyroYVelocity);
+				}
+				else if (referenceAngle < snapRad)
+				{
+					float x = 1.0f - (referenceAngle / snapRad);
+					const float snap = smoothstep01(x);
+					gyroYVelocity *= (1.0f - snap);
+					gyroXVelocity = copysignf(mag, gyroXVelocity);
+				}
+			}
+			else
+			{
+				if (referenceAngle > float(M_PI_2) - snapRad)
+				{
+					gyroXVelocity = 0.0f;
+					gyroYVelocity = copysign(mag, gyroYVelocity);
+				}
+				else if (referenceAngle < snapRad)
+				{
+					gyroXVelocity = copysign(mag, gyroXVelocity);
+					gyroYVelocity = 0.0f;
+				}
+			}
 		}
 	}
 
@@ -2623,6 +2651,12 @@ void initJsmSettings(CmdRegistry *commandRegistry)
 	SettingsManager::add(gyro_cutoff_recovery);
 	commandRegistry->add((new JSMAssignment<float>(*gyro_cutoff_recovery))
 	                       ->setHelp("Below this threshold (in degrees per second), gyro sensitivity is pushed down towards zero. This can tighten and steady aim without a deadzone."));
+
+	auto gyro_angle_snap_smooth = new JSMSetting<Switch>(SettingID::GYRO_ANGLE_SNAP_SMOOTH, Switch::OFF);
+	gyro_angle_snap_smooth->setFilter(&filterInvalidValue<Switch, Switch::INVALID>);
+	SettingsManager::add(gyro_angle_snap_smooth);
+	commandRegistry->add((new JSMAssignment<Switch>(*gyro_angle_snap_smooth))
+	                       ->setHelp("When ON, applies a smooth transition into angle snapping instead of a hard snap."));
 
 	auto gyro_angle_snap = new JSMSetting<float>(SettingID::GYRO_ANGLE_SNAP, 0.0f);
 	gyro_angle_snap->setFilter([](float current, float next)

@@ -17,6 +17,7 @@ type NoiseSteadyingControlsProps = {
   onSmoothTimeChange: (value: string) => void
   onSmoothThresholdChange: (value: string) => void
   onAngleSnapChange: (value: string) => void
+  onAngleSnapSmoothChange: (value: string) => void
   telemetry: {
     omega: string
     timestamp: string
@@ -37,6 +38,7 @@ export function NoiseSteadyingControls({
   onSmoothTimeChange,
   onSmoothThresholdChange,
   onAngleSnapChange,
+  onAngleSnapSmoothChange,
   telemetry,
 }: NoiseSteadyingControlsProps) {
   return (
@@ -131,6 +133,8 @@ export function NoiseSteadyingControls({
             onChange={(e) => onSmoothThresholdChange(e.target.value)}
           />
         </label>
+      </div>
+      <div className="flex-inputs">
         <label>
           Angle Snapping (degrees)
           <input
@@ -149,6 +153,16 @@ export function NoiseSteadyingControls({
             value={sensitivity.angleSnap ?? 0}
             onChange={(e) => onAngleSnapChange(e.target.value)}
           />
+        </label>
+        <label>
+          Smooth Snap Transition
+          <select
+            value={sensitivity.angleSnapSmooth ?? 'OFF'}
+            onChange={(e) => onAngleSnapSmoothChange(e.target.value)}
+          >
+            <option value="OFF">Off</option>
+            <option value="ON">On</option>
+          </select>
         </label>
       </div>
       <SectionActions
