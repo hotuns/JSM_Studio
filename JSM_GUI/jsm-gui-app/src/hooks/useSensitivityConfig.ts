@@ -164,11 +164,20 @@ export function useSensitivityConfig({ configText, setConfigText }: SensitivityA
     setConfigText(prev => updateKeymapEntry(prev, key, [next]))
   }
 
+  const makeStringHandler = (key: string) => (value: string) => {
+    if (!value) {
+      setConfigText(prev => removeKeymapEntry(prev, key))
+      return
+    }
+    setConfigText(prev => updateKeymapEntry(prev, key, [value]))
+  }
+
   const handleCutoffSpeedChange = makeScalarHandler(keyName.GYRO_CUTOFF_SPEED)
   const handleCutoffRecoveryChange = makeScalarHandler(keyName.GYRO_CUTOFF_RECOVERY)
   const handleSmoothTimeChange = makeScalarHandler(keyName.GYRO_SMOOTH_TIME)
   const handleSmoothThresholdChange = makeScalarHandler(keyName.GYRO_SMOOTH_THRESHOLD)
   const handleAngleSnapChange = makeScalarHandler(keyName.GYRO_ANGLE_SNAP)
+  const handleAngleSnapSmoothChange = makeStringHandler(keyName.GYRO_ANGLE_SNAP_SMOOTH)
   const handleTickTimeChange = makeScalarHandler(keyName.TICK_TIME)
   const handleHoldPressTimeChange = makeScalarHandler(keyName.HOLD_PRESS_TIME)
   const makeWindowHandler = (key: typeof keyName.DBL_PRESS_WINDOW | typeof keyName.SIM_PRESS_WINDOW) => (value: string) => {
@@ -194,14 +203,6 @@ export function useSensitivityConfig({ configText, setConfigText }: SensitivityA
     const clamped = Math.min(1, Math.max(0, next))
     setConfigText(prev => updateKeymapEntry(prev, keyName.TRIGGER_THRESHOLD, [clamped]))
   }, [setConfigText])
-
-  const makeStringHandler = (key: string) => (value: string) => {
-    if (!value) {
-      setConfigText(prev => removeKeymapEntry(prev, key))
-      return
-    }
-    setConfigText(prev => updateKeymapEntry(prev, key, [value]))
-  }
 
   const handleGyroSpaceChange = makeStringHandler(keyName.GYRO_SPACE)
   const handleGyroAxisXChange = (value: string) => {
@@ -583,6 +584,7 @@ export function useSensitivityConfig({ configText, setConfigText }: SensitivityA
     handleSmoothTimeChange,
     handleSmoothThresholdChange,
     handleAngleSnapChange,
+    handleAngleSnapSmoothChange,
     handleTickTimeChange,
     handleHoldPressTimeChange,
     handleDoublePressWindowChange,

@@ -15,6 +15,7 @@ export const noiseKeys = [
   'GYRO_SMOOTH_TIME',
   'GYRO_SMOOTH_THRESHOLD',
   'GYRO_ANGLE_SNAP',
+  'GYRO_ANGLE_SNAP_SMOOTH',
 ] as const
 
 export const sensitivityKeys = [
@@ -104,6 +105,7 @@ export const keyName = {
   GYRO_SMOOTH_TIME: 'GYRO_SMOOTH_TIME',
   GYRO_SMOOTH_THRESHOLD: 'GYRO_SMOOTH_THRESHOLD',
   GYRO_ANGLE_SNAP: 'GYRO_ANGLE_SNAP',
+  GYRO_ANGLE_SNAP_SMOOTH: 'GYRO_ANGLE_SNAP_SMOOTH',
 
   // Sensitivity
   GYRO_SENS: 'GYRO_SENS',

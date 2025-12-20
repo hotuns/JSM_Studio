@@ -65,6 +65,7 @@ function App() {
     handleSmoothTimeChange,
     handleSmoothThresholdChange,
     handleAngleSnapChange,
+    handleAngleSnapSmoothChange,
     handleTickTimeChange,
     handleHoldPressTimeChange,
     handleDoublePressWindowChange,
@@ -369,6 +370,7 @@ function App() {
           onSmoothTimeChange={handleSmoothTimeChange}
           onSmoothThresholdChange={handleSmoothThresholdChange}
           onAngleSnapChange={handleAngleSnapChange}
+          onAngleSnapSmoothChange={handleAngleSnapSmoothChange}
           telemetry={{ omega: telemetryValues.omega, timestamp: telemetryValues.timestamp, sampleHz: telemetryValues.sampleHz }}
         />
       )}
