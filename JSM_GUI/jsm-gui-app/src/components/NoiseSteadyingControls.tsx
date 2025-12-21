@@ -18,6 +18,8 @@ type NoiseSteadyingControlsProps = {
   onSmoothThresholdChange: (value: string) => void
   onAngleSnapChange: (value: string) => void
   onAngleSnapSmoothChange: (value: string) => void
+  onDecelBrakeStrengthChange: (value: string) => void
+  onDecelBrakeThresholdChange: (value: string) => void
   telemetry: {
     omega: string
     timestamp: string
@@ -39,6 +41,8 @@ export function NoiseSteadyingControls({
   onSmoothThresholdChange,
   onAngleSnapChange,
   onAngleSnapSmoothChange,
+  onDecelBrakeStrengthChange,
+  onDecelBrakeThresholdChange,
   telemetry,
 }: NoiseSteadyingControlsProps) {
   return (
@@ -155,14 +159,54 @@ export function NoiseSteadyingControls({
           />
         </label>
         <label>
-          Smooth Snap Transition
+          Ease Angle Snapping
           <select
-            value={sensitivity.angleSnapSmooth ?? 'OFF'}
+            value={sensitivity.angleSnapEase ?? 'OFF'}
             onChange={(e) => onAngleSnapSmoothChange(e.target.value)}
           >
             <option value="OFF">Off</option>
             <option value="ON">On</option>
           </select>
+        </label>
+      </div>
+      <div className="flex-inputs">
+        <label>
+          Decel Brake Strength
+          <input
+            type="number"
+            step="0.01"
+            min="0"
+            max="1"
+            value={sensitivity.decelBrakeStrength ?? ''}
+            onChange={(e) => onDecelBrakeStrengthChange(e.target.value)}
+          />
+          <input
+            type="range"
+            min="0"
+            max="1"
+            step="0.01"
+            value={sensitivity.decelBrakeStrength ?? 0}
+            onChange={(e) => onDecelBrakeStrengthChange(e.target.value)}
+          />
+        </label>
+        <label>
+          Decel Brake Threshold (°/s)
+          <input
+            type="number"
+            step="0.1"
+            min="1"
+            max="60"
+            value={sensitivity.decelBrakeThreshold ?? ''}
+            onChange={(e) => onDecelBrakeThresholdChange(e.target.value)}
+          />
+          <input
+            type="range"
+            min="1"
+            max="60"
+            step="0.5"
+            value={sensitivity.decelBrakeThreshold ?? 25}
+            onChange={(e) => onDecelBrakeThresholdChange(e.target.value)}
+          />
         </label>
       </div>
       <SectionActions

@@ -686,6 +686,9 @@ void joyShockPollCallback(int jcHandle, JOY_SHOCK_STATE state, JOY_SHOCK_STATE l
 	jc->getSmoothedGyro(gyroX, gyroY, gyroLength, threshold / 2.0f, threshold, int(numGyroSamples), gyroX, gyroY);
 	// COUT << "%d Samples for threshold: %0.4f\n", numGyroSamples, gyro_smooth_threshold * maxSmoothingSamples);
 
+	// Decel brake detection should use IMU-based, post-smoothing gyro before cutoff/recovery and before synthetic additions
+	jc->decelBrakeOmegaRaw = sqrt(gyroX * gyroX + gyroY * gyroY);
+
 	// now, honour gyro_cutoff_speed
 	gyroLength = sqrt(gyroX * gyroX + gyroY * gyroY);
 	auto speed = jc->getSetting(SettingID::GYRO_CUTOFF_SPEED);
@@ -919,10 +922,93 @@ void joyShockPollCallback(int jcHandle, JOY_SHOCK_STATE state, JOY_SHOCK_STATE l
 	float gyroXVelocity = gyroX * gyro_x_sign_to_use;
 	float gyroYVelocity = gyroY * gyro_y_sign_to_use;
 
+	pair<float, float> lowSensXY = jc->getSetting<FloatXY>(SettingID::MIN_GYRO_SENS);
+	pair<float, float> hiSensXY = jc->getSetting<FloatXY>(SettingID::MAX_GYRO_SENS);
+	const AccelCurve accelCurve = jc->getSetting<AccelCurve>(SettingID::ACCEL_CURVE);
+
+	// Curve-specific parameters
+	const float naturalVHalf = jc->getSetting(SettingID::ACCEL_NATURAL_VHALF);
+	const float powervRef = jc->getSetting(SettingID::ACCEL_POWER_VREF);
+	const float powerExponent = jc->getSetting(SettingID::ACCEL_POWER_EXPONENT);
+	const float sigmoidMid = jc->getSetting(SettingID::ACCEL_SIGMOID_MID);
+	const float sigmoidWidth = jc->getSetting(SettingID::ACCEL_SIGMOID_WIDTH);
+	const float jumpTau = jc->getSetting(SettingID::ACCEL_JUMP_TAU);
+
+	// apply calibration factor
+	// get input velocity (post snap; may include synthetic gyro later)
+	float omega = sqrt(gyroXVelocity * gyroXVelocity + gyroYVelocity * gyroYVelocity);
+
+	// Gyro deceleration brake detection uses pre-curve, post-smoothing (IMU-only) gyro vector
+	const float decelBrakeStrength = std::clamp(jc->getSetting(SettingID::DECEL_BRAKE_STRENGTH), 0.0f, 1.0f);
+	const float decelBrakeThreshold = std::max(0.0f, jc->getSetting(SettingID::DECEL_BRAKE_THRESHOLD));
+	float decelBrakeMultiplier = 1.0f;
+	if (decelBrakeStrength <= 0.0f)
+	{
+		jc->decelBrakeEngagement = 0.0f;
+	}
+	else
+	{
+		constexpr float kWindowSeconds = 0.010f;              // Tw
+		constexpr float kSpeedMin = 2.0f;                     // S_MIN
+		constexpr float kSpeedMax = 60.0f;                    // S_MAX
+		constexpr float kEngageTime = 0.010f;                 // T_ENGAGE
+		constexpr float kReleaseTime = 0.006f;                // T_RELEASE
+		constexpr float kFullBrakeFactor = 3.5f;              // k
+		constexpr auto kHistoryWindow = std::chrono::milliseconds(50);
+
+		const auto nowTs = std::chrono::steady_clock::now();
+		jc->decelBrakeHistory.push_back({ nowTs, jc->decelBrakeOmegaRaw });
+		while (!jc->decelBrakeHistory.empty() && nowTs - jc->decelBrakeHistory.front().first > kHistoryWindow)
+		{
+			jc->decelBrakeHistory.pop_front();
+		}
+
+		float sOld = jc->decelBrakeOmegaRaw;
+		const auto targetTs = nowTs - std::chrono::milliseconds(10);
+		for (auto it = jc->decelBrakeHistory.rbegin(); it != jc->decelBrakeHistory.rend(); ++it)
+		{
+			if (it->first <= targetTs)
+			{
+				sOld = it->second;
+				break;
+			}
+		}
+
+		const float slope = (jc->decelBrakeOmegaRaw - sOld) / kWindowSeconds; // deg/s^2
+		const float dNeg = std::max(0.0f, -slope);
+		const float d0 = kWindowSeconds > 0.0f ? decelBrakeThreshold / kWindowSeconds : 0.0f;
+		const float d1 = d0 * kFullBrakeFactor;
+		const float denom = (d1 > d0) ? (d1 - d0) : 1e-6f;
+
+		float bInst = 0.0f;
+		const bool speedGate = omega >= kSpeedMin && omega <= kSpeedMax;
+		if (speedGate)
+		{
+			bInst = std::clamp((dNeg - d0) / denom, 0.0f, 1.0f);
+		}
+
+		float &engagement = jc->decelBrakeEngagement;
+		if (speedGate && bInst > 0.0f)
+		{
+			engagement += (deltaTime / kEngageTime) * bInst;
+		}
+		else
+		{
+			engagement -= (deltaTime / kReleaseTime);
+		}
+		engagement = std::clamp(engagement, 0.0f, 1.0f);
+
+		if (decelBrakeStrength > 0.0f && engagement > 0.0f)
+		{
+			decelBrakeMultiplier = 1.0f - decelBrakeStrength * engagement;
+		}
+	}
+
+	// Apply angle snap after decel brake detection so braking is not triggered by snap-induced slowdown
 	const float gyroAngleSnapDeg = jc->getSetting(SettingID::GYRO_ANGLE_SNAP);
 	if (gyroAngleSnapDeg > 0.0f && (gyroXVelocity != 0.0f || gyroYVelocity != 0.0f))
 	{
-		const bool smoothSnap = jc->getSetting<Switch>(SettingID::GYRO_ANGLE_SNAP_SMOOTH) == Switch::ON;
+		const bool smoothSnap = jc->getSetting<Switch>(SettingID::GYRO_ANGLE_SNAP_EASE) == Switch::ON;
 		const float snapRad = gyroAngleSnapDeg * float(M_PI) / 180.0f;
 		const float referenceAngle = gyroXVelocity == 0.0f ? float(M_PI_2) : atan(fabsf(gyroYVelocity / gyroXVelocity));
 		const float mag = sqrtf(gyroXVelocity * gyroXVelocity + gyroYVelocity * gyroYVelocity);
@@ -967,21 +1053,9 @@ void joyShockPollCallback(int jcHandle, JOY_SHOCK_STATE state, JOY_SHOCK_STATE l
 		}
 	}
 
-	pair<float, float> lowSensXY = jc->getSetting<FloatXY>(SettingID::MIN_GYRO_SENS);
-	pair<float, float> hiSensXY = jc->getSetting<FloatXY>(SettingID::MAX_GYRO_SENS);
-	const AccelCurve accelCurve = jc->getSetting<AccelCurve>(SettingID::ACCEL_CURVE);
+	// Recompute omega after snapping to feed accel curves/telemetry
+	omega = sqrt(gyroXVelocity * gyroXVelocity + gyroYVelocity * gyroYVelocity);
 
-	// Curve-specific parameters
-	const float naturalVHalf = jc->getSetting(SettingID::ACCEL_NATURAL_VHALF);
-	const float powervRef = jc->getSetting(SettingID::ACCEL_POWER_VREF);
-	const float powerExponent = jc->getSetting(SettingID::ACCEL_POWER_EXPONENT);
-	const float sigmoidMid = jc->getSetting(SettingID::ACCEL_SIGMOID_MID);
-	const float sigmoidWidth = jc->getSetting(SettingID::ACCEL_SIGMOID_WIDTH);
-	const float jumpTau = jc->getSetting(SettingID::ACCEL_JUMP_TAU);
-
-	// apply calibration factor
-	// get input velocity
-	float omega = sqrt(gyroXVelocity * gyroXVelocity + gyroYVelocity * gyroYVelocity);
 	// calculate position on minThreshold to maxThreshold scale
 	float minThreshold = jc->getSetting(SettingID::MIN_GYRO_THRESHOLD);
 	float maxThreshold = jc->getSetting(SettingID::MAX_GYRO_THRESHOLD);
@@ -1039,6 +1113,12 @@ void joyShockPollCallback(int jcHandle, JOY_SHOCK_STATE state, JOY_SHOCK_STATE l
 
 	gyroXVelocity *= appliedSensX;
 	gyroYVelocity *= appliedSensY;
+
+	if (decelBrakeMultiplier < 1.0f)
+	{
+		gyroXVelocity *= decelBrakeMultiplier;
+		gyroYVelocity *= decelBrakeMultiplier;
+	}
 
 	TelemetrySample telemetrySample;
 	telemetrySample.omega = omega;
@@ -2652,10 +2732,10 @@ void initJsmSettings(CmdRegistry *commandRegistry)
 	commandRegistry->add((new JSMAssignment<float>(*gyro_cutoff_recovery))
 	                       ->setHelp("Below this threshold (in degrees per second), gyro sensitivity is pushed down towards zero. This can tighten and steady aim without a deadzone."));
 
-	auto gyro_angle_snap_smooth = new JSMSetting<Switch>(SettingID::GYRO_ANGLE_SNAP_SMOOTH, Switch::OFF);
-	gyro_angle_snap_smooth->setFilter(&filterInvalidValue<Switch, Switch::INVALID>);
-	SettingsManager::add(gyro_angle_snap_smooth);
-	commandRegistry->add((new JSMAssignment<Switch>(*gyro_angle_snap_smooth))
+	auto gyro_angle_snap_ease = new JSMSetting<Switch>(SettingID::GYRO_ANGLE_SNAP_EASE, Switch::OFF);
+	gyro_angle_snap_ease->setFilter(&filterInvalidValue<Switch, Switch::INVALID>);
+	SettingsManager::add(gyro_angle_snap_ease);
+	commandRegistry->add((new JSMAssignment<Switch>(*gyro_angle_snap_ease))
 	                       ->setHelp("When ON, applies a smooth transition into angle snapping instead of a hard snap."));
 
 	auto gyro_angle_snap = new JSMSetting<float>(SettingID::GYRO_ANGLE_SNAP, 0.0f);
@@ -2664,6 +2744,19 @@ void initJsmSettings(CmdRegistry *commandRegistry)
 	SettingsManager::add(gyro_angle_snap);
 	commandRegistry->add((new JSMAssignment<float>(*gyro_angle_snap))
 	                       ->setHelp("Degrees of angle snapping for gyro input. Snaps movement to horizontal/vertical when within this angle. 0 disables snapping. (Range: 0-45)"));
+
+	auto decel_brake_strength = new JSMSetting<float>(SettingID::DECEL_BRAKE_STRENGTH, 0.0f);
+	decel_brake_strength->setFilter([](float current, float next)
+	  { return std::clamp(next, 0.0f, 1.0f); });
+	SettingsManager::add(decel_brake_strength);
+	commandRegistry->add((new JSMAssignment<float>(*decel_brake_strength))
+	                       ->setHelp("Deceleration brake strength (0-1). Higher values apply more braking when stopping."));
+
+	auto decel_brake_threshold = new JSMSetting<float>(SettingID::DECEL_BRAKE_THRESHOLD, 25.0f);
+	decel_brake_threshold->setFilter(&filterPositive);
+	SettingsManager::add(decel_brake_threshold);
+	commandRegistry->add((new JSMAssignment<float>(*decel_brake_threshold))
+	                       ->setHelp("Deceleration brake trigger threshold (deg/s drop over a short window). Lower values trigger more easily."));
 
 	auto stick_acceleration_rate = new JSMSetting<float>(SettingID::STICK_ACCELERATION_RATE, 0.0f);
 	stick_acceleration_rate->setFilter(&filterPositive);

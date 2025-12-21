@@ -21,7 +21,9 @@ export interface SensitivityValues {
   smoothTime?: number
   smoothThreshold?: number
   angleSnap?: number
-  angleSnapSmooth?: string
+  angleSnapEase?: string
+  decelBrakeStrength?: number
+  decelBrakeThreshold?: number
   gyroSpace?: string
   gyroAxisX?: string
   gyroAxisY?: string
@@ -67,7 +69,9 @@ export function parseSensitivityValues(text: string, options?: { prefix?: string
   const maxSens = get('MAX_GYRO_SENS', 2)
   const staticSens = get('GYRO_SENS', 2)
   const angleSnap = single('GYRO_ANGLE_SNAP')
-  const angleSnapSmoothRaw = raw('GYRO_ANGLE_SNAP_SMOOTH')
+  const angleSnapEaseRaw = raw('GYRO_ANGLE_SNAP_EASE')
+  const decelBrakeStrength = single('DECEL_BRAKE_STRENGTH')
+  const decelBrakeThreshold = single('DECEL_BRAKE_THRESHOLD')
 
   const result: SensitivityValues = {
     inGameSens: single('IN_GAME_SENS'),
@@ -85,7 +89,9 @@ export function parseSensitivityValues(text: string, options?: { prefix?: string
     smoothTime: single('GYRO_SMOOTH_TIME'),
     smoothThreshold: single('GYRO_SMOOTH_THRESHOLD'),
     angleSnap,
-    angleSnapSmooth: angleSnapSmoothRaw ? angleSnapSmoothRaw.toUpperCase() : undefined,
+    angleSnapEase: angleSnapEaseRaw ? angleSnapEaseRaw.toUpperCase() : undefined,
+    decelBrakeStrength,
+    decelBrakeThreshold,
     gyroSpace: raw('GYRO_SPACE'),
     gyroAxisX: raw('GYRO_AXIS_X'),
     gyroAxisY: raw('GYRO_AXIS_Y'),

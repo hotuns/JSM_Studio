@@ -59,6 +59,8 @@ export function useKeymapConfig() {
     handleSmoothThresholdChange: sensitivityConfig.handleSmoothThresholdChange,
     handleAngleSnapChange: sensitivityConfig.handleAngleSnapChange,
     handleAngleSnapSmoothChange: sensitivityConfig.handleAngleSnapSmoothChange,
+    handleDecelBrakeStrengthChange: sensitivityConfig.handleDecelBrakeStrengthChange,
+    handleDecelBrakeThresholdChange: sensitivityConfig.handleDecelBrakeThresholdChange,
     handleTickTimeChange: sensitivityConfig.handleTickTimeChange,
     handleHoldPressTimeChange: sensitivityConfig.handleHoldPressTimeChange,
     handleDoublePressWindowChange: sensitivityConfig.handleDoublePressWindowChange,
