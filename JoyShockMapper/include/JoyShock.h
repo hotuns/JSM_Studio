@@ -102,6 +102,10 @@ public:
 	float gyroXVelocity = 0.f;
 	float gyroYVelocity = 0.f;
 
+	std::deque<std::pair<std::chrono::steady_clock::time_point, float>> decelBrakeHistory;
+	float decelBrakeEngagement = 0.f;
+	float decelBrakeOmegaRaw = 0.f;
+
 private:
 	// this large functions is defined further down
 	float handleFlickStick(float stickX, float stickY, Stick &stick, float stickLength, StickMode mode);
