@@ -1,0 +1,53 @@
+import { useEffect, useState } from 'react'
+
+type ToastKind = 'success' | 'warn' | 'error'
+
+type ToastPayload = {
+  message: string
+  kind?: ToastKind
+}
+
+type Toast = ToastPayload & { id: string }
+
+const eventName = 'app-toast'
+const toastDurationMs = 3200
+
+export function ToastHost() {
+  const [toasts, setToasts] = useState<Toast[]>([])
+
+  useEffect(() => {
+    const listener = (event: Event) => {
+      const detail = (event as CustomEvent<ToastPayload>)?.detail
+      if (!detail?.message) return
+      setToasts(current => [...current, { id: crypto.randomUUID(), ...detail }])
+    }
+    window.addEventListener(eventName, listener as EventListener)
+    return () => window.removeEventListener(eventName, listener as EventListener)
+  }, [])
+
+  useEffect(() => {
+    if (toasts.length === 0) return
+    const timers = toasts.map(toast =>
+      setTimeout(() => {
+        setToasts(current => current.filter(item => item.id !== toast.id))
+      }, toastDurationMs)
+    )
+    return () => timers.forEach(clearTimeout)
+  }, [toasts])
+
+  if (!toasts.length) return null
+
+  return (
+    <div className="toast-stack">
+      {toasts.map(toast => (
+        <div key={toast.id} className={`toast toast-${toast.kind ?? 'success'}`}>
+          {toast.message}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+export function showToast(message: string, kind: ToastKind = 'success') {
+  window.dispatchEvent(new CustomEvent<ToastPayload>(eventName, { detail: { message, kind } }))
+}

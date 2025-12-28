@@ -47,10 +47,9 @@ export function ProfileManager({
     <Card className="profile-card" lockable locked={isCalibrating} lockMessage={lockMessage}>
       <h2>
         <span>Profiles</span>
-        {(hasPendingChanges || statusMessage) && (
+        {hasPendingChanges && (
           <div className="profile-flags">
-            {statusMessage && <span className="profile-status">{statusMessage}</span>}
-            {hasPendingChanges && <span className="profile-warning">Unsaved changes on current profile</span>}
+            <span className="profile-warning">Unsaved changes on current profile</span>
           </div>
         )}
       </h2>

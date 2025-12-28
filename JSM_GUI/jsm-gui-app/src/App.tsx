@@ -13,6 +13,7 @@ import { DEFAULT_HOLD_PRESS_TIME } from './constants/defaults'
 import { useProfileLibrary } from './hooks/useProfileLibrary'
 import { useKeymapConfig } from './hooks/useKeymapConfig'
 import { useCalibration } from './hooks/useCalibration'
+import { ToastHost } from './components/ToastHost'
 
 type PrimaryTab = 'gyro' | 'keybinds' | 'touchpad' | 'sticks'
 type GyroSubTab = 'behavior' | 'sensitivity' | 'noise'
@@ -567,6 +568,7 @@ function App() {
 
   return (
     <div className="app-shell">
+      <ToastHost />
       <aside className="side-nav">
         <div className="nav-brand">JSM Custom Curve</div>
         <div className="nav-group">
@@ -625,11 +627,7 @@ function App() {
             <div className="profile-summary-card">
               <div className="profile-summary-header">
                 <div className="profile-summary-title">Profile</div>
-                <span className={`status-chip ${hasPendingChanges ? 'warning' : 'success'}`}>
-                  {hasPendingChanges ? 'Pending changes' : 'Applied'}
-                </span>
               </div>
-              <div className="profile-summary-name">{currentLibraryProfile ?? 'Unsaved profile'}</div>
               <label className="profile-summary-select">
                 Quick switch
                 <select
@@ -655,9 +653,6 @@ function App() {
                 <button className="secondary-btn" onClick={() => setProfileModalOpen(true)}>
                   Manage profiles
                 </button>
-                <button className="secondary-btn" onClick={handleImportProfile} disabled={!window.electronAPI?.saveLibraryProfile}>
-                  Import
-                </button>
               </div>
             </div>
             <div className="config-editor-desktop">
@@ -666,7 +661,7 @@ function App() {
                 label={profileFileLabel}
                 disabled={isCalibrating}
                 hasPendingChanges={hasPendingChanges}
-                statusMessage={statusMessage}
+                statusMessage={null}
                 onChange={setConfigText}
                 onApply={applyConfig}
                 onCancel={handleCancel}
@@ -679,7 +674,7 @@ function App() {
               label={profileFileLabel}
               disabled={isCalibrating}
               hasPendingChanges={hasPendingChanges}
-              statusMessage={statusMessage}
+              statusMessage={null}
               onChange={setConfigText}
               onApply={applyConfig}
               onCancel={handleCancel}

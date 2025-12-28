@@ -14,6 +14,7 @@ import {
   formatImportedProfileMessage,
   formatLoadedProfileMessage,
 } from '../constants/messages'
+import { showToast } from '../components/ToastHost'
 
 type ApplyConfigOptions = {
   profileNameOverride?: string
@@ -110,12 +111,15 @@ export function useProfileLibrary({
           setActiveProfilePath(result.path)
         }
         const profileName = options?.profileNameOverride ?? currentLibraryProfile ?? 'Unsaved profile'
-        setStatusMessage(formatAppliedProfileMessage(profileName, Boolean(result?.restarted)))
+        const appliedMessage = formatAppliedProfileMessage(profileName, Boolean(result?.restarted))
+        setStatusMessage(appliedMessage)
+        showToast(appliedMessage)
         setAppliedConfig(normalizedConfig)
         setTimeout(() => setStatusMessage(null), 3000)
       } catch (err) {
         console.error(err)
         setStatusMessage(APPLY_KEYMAP_FAILED)
+        showToast(APPLY_KEYMAP_FAILED, 'error')
       }
     },
     [activeProfilePath, configText, currentLibraryProfile, setAppliedConfig, setConfigText, setStatusMessage]
@@ -139,13 +143,15 @@ export function useProfileLibrary({
             textOverride: profileContent,
             profilePathOverride: profilePath,
           })
-          setStatusMessage(formatLoadedProfileMessage(profileName))
+          const appliedMessage = formatAppliedProfileMessage(profileName, false)
+          setStatusMessage(appliedMessage)
           setTimeout(() => setStatusMessage(null), 3000)
           return result.content
         }
       } catch (err) {
         console.error('Failed to load profile from library', err)
         setStatusMessage(LOAD_PROFILE_FAILED)
+        showToast(LOAD_PROFILE_FAILED, 'error')
         setTimeout(() => setStatusMessage(null), 3000)
         refreshLibraryProfiles()
       }
@@ -197,6 +203,7 @@ export function useProfileLibrary({
       const pendingName = (editedLibraryNames[originalName] ?? originalName).trim()
       if (!pendingName) {
         setStatusMessage(EMPTY_PROFILE_NAME)
+        showToast(EMPTY_PROFILE_NAME, 'error')
         setTimeout(() => setStatusMessage(null), 3000)
         return
       }
@@ -222,6 +229,7 @@ export function useProfileLibrary({
       } catch (err) {
         console.error('Failed to rename profile', err)
         setStatusMessage(RENAME_PROFILE_FAILED)
+        showToast(RENAME_PROFILE_FAILED, 'error')
         setTimeout(() => setStatusMessage(null), 3000)
       }
     },
@@ -284,10 +292,12 @@ export function useProfileLibrary({
           }
         }
         setStatusMessage(formatDeletedProfileMessage(name))
+        showToast(formatDeletedProfileMessage(name))
         setTimeout(() => setStatusMessage(null), 3000)
       } catch (err) {
         console.error('Failed to delete profile', err)
         setStatusMessage(DELETE_PROFILE_FAILED)
+        showToast(DELETE_PROFILE_FAILED, 'error')
         setTimeout(() => setStatusMessage(null), 3000)
       }
     },
@@ -311,12 +321,15 @@ export function useProfileLibrary({
         const result = await window.electronAPI?.saveLibraryProfile?.(baseName, sanitized)
         const savedName = result?.name ?? baseName
         await handleLoadProfileFromLibrary(savedName)
-        setStatusMessage(formatImportedProfileMessage(savedName))
+        const importedMessage = formatImportedProfileMessage(savedName)
+        setStatusMessage(importedMessage)
+        showToast(importedMessage)
         setTimeout(() => setStatusMessage(null), 3000)
         refreshLibraryProfiles()
       } catch (err) {
         console.error('Failed to import profile', err)
         setStatusMessage(IMPORT_PROFILE_FAILED)
+        showToast(IMPORT_PROFILE_FAILED, 'error')
         setTimeout(() => setStatusMessage(null), 3000)
       }
     },
