@@ -45,6 +45,8 @@ function App() {
     modeshiftSensitivity,
     activeSensitivityPrefix,
     ignoredGyroDevices,
+    selectedBaseMode,
+    selectedModeshiftMode,
     holdPressTimeSeconds,
     holdPressTimeIsCustom,
     doublePressWindowSeconds,
@@ -56,8 +58,6 @@ function App() {
     gridSizeValue,
     touchpadSensitivityValue,
     hasPendingChanges,
-    baseMode,
-    modeshiftMode,
     handleSensitivityModeshiftButtonChange,
     handleThresholdChange,
     handleCutoffSpeedChange,
@@ -91,7 +91,7 @@ function App() {
     handleJumpTauChange,
     handleSigmoidMidChange,
     handleSigmoidWidthChange,
-    switchToAccelMode,
+    handleModeSelection,
     handleCancel,
     handleFaceButtonBindingChange,
     handleModifierChange,
@@ -206,7 +206,7 @@ function App() {
     timestamp: formatTimestamp(sample?.ts),
   }
   const currentMode: 'static' | 'accel' =
-    sensitivityView === 'modeshift' && sensitivityModeshiftButton ? modeshiftMode : baseMode
+    sensitivityView === 'modeshift' && sensitivityModeshiftButton ? selectedModeshiftMode : selectedBaseMode
   const profileLabel = currentLibraryProfile ?? 'Unsaved profile'
   const activeProfileFile = activeProfilePath || 'No active profile'
   const profileFileLabel = `${activeProfileFile} — ${profileLabel}`
@@ -332,9 +332,7 @@ function App() {
               telemetry={telemetryValues}
               touchpadMode={touchpadModeValue}
               touchpadGridCells={touchpadModeValue === 'GRID_AND_STICK' ? Math.min(25, gridSizeValue.columns * gridSizeValue.rows) : 0}
-              onModeChange={(mode) =>
-                mode === 'static' ? switchToStaticMode(activeSensitivityPrefix) : switchToAccelMode(activeSensitivityPrefix)
-              }
+              onModeChange={(mode) => handleModeSelection(mode, activeSensitivityPrefix)}
               onSensitivityViewChange={setSensitivityView}
               onApply={applyConfig}
               onCancel={handleCancel}

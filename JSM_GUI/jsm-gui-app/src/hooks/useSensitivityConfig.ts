@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { getKeymapValue, parseSensitivityValues, removeKeymapEntry, updateKeymapEntry } from '../utils/keymap'
 import { DEFAULT_HOLD_PRESS_TIME, DEFAULT_WINDOW_SECONDS } from '../constants/defaults'
 import { keyName } from '../constants/configKeys'
@@ -287,7 +287,12 @@ export function useSensitivityConfig({ configText, setConfigText }: SensitivityA
   const switchToStaticMode = (prefix?: string) => {
     setConfigText(prev => {
       const values = parseSensitivityValues(prev, prefix ? { prefix } : undefined)
-      if (values.gyroSensX !== undefined) {
+      const hasExistingStatic = values.gyroSensX !== undefined
+      const hasAccel = values.minSensX !== undefined || values.maxSensX !== undefined
+      if (!hasExistingStatic && !hasAccel) {
+        return prev
+      }
+      if (hasExistingStatic) {
         return prev
       }
       const defaultX = values.minSensX ?? values.maxSensX ?? 1
@@ -560,8 +565,55 @@ export function useSensitivityConfig({ configText, setConfigText }: SensitivityA
     return 0
   }, [configText])
 
-  const baseMode: 'static' | 'accel' = sensitivity.gyroSensX !== undefined ? 'static' : 'accel'
-  const modeshiftMode: 'static' | 'accel' = modeshiftSensitivity?.gyroSensX !== undefined ? 'static' : 'accel'
+  const hasAccelValues = (values?: ReturnType<typeof parseSensitivityValues>) => {
+    if (!values) return false
+    return values.minSensX !== undefined || values.minSensY !== undefined
+  }
+
+  const baseMode: 'static' | 'accel' =
+    sensitivity.gyroSensX !== undefined ? 'static' : hasAccelValues(sensitivity) ? 'accel' : 'static'
+  const modeshiftMode: 'static' | 'accel' =
+    modeshiftSensitivity?.gyroSensX !== undefined
+      ? 'static'
+      : hasAccelValues(modeshiftSensitivity)
+        ? 'accel'
+        : 'static'
+
+  const baseModeDerivedRef = useRef(baseMode)
+  const modeshiftModeDerivedRef = useRef(modeshiftMode)
+  const [selectedBaseMode, setSelectedBaseMode] = useState<'static' | 'accel'>(baseMode)
+  const [selectedModeshiftMode, setSelectedModeshiftMode] = useState<'static' | 'accel'>(modeshiftMode)
+
+  useEffect(() => {
+    if (selectedBaseMode === baseModeDerivedRef.current && baseMode !== baseModeDerivedRef.current) {
+      setSelectedBaseMode(baseMode)
+    }
+    baseModeDerivedRef.current = baseMode
+  }, [baseMode, selectedBaseMode])
+
+  useEffect(() => {
+    if (selectedModeshiftMode === modeshiftModeDerivedRef.current && modeshiftMode !== modeshiftModeDerivedRef.current) {
+      setSelectedModeshiftMode(modeshiftMode)
+    }
+    modeshiftModeDerivedRef.current = modeshiftMode
+  }, [modeshiftMode, selectedModeshiftMode])
+
+  const handleModeSelection = (mode: 'static' | 'accel', prefix?: string) => {
+    if (mode === 'static') {
+      switchToStaticMode(prefix)
+      if (prefix) {
+        setSelectedModeshiftMode('static')
+      } else {
+        setSelectedBaseMode('static')
+      }
+      return
+    }
+    if (prefix) {
+      setSelectedModeshiftMode('accel')
+    } else {
+      setSelectedBaseMode('accel')
+    }
+  }
 
   return {
     sensitivityView,
@@ -572,6 +624,8 @@ export function useSensitivityConfig({ configText, setConfigText }: SensitivityA
     activeSensitivityPrefix,
     baseMode,
     modeshiftMode,
+    selectedBaseMode,
+    selectedModeshiftMode,
     holdPressTimeSeconds,
     holdPressTimeIsCustom,
     doublePressWindowSeconds,
@@ -599,6 +653,7 @@ export function useSensitivityConfig({ configText, setConfigText }: SensitivityA
     handleGyroAxisYChange,
     handleDualSensChange,
     handleStaticSensChange,
+    handleModeSelection,
     handleInGameSensChange,
     handleRealWorldCalibrationChange,
     switchToStaticMode,
