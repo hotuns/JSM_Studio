@@ -209,8 +209,7 @@ function App() {
   const currentMode: 'static' | 'accel' =
     sensitivityView === 'modeshift' && sensitivityModeshiftButton ? selectedModeshiftMode : selectedBaseMode
   const profileLabel = currentLibraryProfile ?? 'Unsaved profile'
-  const activeProfileFile = activeProfilePath || 'No active profile'
-  const profileFileLabel = `${activeProfileFile} — ${profileLabel}`
+  const profileFileLabel = `${profileLabel}${profileLabel.endsWith('.txt') ? '' : '.txt'}`
   const lockMessage = LOCK_MESSAGE
   const [backendChoice, setBackendChoice] = useState<'SDL' | 'legacy'>('SDL')
 

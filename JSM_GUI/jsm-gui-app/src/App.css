@@ -197,6 +197,10 @@ body {
   gap: 0.65rem;
 }
 
+.profile-summary-select {
+  margin-bottom: 0.35rem;
+}
+
 .profile-summary-header {
   display: flex;
   align-items: center;
@@ -1517,6 +1521,12 @@ input[type=number] {
   display: flex;
   flex-direction: column;
   gap: 0.9rem;
+}
+
+.config-panel label {
+  display: flex;
+  flex-direction: column;
+  gap: 5.6px;
 }
 
 .config-panel textarea {
