@@ -616,6 +616,7 @@ export function useSensitivityConfig({ configText, setConfigText }: SensitivityA
       }
       return
     }
+    switchToAccelMode(prefix)
     if (prefix) {
       setSelectedModeshiftMode('accel')
     } else {
