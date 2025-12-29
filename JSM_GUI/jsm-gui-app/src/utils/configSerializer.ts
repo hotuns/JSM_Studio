@@ -162,9 +162,24 @@ const classify = (rawKey: string, value: string): { section: SectionKey; subsect
   if (isKnownKey(key, noiseKeys)) {
     return { section: 'noise' }
   }
-  // Sensitivity
+  // Sensitivity (including mode-shift prefixes like W,GYRO_SENS or combinations)
   if (isKnownKey(key, sensitivityKeys)) {
     return { section: 'sensitivity' }
+  }
+  const keyTokens = key.split(',').map(part => part.trim())
+  if (keyTokens.length > 1) {
+    const lastToken = keyTokens[keyTokens.length - 1]
+    const lastBase = lastToken.includes('+') ? lastToken.split('+').pop() ?? lastToken : lastToken
+    if (isKnownKey(lastBase, sensitivityKeys)) {
+      return { section: 'sensitivity' }
+    }
+  }
+  const plusSplit = key.includes('+') ? key.split('+').map(part => part.trim()) : []
+  if (plusSplit.length > 1) {
+    const lastPlusToken = plusSplit[plusSplit.length - 1]
+    if (isKnownKey(lastPlusToken, sensitivityKeys)) {
+      return { section: 'sensitivity' }
+    }
   }
   // Touchpad settings (grouped with touch bindings)
   if (isKnownKey(key, touchpadKeys)) {
