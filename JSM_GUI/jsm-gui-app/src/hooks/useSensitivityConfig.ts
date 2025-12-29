@@ -288,15 +288,23 @@ export function useSensitivityConfig({ configText, setConfigText }: SensitivityA
     setConfigText(prev => {
       const values = parseSensitivityValues(prev, prefix ? { prefix } : undefined)
       const hasExistingStatic = values.gyroSensX !== undefined
-      const hasAccel = values.minSensX !== undefined || values.maxSensX !== undefined
-      if (!hasExistingStatic && !hasAccel) {
+      const hasAccelFields =
+        values.minSensX !== undefined ||
+        values.maxSensX !== undefined ||
+        values.minThreshold !== undefined ||
+        values.maxThreshold !== undefined ||
+        values.accelCurve !== undefined ||
+        values.naturalVHalf !== undefined ||
+        values.powerVRef !== undefined ||
+        values.powerExponent !== undefined ||
+        values.sigmoidMid !== undefined ||
+        values.sigmoidWidth !== undefined ||
+        values.jumpTau !== undefined
+      if (!hasExistingStatic && !hasAccelFields) {
         return prev
       }
-      if (hasExistingStatic) {
-        return prev
-      }
-      const defaultX = values.minSensX ?? values.maxSensX ?? 1
-      const defaultY = values.minSensY ?? values.minSensX ?? values.maxSensY ?? values.maxSensX ?? defaultX
+      const defaultX = values.gyroSensX ?? values.minSensX ?? values.maxSensX ?? 1
+      const defaultY = values.gyroSensY ?? values.minSensY ?? values.maxSensY ?? defaultX
       let next = updateKeymapEntry(prev, prefixedKey(keyName.GYRO_SENS, prefix), [defaultX, defaultY])
       ;[
         keyName.MIN_GYRO_SENS,
