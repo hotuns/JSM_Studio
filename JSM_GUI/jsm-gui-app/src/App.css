@@ -867,7 +867,9 @@ input[type=number] {
   color: #ffd28a;
   font-size: 0.85rem;
   font-weight: 600;
-  animation: toast-in 160ms ease;
+  animation: toast-in 160ms ease forwards, toast-out 200ms ease forwards;
+  animation-delay: 0s, calc(3000ms - 200ms);
+  animation-fill-mode: forwards;
 }
 
 .pending-banner.success {
@@ -911,7 +913,9 @@ input[type=number] {
   border: 1px solid rgba(255, 183, 77, 0.5);
   color: #ffd695;
   font-size: 0.85rem;
-  animation: toast-in 160ms ease;
+  animation: toast-in 160ms ease forwards, toast-out 200ms ease forwards;
+  animation-delay: 0s, calc(3000ms - 200ms);
+  animation-fill-mode: forwards;
 }
 
 .profile-status {
@@ -921,7 +925,9 @@ input[type=number] {
   color: #9ff6d8;
   font-size: 0.85rem;
   font-weight: 600;
-  animation: toast-in 160ms ease;
+  animation: toast-in 160ms ease forwards, toast-out 200ms ease forwards;
+  animation-delay: 0s, calc(3000ms - 200ms);
+  animation-fill-mode: forwards;
 }
 
 .profile-tabs {
