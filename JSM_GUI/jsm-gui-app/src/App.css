@@ -851,6 +851,7 @@ input[type=number] {
   color: #ffd28a;
   font-size: 0.85rem;
   font-weight: 600;
+  animation: toast-in 160ms ease;
 }
 
 .pending-banner.success {
@@ -894,6 +895,7 @@ input[type=number] {
   border: 1px solid rgba(255, 183, 77, 0.5);
   color: #ffd695;
   font-size: 0.85rem;
+  animation: toast-in 160ms ease;
 }
 
 .profile-status {
@@ -903,6 +905,7 @@ input[type=number] {
   color: #9ff6d8;
   font-size: 0.85rem;
   font-weight: 600;
+  animation: toast-in 160ms ease;
 }
 
 .profile-tabs {
@@ -1862,6 +1865,11 @@ input[type=number] {
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
   border: 1px solid transparent;
   pointer-events: auto;
+  opacity: 0;
+  transform: translateY(8px);
+  animation: toast-in 160ms ease forwards, toast-out 200ms ease forwards;
+  animation-delay: 0s, calc(3000ms - 200ms);
+  animation-fill-mode: forwards;
 }
 
 .toast.toast-success {
@@ -1880,4 +1888,26 @@ input[type=number] {
   background: #3a1818;
   border-color: #f28a8a;
   color: #ffd6d6;
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes toast-out {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
 }

@@ -10,7 +10,7 @@ type ToastPayload = {
 type Toast = ToastPayload & { id: string }
 
 const eventName = 'app-toast'
-const toastDurationMs = 3200
+const toastDurationMs = 3000
 
 export function ToastHost() {
   const [toasts, setToasts] = useState<Toast[]>([])
@@ -19,7 +19,8 @@ export function ToastHost() {
     const listener = (event: Event) => {
       const detail = (event as CustomEvent<ToastPayload>)?.detail
       if (!detail?.message) return
-      setToasts(current => [...current, { id: crypto.randomUUID(), ...detail }])
+      const nextToast = { id: crypto.randomUUID(), ...detail }
+      setToasts([nextToast])
     }
     window.addEventListener(eventName, listener as EventListener)
     return () => window.removeEventListener(eventName, listener as EventListener)
