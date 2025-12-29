@@ -46,6 +46,7 @@ function App() {
     modeshiftSensitivity,
     activeSensitivityPrefix,
     ignoredGyroDevices,
+    finalizePendingValues,
     selectedBaseMode,
     selectedModeshiftMode,
     holdPressTimeSeconds,
@@ -228,6 +229,15 @@ function App() {
       .catch(() => {})
   }
 
+  const handleApplyWithFinalize = () => {
+    const nextText = finalizePendingValues ? finalizePendingValues() : undefined
+    if (nextText !== undefined) {
+      applyConfig({ textOverride: nextText })
+    } else {
+      applyConfig()
+    }
+  }
+
   const renderGyroNav = () => (
     <div className="subnav">
       <button className={`pill-tab ${gyroSubTab === 'behavior' ? 'active' : ''}`} onClick={() => setGyroSubTab('behavior')}>
@@ -304,7 +314,7 @@ function App() {
                 onCounterOsMouseSpeedChange={handleCounterOsMouseSpeedChange}
                 onOpenCalibration={handleOpenCalibration}
                 hasPendingChanges={hasPendingChanges}
-                onApply={applyConfig}
+                onApply={handleApplyWithFinalize}
                 onCancel={handleCancel}
                 lockMessage={lockMessage}
                 appliedSampleHz={telemetryValues.sampleHz}
@@ -334,7 +344,7 @@ function App() {
               touchpadGridCells={touchpadModeValue === 'GRID_AND_STICK' ? Math.min(25, gridSizeValue.columns * gridSizeValue.rows) : 0}
               onModeChange={(mode) => handleModeSelection(mode, activeSensitivityPrefix)}
               onSensitivityViewChange={setSensitivityView}
-              onApply={applyConfig}
+              onApply={handleApplyWithFinalize}
               onCancel={handleCancel}
               onAccelCurveChange={handleAccelCurveChange}
               onNaturalVHalfChange={handleNaturalVHalfChange}
@@ -362,7 +372,7 @@ function App() {
               isCalibrating={isCalibrating}
               statusMessage={statusMessage}
               hasPendingChanges={hasPendingChanges}
-              onApply={applyConfig}
+              onApply={handleApplyWithFinalize}
               onCancel={handleCancel}
               lockMessage={lockMessage}
           onCutoffSpeedChange={handleCutoffSpeedChange}
@@ -388,7 +398,7 @@ function App() {
             hasPendingChanges={hasPendingChanges}
             isCalibrating={isCalibrating}
             statusMessage={statusMessage}
-            onApply={applyConfig}
+            onApply={handleApplyWithFinalize}
             onCancel={handleCancel}
             onBindingChange={handleFaceButtonBindingChange}
             onAssignSpecialAction={handleSpecialActionAssignment}
@@ -454,7 +464,7 @@ function App() {
             hasPendingChanges={hasPendingChanges}
             isCalibrating={isCalibrating}
             statusMessage={statusMessage}
-            onApply={applyConfig}
+            onApply={handleApplyWithFinalize}
             onCancel={handleCancel}
             onBindingChange={handleFaceButtonBindingChange}
             onAssignSpecialAction={handleSpecialActionAssignment}
@@ -512,7 +522,7 @@ function App() {
             hasPendingChanges={hasPendingChanges}
             isCalibrating={isCalibrating}
             statusMessage={statusMessage}
-            onApply={applyConfig}
+            onApply={handleApplyWithFinalize}
             onCancel={handleCancel}
             onBindingChange={handleFaceButtonBindingChange}
             onAssignSpecialAction={handleSpecialActionAssignment}
@@ -662,7 +672,7 @@ function App() {
                 hasPendingChanges={hasPendingChanges}
                 statusMessage={null}
                 onChange={setConfigText}
-                onApply={applyConfig}
+                onApply={handleApplyWithFinalize}
                 onCancel={handleCancel}
               />
             </div>
@@ -675,7 +685,7 @@ function App() {
               hasPendingChanges={hasPendingChanges}
               statusMessage={null}
               onChange={setConfigText}
-              onApply={applyConfig}
+              onApply={handleApplyWithFinalize}
               onCancel={handleCancel}
             />
           </div>

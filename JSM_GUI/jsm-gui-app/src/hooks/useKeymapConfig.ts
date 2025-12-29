@@ -35,6 +35,7 @@ export function useKeymapConfig() {
     hasPendingChanges,
     handleCancel,
     ignoredGyroDevices,
+    finalizePendingValues: sensitivityConfig.finalizePendingValues,
     // Sensitivity slice
     sensitivityView: sensitivityConfig.sensitivityView,
     setSensitivityView: sensitivityConfig.setSensitivityView,
