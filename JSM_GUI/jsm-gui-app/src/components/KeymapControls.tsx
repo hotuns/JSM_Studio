@@ -37,7 +37,13 @@ type KeymapControlsProps = {
   statusMessage?: string | null
   onApply: () => void
   onCancel: () => void
-  onBindingChange: (button: string, slot: BindingSlot, value: string | null, options?: { modifier?: string }) => void
+  onBindingChange: (
+    button: string,
+    slot: BindingSlot,
+    rowId: string,
+    value: string | null,
+    options?: { modifier?: string }
+  ) => void
   onAssignSpecialAction: (special: string, buttonCommand: string) => void
   onClearSpecialAction: (special: string, buttonCommand: string) => void
   trackballDecay: string
@@ -49,6 +55,7 @@ type KeymapControlsProps = {
   onModifierChange: (
     button: string,
     slot: BindingSlot,
+    rowId: string,
     previousModifier: string | undefined,
     nextModifier: string,
     binding: string | null

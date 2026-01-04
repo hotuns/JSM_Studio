@@ -12,9 +12,8 @@ import {
   formatAppliedProfileMessage,
   formatDeletedProfileMessage,
   formatImportedProfileMessage,
-  formatLoadedProfileMessage,
 } from '../constants/messages'
-import { showToast } from '../components/ToastHost'
+import { showToast } from '../utils/toast'
 
 type ApplyConfigOptions = {
   profileNameOverride?: string

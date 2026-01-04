@@ -31,17 +31,24 @@ type ButtonBindingsCardProps = {
   stickShiftDisplayModes: Record<string, 'tap' | 'extra'>
   updateStickShiftDisplayMode: (buttonKey: string, mode?: 'tap' | 'extra') => void
   manualRows: Record<string, ManualRowState>
-  ensureManualRow: (button: string, slot: BindingSlot, defaults?: ManualRowInfo) => void
-  updateManualRow: (button: string, slot: BindingSlot, info: ManualRowInfo) => void
-  removeManualRow: (button: string, slot: BindingSlot) => void
+  ensureManualRow: (button: string, slot: BindingSlot, defaults?: Partial<ManualRowInfo>) => string
+  updateManualRow: (button: string, slot: BindingSlot, rowId: string, info: Omit<ManualRowInfo, 'id'>) => void
+  removeManualRow: (button: string, slot: BindingSlot, rowId?: string) => void
   captureLabel: string
-  isCapturing: (button: string, slot: BindingSlot) => boolean
-  beginCapture: (button: string, slot: BindingSlot, label: string, modifier?: string) => void
+  isCapturing: (button: string, slot: BindingSlot, rowId?: string) => boolean
+  beginCapture: (button: string, slot: BindingSlot, rowId: string, label: string, modifier?: string) => void
   cancelCapture: () => void
-  onBindingChange: (button: string, slot: BindingSlot, value: string | null, options?: { modifier?: string }) => void
+  onBindingChange: (
+    button: string,
+    slot: BindingSlot,
+    rowId: string,
+    value: string | null,
+    options?: { modifier?: string }
+  ) => void
   onModifierChange: (
     button: string,
     slot: BindingSlot,
+    rowId: string,
     previousModifier: string | undefined,
     nextModifier: string,
     binding: string | null
@@ -90,7 +97,6 @@ export const ButtonBindingsCard = ({
       return binding ? binding.includes('TRACK') : false
     }) || (specialKey && new Set(['GYRO_TRACKBALL', 'GYRO_TRACK_X', 'GYRO_TRACK_Y']).has(specialKey))
   )
-  const existingSlots = new Set(rows.map(row => row.slot))
   const trackballSliderValue = trackballDecay && !Number.isNaN(Number(trackballDecay)) ? Number(trackballDecay) : 1
 
   return (
@@ -101,7 +107,7 @@ export const ButtonBindingsCard = ({
       </div>
       <div className="keymap-binding-controls">
         {rows.map(row => {
-          const rowCapturing = isCapturing(button.command, row.slot)
+          const rowCapturing = isCapturing(button.command, row.slot, row.id)
           const hasExtraRows = rows.length > 1
           const isSpecialValue = Boolean(row.binding && SPECIAL_LABELS[row.binding])
           const displayValue = (() => {
@@ -148,7 +154,7 @@ export const ButtonBindingsCard = ({
           const clearTapSpecialBinding = () => {
             if (row.slot !== 'tap') return
             if (row.binding && SPECIAL_LABELS[row.binding]) {
-              onBindingChange(button.command, row.slot, null)
+              onBindingChange(button.command, row.slot, row.id, null)
             }
           }
           const clearAllStickShiftAssignments = () => {
@@ -157,9 +163,11 @@ export const ButtonBindingsCard = ({
             updateStickShiftDisplayMode(buttonKey, undefined)
           }
           const needsModifier = MODIFIER_SLOT_TYPES.includes(row.slot as BindingSlot)
+          const manualEntries = manualRows[button.command]?.[row.slot] ?? []
+          const manualInfo = manualEntries.find(entry => entry.id === row.id)
           const modifierValue = needsModifier
             ? row.modifierCommand ??
-              manualRows[button.command]?.[row.slot]?.modifierCommand ??
+              manualInfo?.modifierCommand ??
               getDefaultModifierForButton(button.command, modifierOptions)
             : undefined
           const modifierLabel = row.slot === 'simultaneous' ? 'Combine with' : 'Modifier button'
@@ -173,9 +181,9 @@ export const ButtonBindingsCard = ({
           }
           const isLegacyFileCall = Boolean(row.binding && /"\s*[^"]+\.(txt|cfg|ini)"/i.test(row.binding))
           return (
-            <Fragment key={`${button.command}-${row.slot}-wrapper`}>
+            <Fragment key={`${button.command}-${row.slot}-${row.id}-wrapper`}>
               <BindingRow
-                key={`${button.command}-${row.slot}`}
+                key={row.id}
                 label={headerLabel}
                 showHeader={showHeader}
                 displayValue={displayValue}
@@ -186,6 +194,7 @@ export const ButtonBindingsCard = ({
                   beginCapture(
                     button.command,
                     row.slot,
+                    row.id,
                     row.slot === 'hold' ? 'Press and hold binding…' : 'Press any key or mouse button…',
                     needsModifier ? modifierValue : undefined
                   )
@@ -194,7 +203,7 @@ export const ButtonBindingsCard = ({
                 onClear={() => {
                   if (row.slot === 'tap') {
                     if (row.binding) {
-                      onBindingChange(button.command, row.slot, null)
+                      onBindingChange(button.command, row.slot, row.id, null)
                     } else if (specialKey) {
                       onClearSpecialAction(specialKey, button.command)
                     } else if (tapStickShiftEntry) {
@@ -202,11 +211,11 @@ export const ButtonBindingsCard = ({
                     }
                   } else {
                     const options = needsModifier ? { modifier: modifierValue } : undefined
-                    onBindingChange(button.command, row.slot, null, options)
+                    onBindingChange(button.command, row.slot, row.id, null, options)
                   }
                 }}
-                onRemoveRow={row.isManual ? () => removeManualRow(button.command, row.slot) : undefined}
-                disableClear={!displayValue}
+                onRemoveRow={row.isManual ? () => removeManualRow(button.command, row.slot, row.id) : undefined}
+                disableClear={!displayValue && !row.isManual}
                 specialOptions={rowSpecialOptions}
                 specialValue={specialValue}
                 modifierOptions={needsModifier ? rowModifierOptions : undefined}
@@ -217,9 +226,9 @@ export const ButtonBindingsCard = ({
                     ? (selected) => {
                         if (!selected) return
                         if (row.isManual) {
-                          updateManualRow(button.command, row.slot, { modifierCommand: selected })
+                          updateManualRow(button.command, row.slot, row.id, { modifierCommand: selected })
                         }
-                        onModifierChange(button.command, row.slot, row.modifierCommand, selected, row.binding ?? null)
+                        onModifierChange(button.command, row.slot, row.id, row.modifierCommand, selected, row.binding ?? null)
                       }
                     : undefined
                 }
@@ -259,15 +268,20 @@ export const ButtonBindingsCard = ({
                         if (!selected) {
                           if (isSpecialValue) {
                             const options = needsModifier ? { modifier: modifierValue } : undefined
-                            onBindingChange(button.command, row.slot, null, options)
+                            onBindingChange(button.command, row.slot, row.id, null, options)
                           }
-                          return
-                        }
-                        onBindingChange(button.command, row.slot, selected, needsModifier ? { modifier: modifierValue } : undefined)
-                        ensureManualRow(button.command, row.slot)
-                      }
-                }
-              />
+                      return
+                    }
+                    onBindingChange(
+                      button.command,
+                      row.slot,
+                      row.id,
+                      selected,
+                      needsModifier ? { modifier: modifierValue } : undefined
+                    )
+                  }
+            }
+          />
               {isLegacyFileCall && (
                 <div className="legacy-binding-warning">
                   Legacy script detected — place the referenced file inside <code>JSM_GUI/bin/</code> or clear this row.
@@ -277,14 +291,13 @@ export const ButtonBindingsCard = ({
           )
         })}
         {(() => {
-          const hasExtraRow = rows.length > 1
-          if (hasExtraRow) {
-            return null
-          }
-          const availableSlots = EXTRA_BINDING_SLOTS.filter(slot => !existingSlots.has(slot))
-          if (availableSlots.length === 0) {
-            return null
-          }
+          const hasHold = rows.some(row => row.slot === 'hold')
+          const hasDouble = rows.some(row => row.slot === 'double')
+          const availableSlots = EXTRA_BINDING_SLOTS.filter(slot => {
+            if (slot === 'hold') return !hasHold
+            if (slot === 'double') return !hasDouble
+            return true
+          })
           return (
             <div className="binding-row add-binding-row" data-capture-ignore="true">
               <select
@@ -305,7 +318,8 @@ export const ButtonBindingsCard = ({
                   }
                   const selected = selectedValue as BindingSlot
                   if (selected) {
-                    if (MODIFIER_SLOT_TYPES.includes(selected)) {
+                    const isComboSlot = MODIFIER_SLOT_TYPES.includes(selected)
+                    if (isComboSlot) {
                       ensureManualRow(button.command, selected, {
                         modifierCommand: getDefaultModifierForButton(button.command, modifierOptions),
                       })

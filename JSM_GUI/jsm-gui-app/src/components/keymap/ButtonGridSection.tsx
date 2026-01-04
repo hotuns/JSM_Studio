@@ -31,7 +31,11 @@ export function ButtonGridSection({
   return (
     <>
       <KeymapSection title={title} description={description}>
-        <div className="keymap-grid">{buttons.map(renderButton)}</div>
+        <div className="keymap-grid">
+          {buttons.map(button => (
+            <div key={button.command}>{renderButton(button)}</div>
+          ))}
+        </div>
         {extraContent}
       </KeymapSection>
       <SectionActions

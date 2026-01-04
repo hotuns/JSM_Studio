@@ -169,6 +169,7 @@ export type ButtonBindingSet = {
 }
 
 export type ButtonBindingRow = {
+  id: string
   slot: BindingSlot
   label: string
   binding: string | null
@@ -177,10 +178,11 @@ export type ButtonBindingRow = {
 }
 
 export type ManualRowInfo = {
+  id: string
   modifierCommand?: string
 }
 
-export type ManualRowState = Partial<Record<BindingSlot, ManualRowInfo>>
+export type ManualRowState = Partial<Record<BindingSlot, ManualRowInfo[]>>
 
 const SLOT_LABELS: Record<BindingSlot, string> = {
   tap: 'Tap',
@@ -251,14 +253,25 @@ export function setDoubleBinding(text: string, button: string, value?: string | 
 }
 
 type ComboBinding = {
+  id: string
   modifier: string
   binding: string
+  lineIndex: number
 }
 
-function parseComboBinding(text: string, button: string, separator: '+' | ','): ComboBinding | null {
+const comboSlotSeparator = (slot: Extract<BindingSlot, 'chord' | 'simultaneous'>) => (slot === 'chord' ? ',' : '+')
+
+function parseComboBindings(
+  text: string,
+  button: string,
+  separator: '+' | ',',
+  slot: Extract<BindingSlot, 'chord' | 'simultaneous'>
+): ComboBinding[] {
   const target = button.toUpperCase()
   const lines = text.split(/\r?\n/)
-  for (const line of lines) {
+  const results: ComboBinding[] = []
+  for (let lineIndex = 0; lineIndex < lines.length; lineIndex += 1) {
+    const line = lines[lineIndex]
     const trimmed = line.trim()
     if (!trimmed) continue
     const [rawKey, rawValue] = trimmed.split('=')
@@ -272,33 +285,61 @@ function parseComboBinding(text: string, button: string, separator: '+' | ','): 
     if (left.toUpperCase() === target) continue
     const bindingValue = value.split(/\s+/)[0]
     if (!bindingValue) continue
-    return { modifier: left, binding: bindingValue }
+    results.push({
+      id: `combo-${slot}-${target}-${results.length}`,
+      modifier: left,
+      binding: bindingValue,
+      lineIndex,
+    })
   }
-  return null
+  return results
 }
 
-function setComboBinding(
+export function setComboBindingLine(
   text: string,
   button: string,
+  slot: Extract<BindingSlot, 'chord' | 'simultaneous'>,
+  rowId: string,
   modifier: string | undefined,
-  separator: '+' | ',',
   value?: string | null
 ) {
   if (!modifier) return text
-  const key = `${modifier}${separator}${button}`
+  const separator = comboSlotSeparator(slot)
+  const lines = text.split(/\r?\n/)
+  const parsed = parseComboBindings(text, button, separator, slot)
   const trimmed = value?.trim()
+  const existing = parsed.find(entry => entry.id === rowId)
+
   if (!trimmed) {
-    return removeKeymapEntry(text, key)
+    if (existing) {
+      lines.splice(existing.lineIndex, 1)
+    }
+    return lines.join('\n')
   }
-  return updateKeymapEntry(text, key, [trimmed])
+
+  const nextLine = `${modifier}${separator}${button} = ${trimmed}`
+  if (existing) {
+    lines[existing.lineIndex] = nextLine
+    return lines.join('\n')
+  }
+
+  lines.push(nextLine)
+  return lines.join('\n')
 }
 
-export function setChordBinding(text: string, button: string, modifier: string | undefined, value?: string | null) {
-  return setComboBinding(text, button, modifier, ',', value)
-}
-
-export function setSimultaneousBinding(text: string, button: string, modifier: string | undefined, value?: string | null) {
-  return setComboBinding(text, button, modifier, '+', value)
+export function removeComboBindingLine(
+  text: string,
+  button: string,
+  slot: Extract<BindingSlot, 'chord' | 'simultaneous'>,
+  rowId: string
+) {
+  const separator = comboSlotSeparator(slot)
+  const lines = text.split(/\r?\n/)
+  const parsed = parseComboBindings(text, button, separator, slot)
+  const existing = parsed.find(entry => entry.id === rowId)
+  if (!existing) return text
+  lines.splice(existing.lineIndex, 1)
+  return lines.join('\n')
 }
 
 export function getButtonBindingRows(
@@ -309,6 +350,7 @@ export function getButtonBindingRows(
   const bindings = getButtonBindingSet(text, button)
   const rows: ButtonBindingRow[] = [
     {
+      id: `${button}-tap`,
       slot: 'tap',
       label: SLOT_LABELS.tap,
       binding: bindings.tap ?? null,
@@ -317,9 +359,11 @@ export function getButtonBindingRows(
   ]
   ;(['hold', 'double'] as BindingSlot[]).forEach(slot => {
     const bindingValue = slot === 'hold' ? bindings.hold : bindings.double
-    const manualInfo = manualState[slot]
+    const manualEntries = manualState[slot] ?? []
+    const manualInfo = manualEntries[0]
     if (bindingValue || manualInfo) {
       rows.push({
+        id: manualInfo?.id ?? `${button}-${slot}`,
         slot,
         label: SLOT_LABELS[slot],
         binding: bindingValue ?? null,
@@ -327,28 +371,32 @@ export function getButtonBindingRows(
       })
     }
   })
-const chordBinding = parseComboBinding(text, button, ',')
-  const chordManual = manualState['chord']
-  if (chordBinding || chordManual) {
-    rows.push({
-      slot: 'chord',
-      label: SLOT_LABELS.chord,
-      binding: chordBinding?.binding ?? null,
-      isManual: Boolean(chordManual),
-      modifierCommand: chordBinding?.modifier ?? chordManual?.modifierCommand,
+  ;(['chord', 'simultaneous'] as const).forEach(slot => {
+    const separator = comboSlotSeparator(slot)
+    const parsedCombos = parseComboBindings(text, button, separator, slot)
+    const parsedIds = new Set(parsedCombos.map(entry => entry.id))
+    parsedCombos.forEach(entry => {
+      rows.push({
+        id: entry.id,
+        slot,
+        label: SLOT_LABELS[slot],
+        binding: entry.binding ?? null,
+        isManual: false,
+        modifierCommand: entry.modifier,
+      })
     })
-  }
-const simultaneousBinding = parseComboBinding(text, button, '+')
-  const simultaneousManual = manualState['simultaneous']
-  if (simultaneousBinding || simultaneousManual) {
-    rows.push({
-      slot: 'simultaneous',
-      label: SLOT_LABELS.simultaneous,
-      binding: simultaneousBinding?.binding ?? null,
-      isManual: Boolean(simultaneousManual),
-      modifierCommand: simultaneousBinding?.modifier ?? simultaneousManual?.modifierCommand,
+    const manualEntries = (manualState[slot] ?? []).filter(entry => !parsedIds.has(entry.id))
+    manualEntries.forEach(entry => {
+      rows.push({
+        id: entry.id,
+        slot,
+        label: SLOT_LABELS[slot],
+        binding: null,
+        isManual: true,
+        modifierCommand: entry.modifierCommand,
+      })
     })
-  }
+  })
   return rows
 }
 

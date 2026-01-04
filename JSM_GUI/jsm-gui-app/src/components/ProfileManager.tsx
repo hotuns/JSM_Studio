@@ -6,7 +6,6 @@ type ProfileManagerProps = {
   hasPendingChanges: boolean
   isCalibrating: boolean
   profileApplied: boolean
-  statusMessage?: string | null
   onImportProfile?: (fileName: string, content: string) => void
   libraryProfiles: string[]
   libraryLoading?: boolean
@@ -24,7 +23,6 @@ export function ProfileManager({
   hasPendingChanges,
   isCalibrating,
   profileApplied,
-  statusMessage,
   onImportProfile,
   libraryProfiles,
   libraryLoading = false,

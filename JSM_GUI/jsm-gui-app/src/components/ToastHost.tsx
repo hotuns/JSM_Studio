@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
-
-type ToastKind = 'success' | 'warn' | 'error'
+import { toastEventName, type ToastKind } from '../utils/toast'
 
 type ToastPayload = {
   message: string
@@ -9,7 +8,6 @@ type ToastPayload = {
 
 type Toast = ToastPayload & { id: string }
 
-const eventName = 'app-toast'
 const toastDurationMs = 3000
 
 export function ToastHost() {
@@ -22,8 +20,8 @@ export function ToastHost() {
       const nextToast = { id: crypto.randomUUID(), ...detail }
       setToasts([nextToast])
     }
-    window.addEventListener(eventName, listener as EventListener)
-    return () => window.removeEventListener(eventName, listener as EventListener)
+    window.addEventListener(toastEventName, listener as EventListener)
+    return () => window.removeEventListener(toastEventName, listener as EventListener)
   }, [])
 
   useEffect(() => {
@@ -47,8 +45,4 @@ export function ToastHost() {
       ))}
     </div>
   )
-}
-
-export function showToast(message: string, kind: ToastKind = 'success') {
-  window.dispatchEvent(new CustomEvent<ToastPayload>(eventName, { detail: { message, kind } }))
 }
