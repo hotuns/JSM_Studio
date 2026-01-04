@@ -867,15 +867,15 @@ input[type=number] {
   color: #ffd28a;
   font-size: 0.85rem;
   font-weight: 600;
-  animation: toast-in 160ms ease forwards, toast-out 200ms ease forwards;
-  animation-delay: 0s, calc(3000ms - 200ms);
-  animation-fill-mode: forwards;
 }
 
 .pending-banner.success {
   background: rgba(111, 213, 179, 0.12);
   border-color: rgba(111, 213, 179, 0.4);
   color: #a9ffe2;
+  animation: toast-in 160ms ease forwards, toast-out 200ms ease forwards;
+  animation-delay: 0s, calc(3000ms - 200ms);
+  animation-fill-mode: forwards;
 }
 
 .lockable.locked input,
