@@ -18,7 +18,7 @@ import { ToastHost } from './components/ToastHost'
 type PrimaryTab = 'gyro' | 'keybinds' | 'touchpad' | 'sticks'
 type GyroSubTab = 'behavior' | 'sensitivity' | 'noise'
 type KeybindsSubTab = 'face' | 'dpad' | 'bumpers' | 'triggers' | 'center'
-type TouchpadSubTab = 'mode' | 'grid' | 'bind'
+type TouchpadSubTab = 'mode' | 'bind'
 type SticksSubTab = 'bindings' | 'modes'
 
 const asNumber = (value: unknown) => (typeof value === 'number' ? value : undefined)
@@ -271,9 +271,6 @@ function App() {
       <button className={`pill-tab ${touchpadSubTab === 'mode' ? 'active' : ''}`} onClick={() => setTouchpadSubTab('mode')}>
         Mode
       </button>
-      <button className={`pill-tab ${touchpadSubTab === 'grid' ? 'active' : ''}`} onClick={() => setTouchpadSubTab('grid')}>
-        Grid
-      </button>
       <button className={`pill-tab ${touchpadSubTab === 'bind' ? 'active' : ''}`} onClick={() => setTouchpadSubTab('bind')}>
         Bindings
       </button>
@@ -450,12 +447,7 @@ function App() {
     }
 
     if (primaryTab === 'touchpad') {
-      const sections =
-        touchpadSubTab === 'bind'
-          ? ['touch-bind']
-          : touchpadSubTab === 'grid'
-            ? ['touch-grid']
-            : ['touch-grid']
+      const sections = touchpadSubTab === 'bind' ? ['touch-bind'] : ['touch-grid']
       return (
         <>
           <KeymapControls
