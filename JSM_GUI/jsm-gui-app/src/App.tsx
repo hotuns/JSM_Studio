@@ -135,6 +135,7 @@ function App() {
     handleRenameProfile,
     handleDeleteLibraryProfile,
     handleImportProfile,
+    handleCopyActiveProfile,
     refreshActiveProfile,
   } = useProfileLibrary({
     configText,
@@ -774,6 +775,7 @@ function App() {
               onDeleteProfile={handleDeleteLibraryProfile}
               onAddProfile={handleCreateProfile}
               onLoadLibraryProfile={handleLoadProfileFromLibrary}
+              onCopyActiveProfile={handleCopyActiveProfile}
             />
           </div>
         </div>

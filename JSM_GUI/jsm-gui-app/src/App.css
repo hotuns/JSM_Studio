@@ -251,6 +251,7 @@ body {
 .profile-modal .modal-header {
   justify-content: space-between;
   align-items: center;
+  margin-bottom: 1rem;
 }
 
 @media (max-width: 1060px) {
@@ -1125,8 +1126,10 @@ input[type=number] {
 .profile-library-actions-row {
   margin-top: 0.75rem;
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
 }
 
 .config-panel textarea:disabled,
@@ -1706,6 +1709,10 @@ input[type=number] {
   padding: 1.25rem;
   width: min(640px, 90vw);
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
+}
+
+.modal-card.profile-modal {
+  width: min(820px, 92vw);
 }
 
 .modal-card h3 {

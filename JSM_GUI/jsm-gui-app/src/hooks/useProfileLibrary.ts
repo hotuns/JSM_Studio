@@ -9,9 +9,11 @@ import {
   IMPORT_PROFILE_FAILED,
   LOAD_PROFILE_FAILED,
   RENAME_PROFILE_FAILED,
+  COPY_PROFILE_FAILED,
   formatAppliedProfileMessage,
   formatDeletedProfileMessage,
   formatImportedProfileMessage,
+  formatCopiedProfileMessage,
 } from '../constants/messages'
 import { showToast } from '../utils/toast'
 
@@ -335,6 +337,32 @@ export function useProfileLibrary({
     [handleLoadProfileFromLibrary, refreshLibraryProfiles, setStatusMessage]
   )
 
+  const handleCopyActiveProfile = useCallback(async () => {
+    if (!window.electronAPI?.copyActiveProfile) return null
+    try {
+      const result = await window.electronAPI.copyActiveProfile()
+      if (result) {
+        const profileName = result.name ?? 'Copied profile'
+        setConfigText(result.content ?? '')
+        setAppliedConfig(result.content ?? '')
+        setCurrentLibraryProfile(profileName)
+        setActiveProfilePath(result.path ?? '')
+        const message = formatCopiedProfileMessage(profileName)
+        setStatusMessage(message)
+        showToast(message)
+        setTimeout(() => setStatusMessage(null), 3000)
+        refreshLibraryProfiles()
+        return result
+      }
+    } catch (err) {
+      console.error('Failed to copy active profile', err)
+      setStatusMessage(COPY_PROFILE_FAILED)
+      showToast(COPY_PROFILE_FAILED, 'error')
+      setTimeout(() => setStatusMessage(null), 3000)
+    }
+    return null
+  }, [refreshLibraryProfiles, setActiveProfilePath, setAppliedConfig, setConfigText, setStatusMessage])
+
   return {
     libraryProfiles,
     isLibraryLoading,
@@ -351,6 +379,7 @@ export function useProfileLibrary({
     handleRenameProfile,
     handleDeleteLibraryProfile,
     handleImportProfile,
+    handleCopyActiveProfile,
     setEditedLibraryNames,
     refreshActiveProfile,
   }

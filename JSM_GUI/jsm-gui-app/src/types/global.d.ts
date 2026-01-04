@@ -15,6 +15,7 @@ declare interface Window {
     getActiveProfile?: () => Promise<{ path: string; name: string; content: string }>
     activateLibraryProfile?: (name: string) => Promise<{ path: string; name: string; content: string }>
     createLibraryProfile?: () => Promise<{ path: string; name: string; content: string }>
+    copyActiveProfile?: () => Promise<{ path: string; name: string; content: string }>
     renameLibraryProfile?: (oldName: string, newName: string) => Promise<{ path: string; name: string; content: string }>
     loadCalibrationPreset?: () => Promise<{ success: boolean; activeProfile?: string; calibrationProfile?: string }>
     readCalibrationPreset?: () => Promise<{ success: boolean; calibrationProfile?: string; content?: string }>
