@@ -192,7 +192,7 @@ const SLOT_LABELS: Record<BindingSlot, string> = {
   simultaneous: 'Simultaneous Press',
 }
 
-const FACE_BUTTONS = ['S', 'E', 'N', 'W'] as const
+const FACE_BUTTONS = ['N', 'E', 'S', 'W'] as const
 
 function parseBaseBinding(value?: string) {
   const tapHold: { tap?: string; hold?: string } = {}

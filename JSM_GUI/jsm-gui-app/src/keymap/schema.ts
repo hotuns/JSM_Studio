@@ -10,17 +10,17 @@ export type ButtonDefinition = {
 }
 
 export const FACE_BUTTONS: ButtonDefinition[] = [
-  { command: 'S', description: 'South / Bottom', playstation: 'Cross', xbox: 'A' },
-  { command: 'E', description: 'East / Right', playstation: 'Circle', xbox: 'B' },
   { command: 'N', description: 'North / Top', playstation: 'Triangle', xbox: 'Y' },
+  { command: 'E', description: 'East / Right', playstation: 'Circle', xbox: 'B' },
+  { command: 'S', description: 'South / Bottom', playstation: 'Cross', xbox: 'A' },
   { command: 'W', description: 'West / Left', playstation: 'Square', xbox: 'X' },
 ]
 
 export const DPAD_BUTTONS: ButtonDefinition[] = [
   { command: 'UP', description: 'D-pad Up', playstation: 'Up', xbox: 'Up' },
+  { command: 'RIGHT', description: 'D-pad Right', playstation: 'Right', xbox: 'Right' },
   { command: 'DOWN', description: 'D-pad Down', playstation: 'Down', xbox: 'Down' },
   { command: 'LEFT', description: 'D-pad Left', playstation: 'Left', xbox: 'Left' },
-  { command: 'RIGHT', description: 'D-pad Right', playstation: 'Right', xbox: 'Right' },
 ]
 
 export const BUMPER_BUTTONS: ButtonDefinition[] = [
