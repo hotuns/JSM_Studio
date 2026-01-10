@@ -72,6 +72,23 @@ export function useSensitivityConfig({ configText, setConfigText }: SensitivityA
     }
   }, [sensitivityModeshiftButton, sensitivityView])
 
+  useEffect(() => {
+    setPendingDual(prev => {
+      const allowed = new Set<string>([prefixKey()])
+      if (sensitivityModeshiftButton) {
+        allowed.add(prefixKey(`${sensitivityModeshiftButton},`))
+      }
+      const filtered: PendingDual = {}
+      Object.entries(prev).forEach(([key, value]) => {
+        if (allowed.has(key)) {
+          filtered[key] = value
+        }
+      })
+      pendingDualRef.current = filtered
+      return filtered
+    })
+  }, [sensitivityModeshiftButton])
+
   const modeshiftSensitivity = useMemo(() => {
     if (!sensitivityModeshiftButton) return undefined
     return parseSensitivityValues(configText, { prefix: `${sensitivityModeshiftButton},` })
@@ -702,7 +719,12 @@ export function useSensitivityConfig({ configText, setConfigText }: SensitivityA
 
   const finalizePendingValues = useCallback((): string => {
     let next = configText
+    const allowed = new Set<string>([prefixKey()])
+    if (sensitivityModeshiftButton) {
+      allowed.add(prefixKey(`${sensitivityModeshiftButton},`))
+    }
     Object.entries(pendingDualRef.current).forEach(([key, pending]) => {
+      if (!allowed.has(key)) return
       const prefix = key === '__base__' ? undefined : key
       const parsed = parseSensitivityValues(next, prefix ? { prefix } : undefined)
       if (pending.min) {
