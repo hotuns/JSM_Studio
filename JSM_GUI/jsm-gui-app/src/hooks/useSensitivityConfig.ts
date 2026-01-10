@@ -46,11 +46,6 @@ export function useSensitivityConfig({ configText, setConfigText }: SensitivityA
     pendingDualRef.current = pendingDual
   }, [pendingDual])
 
-  useEffect(() => {
-    setPendingDual({})
-    pendingDualRef.current = {}
-  }, [configText])
-
   const sensitivity = useMemo(() => parseSensitivityValues(configText), [configText])
   const SENS_MODE_REGEX = useMemo(
     () =>

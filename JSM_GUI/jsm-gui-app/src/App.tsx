@@ -233,6 +233,8 @@ function App() {
         requestAnimationFrame(() => target.select())
       } else if (target instanceof HTMLTextAreaElement) {
         if (target.disabled || target.readOnly) return
+        const skipAutoSelect = target.closest('.config-panel')
+        if (skipAutoSelect) return
         requestAnimationFrame(() => target.select())
       }
     }
