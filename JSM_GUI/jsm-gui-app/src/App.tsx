@@ -240,6 +240,29 @@ function App() {
     return () => window.removeEventListener('focusin', handleFocusIn)
   }, [])
 
+  useEffect(() => {
+    const applyRangeTabIndex = (root: ParentNode | undefined | null) => {
+      if (!root) return
+      root.querySelectorAll<HTMLInputElement>('input[type="range"]').forEach(el => {
+        if (el.tabIndex !== -1) {
+          el.tabIndex = -1
+        }
+      })
+    }
+    applyRangeTabIndex(document.body)
+    const observer = new MutationObserver(mutations => {
+      mutations.forEach(mutation => {
+        mutation.addedNodes.forEach(node => {
+          if (node instanceof HTMLElement || node instanceof DocumentFragment) {
+            applyRangeTabIndex(node)
+          }
+        })
+      })
+    })
+    observer.observe(document.body, { childList: true, subtree: true })
+    return () => observer.disconnect()
+  }, [])
+
   const handleBackendChange = (choice: 'SDL' | 'legacy') => {
     setBackendChoice(choice)
     window.electronAPI?.setBackendChoice?.(choice)
