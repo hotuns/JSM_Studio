@@ -130,5 +130,6 @@ export function useKeymapConfig() {
     handleClearSpecialAction: bindingsConfig.handleClearSpecialAction,
     trackballDecayValue: bindingsConfig.trackballDecayValue,
     handleTrackballDecayChange: bindingsConfig.handleTrackballDecayChange,
+    resetPendingSensitivityChanges: sensitivityConfig.resetPendingSensitivityChanges,
   }
 }

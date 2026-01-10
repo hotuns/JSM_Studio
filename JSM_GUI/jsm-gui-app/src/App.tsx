@@ -122,6 +122,7 @@ function App() {
     handleToggleIgnoreGyroDevice,
     scrollSensValue,
     handleScrollSensChange,
+    resetPendingSensitivityChanges,
   } = useKeymapConfig()
   const {
     libraryProfiles,
@@ -142,6 +143,7 @@ function App() {
     setConfigText,
     setAppliedConfig,
     setStatusMessage,
+    resetPendingSensitivityChanges: resetPendingSensitivityChanges,
   })
   const {
     isCalibrationModalOpen,

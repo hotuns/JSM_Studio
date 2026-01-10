@@ -29,6 +29,7 @@ type UseProfileLibraryParams = {
   setConfigText: (value: string) => void
   setAppliedConfig: (value: string) => void
   setStatusMessage: (value: string | null) => void
+  resetPendingSensitivityChanges: () => void
 }
 
 export function useProfileLibrary({
@@ -36,6 +37,7 @@ export function useProfileLibrary({
   setConfigText,
   setAppliedConfig,
   setStatusMessage,
+  resetPendingSensitivityChanges,
 }: UseProfileLibraryParams) {
   const [libraryProfiles, setLibraryProfiles] = useState<string[]>([])
   const [isLibraryLoading, setIsLibraryLoading] = useState(false)
@@ -47,6 +49,7 @@ export function useProfileLibrary({
     try {
       const result = await window.electronAPI.getActiveProfile()
       if (result) {
+        resetPendingSensitivityChanges()
         setConfigText(result.content ?? '')
         setAppliedConfig(result.content ?? '')
         setCurrentLibraryProfile(result.name ?? null)
@@ -135,6 +138,7 @@ export function useProfileLibrary({
           const profileContent = result.content ?? ''
           const profileName = result.name ?? name
           const profilePath = result.path ?? ''
+          resetPendingSensitivityChanges()
           setConfigText(profileContent)
           setAppliedConfig(profileContent)
           setCurrentLibraryProfile(profileName)
@@ -176,6 +180,7 @@ export function useProfileLibrary({
         const profileContent = result.content ?? ''
         const profileName = result.name ?? null
         const profilePath = result.path ?? ''
+        resetPendingSensitivityChanges()
         setConfigText(profileContent)
         setAppliedConfig(profileContent)
         setCurrentLibraryProfile(profileName)
@@ -210,16 +215,17 @@ export function useProfileLibrary({
       }
       try {
         const result = await window.electronAPI.renameLibraryProfile(originalName, pendingName)
-        if (result) {
-          if (currentLibraryProfile === originalName) {
-            setCurrentLibraryProfile(result.name ?? originalName)
-            setActiveProfilePath(result.path ?? activeProfilePath)
-            if (result.content !== undefined) {
-              setConfigText(result.content)
-              setAppliedConfig(result.content)
+          if (result) {
+            if (currentLibraryProfile === originalName) {
+              setCurrentLibraryProfile(result.name ?? originalName)
+              setActiveProfilePath(result.path ?? activeProfilePath)
+              if (result.content !== undefined) {
+                resetPendingSensitivityChanges()
+                setConfigText(result.content)
+                setAppliedConfig(result.content)
+              }
             }
-          }
-          setEditedLibraryNames(prev => {
+            setEditedLibraryNames(prev => {
             const next = { ...prev }
             delete next[originalName]
             next[result.name ?? originalName] = result.name ?? originalName
@@ -262,6 +268,7 @@ export function useProfileLibrary({
         if (currentLibraryProfile === name) {
           const fallback = response.fallback
           if (fallback) {
+            resetPendingSensitivityChanges()
             setCurrentLibraryProfile(fallback.name ?? null)
             setConfigText(fallback.content ?? '')
             setAppliedConfig(fallback.content ?? '')
@@ -276,6 +283,7 @@ export function useProfileLibrary({
             const content = await handleLoadProfileFromLibrary(fallbackName)
             if (content !== null) {
               const relativePath = `profiles-library/${fallbackName}.txt`
+              resetPendingSensitivityChanges()
               setCurrentLibraryProfile(fallbackName)
               setActiveProfilePath(relativePath)
               await applyConfig({
@@ -285,6 +293,7 @@ export function useProfileLibrary({
               })
             }
           } else {
+            resetPendingSensitivityChanges()
             setCurrentLibraryProfile(null)
             setConfigText('')
             setAppliedConfig('')
@@ -321,6 +330,7 @@ export function useProfileLibrary({
         const sanitized = sanitizeImportedConfig(fileContent)
         const result = await window.electronAPI?.saveLibraryProfile?.(baseName, sanitized)
         const savedName = result?.name ?? baseName
+        resetPendingSensitivityChanges()
         await handleLoadProfileFromLibrary(savedName)
         const importedMessage = formatImportedProfileMessage(savedName)
         setStatusMessage(importedMessage)
@@ -343,6 +353,7 @@ export function useProfileLibrary({
       const result = await window.electronAPI.copyActiveProfile()
       if (result) {
         const profileName = result.name ?? 'Copied profile'
+        resetPendingSensitivityChanges()
         setConfigText(result.content ?? '')
         setAppliedConfig(result.content ?? '')
         setCurrentLibraryProfile(profileName)
