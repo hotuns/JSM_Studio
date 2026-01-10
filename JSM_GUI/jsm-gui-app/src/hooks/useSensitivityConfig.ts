@@ -689,7 +689,10 @@ export function useSensitivityConfig({ configText, setConfigText }: SensitivityA
   const [selectedModeshiftMode, setSelectedModeshiftMode] = useState<'static' | 'accel'>(modeshiftMode)
 
   const displaySensitivity = useMemo(() => {
-    const clone = { ...sensitivity }
+    const source = activeSensitivityPrefix
+      ? modeshiftSensitivity ?? parseSensitivityValues(configText, { prefix: activeSensitivityPrefix })
+      : sensitivity
+    const clone = { ...source }
     const keyPrefix = prefixKey(activeSensitivityPrefix)
     const pending = pendingDual[keyPrefix] ?? {}
     if (pending.min?.x !== undefined) clone.minSensX = pending.min.x === '' ? undefined : parseFloat(pending.min.x)
@@ -699,7 +702,7 @@ export function useSensitivityConfig({ configText, setConfigText }: SensitivityA
     if (pending.static?.x !== undefined) clone.gyroSensX = pending.static.x === '' ? undefined : parseFloat(pending.static.x)
     if (pending.static?.y !== undefined) clone.gyroSensY = pending.static.y === '' ? undefined : parseFloat(pending.static.y)
     return clone
-  }, [activeSensitivityPrefix, pendingDual, sensitivity])
+  }, [activeSensitivityPrefix, configText, modeshiftSensitivity, pendingDual, sensitivity])
 
   const finalizePendingValues = useCallback((): string => {
     let next = configText

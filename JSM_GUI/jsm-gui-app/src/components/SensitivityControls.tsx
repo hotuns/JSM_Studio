@@ -91,8 +91,7 @@ export function SensitivityControls({
   onModeshiftButtonChange,
   lockMessage = LOCK_MESSAGE,
 }: SensitivityControlsProps) {
-  const displaySensitivity =
-    sensitivityView === 'base' || !modeshiftButton ? sensitivity : modeshiftSensitivity ?? sensitivity
+  const displaySensitivity = sensitivity
 
   const isTouchpadGridActive = touchpadMode === 'GRID_AND_STICK'
   const modifierOptions = buildModifierOptions('playstation', isTouchpadGridActive, isTouchpadGridActive ? touchpadGridCells : 0)
