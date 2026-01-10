@@ -13,11 +13,12 @@ import { DEFAULT_HOLD_PRESS_TIME } from './constants/defaults'
 import { useProfileLibrary } from './hooks/useProfileLibrary'
 import { useKeymapConfig } from './hooks/useKeymapConfig'
 import { useCalibration } from './hooks/useCalibration'
+import { ToastHost } from './components/ToastHost'
 
 type PrimaryTab = 'gyro' | 'keybinds' | 'touchpad' | 'sticks'
 type GyroSubTab = 'behavior' | 'sensitivity' | 'noise'
 type KeybindsSubTab = 'face' | 'dpad' | 'bumpers' | 'triggers' | 'center'
-type TouchpadSubTab = 'mode' | 'grid' | 'bind'
+type TouchpadSubTab = 'mode' | 'bind'
 type SticksSubTab = 'bindings' | 'modes'
 
 const asNumber = (value: unknown) => (typeof value === 'number' ? value : undefined)
@@ -45,6 +46,9 @@ function App() {
     modeshiftSensitivity,
     activeSensitivityPrefix,
     ignoredGyroDevices,
+    finalizePendingValues,
+    selectedBaseMode,
+    selectedModeshiftMode,
     holdPressTimeSeconds,
     holdPressTimeIsCustom,
     doublePressWindowSeconds,
@@ -56,8 +60,6 @@ function App() {
     gridSizeValue,
     touchpadSensitivityValue,
     hasPendingChanges,
-    baseMode,
-    modeshiftMode,
     handleSensitivityModeshiftButtonChange,
     handleThresholdChange,
     handleCutoffSpeedChange,
@@ -83,7 +85,6 @@ function App() {
     handleTouchpadSensitivityChange,
     handleInGameSensChange,
     handleRealWorldCalibrationChange,
-    switchToStaticMode,
     handleAccelCurveChange,
     handleNaturalVHalfChange,
     handlePowerVRefChange,
@@ -91,7 +92,7 @@ function App() {
     handleJumpTauChange,
     handleSigmoidMidChange,
     handleSigmoidWidthChange,
-    switchToAccelMode,
+    handleModeSelection,
     handleCancel,
     handleFaceButtonBindingChange,
     handleModifierChange,
@@ -121,13 +122,13 @@ function App() {
     handleToggleIgnoreGyroDevice,
     scrollSensValue,
     handleScrollSensChange,
+    resetPendingSensitivityChanges,
   } = useKeymapConfig()
   const {
     libraryProfiles,
     isLibraryLoading,
     editedLibraryNames,
     currentLibraryProfile,
-    activeProfilePath,
     applyConfig,
     handleLoadProfileFromLibrary,
     handleLibraryProfileNameChange,
@@ -135,12 +136,14 @@ function App() {
     handleRenameProfile,
     handleDeleteLibraryProfile,
     handleImportProfile,
+    handleCopyActiveProfile,
     refreshActiveProfile,
   } = useProfileLibrary({
     configText,
     setConfigText,
     setAppliedConfig,
     setStatusMessage,
+    resetPendingSensitivityChanges: resetPendingSensitivityChanges,
   })
   const {
     isCalibrationModalOpen,
@@ -206,10 +209,9 @@ function App() {
     timestamp: formatTimestamp(sample?.ts),
   }
   const currentMode: 'static' | 'accel' =
-    sensitivityView === 'modeshift' && sensitivityModeshiftButton ? modeshiftMode : baseMode
+    sensitivityView === 'modeshift' && sensitivityModeshiftButton ? selectedModeshiftMode : selectedBaseMode
   const profileLabel = currentLibraryProfile ?? 'Unsaved profile'
-  const activeProfileFile = activeProfilePath || 'No active profile'
-  const profileFileLabel = `${activeProfileFile} — ${profileLabel}`
+  const profileFileLabel = `${profileLabel}${profileLabel.endsWith('.txt') ? '' : '.txt'}`
   const lockMessage = LOCK_MESSAGE
   const [backendChoice, setBackendChoice] = useState<'SDL' | 'legacy'>('SDL')
 
@@ -221,11 +223,64 @@ function App() {
     }).catch(() => {})
   }, [])
 
+  useEffect(() => {
+    const handleFocusIn = (event: FocusEvent) => {
+      const target = event.target as HTMLElement
+      const isTextInput = (el: HTMLInputElement) => {
+        const excluded = ['checkbox', 'radio', 'range', 'file', 'color', 'button', 'submit', 'reset']
+        return !excluded.includes(el.type)
+      }
+      if (target instanceof HTMLInputElement) {
+        if (target.disabled || target.readOnly || !isTextInput(target)) return
+        requestAnimationFrame(() => target.select())
+      } else if (target instanceof HTMLTextAreaElement) {
+        if (target.disabled || target.readOnly) return
+        const skipAutoSelect = target.closest('.config-panel')
+        if (skipAutoSelect) return
+        requestAnimationFrame(() => target.select())
+      }
+    }
+    window.addEventListener('focusin', handleFocusIn)
+    return () => window.removeEventListener('focusin', handleFocusIn)
+  }, [])
+
+  useEffect(() => {
+    const applyRangeTabIndex = (root: ParentNode | undefined | null) => {
+      if (!root) return
+      root.querySelectorAll<HTMLInputElement>('input[type="range"]').forEach(el => {
+        if (el.tabIndex !== -1) {
+          el.tabIndex = -1
+        }
+      })
+    }
+    applyRangeTabIndex(document.body)
+    const observer = new MutationObserver(mutations => {
+      mutations.forEach(mutation => {
+        mutation.addedNodes.forEach(node => {
+          if (node instanceof HTMLElement || node instanceof DocumentFragment) {
+            applyRangeTabIndex(node)
+          }
+        })
+      })
+    })
+    observer.observe(document.body, { childList: true, subtree: true })
+    return () => observer.disconnect()
+  }, [])
+
   const handleBackendChange = (choice: 'SDL' | 'legacy') => {
     setBackendChoice(choice)
     window.electronAPI?.setBackendChoice?.(choice)
       .then(() => refreshActiveProfile())
       .catch(() => {})
+  }
+
+  const handleApplyWithFinalize = () => {
+    const nextText = finalizePendingValues ? finalizePendingValues() : undefined
+    if (nextText !== undefined) {
+      applyConfig({ textOverride: nextText })
+    } else {
+      applyConfig()
+    }
   }
 
   const renderGyroNav = () => (
@@ -260,9 +315,6 @@ function App() {
     <div className="subnav">
       <button className={`pill-tab ${touchpadSubTab === 'mode' ? 'active' : ''}`} onClick={() => setTouchpadSubTab('mode')}>
         Mode
-      </button>
-      <button className={`pill-tab ${touchpadSubTab === 'grid' ? 'active' : ''}`} onClick={() => setTouchpadSubTab('grid')}>
-        Grid
       </button>
       <button className={`pill-tab ${touchpadSubTab === 'bind' ? 'active' : ''}`} onClick={() => setTouchpadSubTab('bind')}>
         Bindings
@@ -304,7 +356,7 @@ function App() {
                 onCounterOsMouseSpeedChange={handleCounterOsMouseSpeedChange}
                 onOpenCalibration={handleOpenCalibration}
                 hasPendingChanges={hasPendingChanges}
-                onApply={applyConfig}
+                onApply={handleApplyWithFinalize}
                 onCancel={handleCancel}
                 lockMessage={lockMessage}
                 appliedSampleHz={telemetryValues.sampleHz}
@@ -332,11 +384,9 @@ function App() {
               telemetry={telemetryValues}
               touchpadMode={touchpadModeValue}
               touchpadGridCells={touchpadModeValue === 'GRID_AND_STICK' ? Math.min(25, gridSizeValue.columns * gridSizeValue.rows) : 0}
-              onModeChange={(mode) =>
-                mode === 'static' ? switchToStaticMode(activeSensitivityPrefix) : switchToAccelMode(activeSensitivityPrefix)
-              }
+              onModeChange={(mode) => handleModeSelection(mode, activeSensitivityPrefix)}
               onSensitivityViewChange={setSensitivityView}
-              onApply={applyConfig}
+              onApply={handleApplyWithFinalize}
               onCancel={handleCancel}
               onAccelCurveChange={handleAccelCurveChange}
               onNaturalVHalfChange={handleNaturalVHalfChange}
@@ -364,7 +414,7 @@ function App() {
               isCalibrating={isCalibrating}
               statusMessage={statusMessage}
               hasPendingChanges={hasPendingChanges}
-              onApply={applyConfig}
+              onApply={handleApplyWithFinalize}
               onCancel={handleCancel}
               lockMessage={lockMessage}
           onCutoffSpeedChange={handleCutoffSpeedChange}
@@ -390,7 +440,7 @@ function App() {
             hasPendingChanges={hasPendingChanges}
             isCalibrating={isCalibrating}
             statusMessage={statusMessage}
-            onApply={applyConfig}
+            onApply={handleApplyWithFinalize}
             onCancel={handleCancel}
             onBindingChange={handleFaceButtonBindingChange}
             onAssignSpecialAction={handleSpecialActionAssignment}
@@ -442,12 +492,7 @@ function App() {
     }
 
     if (primaryTab === 'touchpad') {
-      const sections =
-        touchpadSubTab === 'bind'
-          ? ['touch-bind']
-          : touchpadSubTab === 'grid'
-            ? ['touch-grid']
-            : ['touch-grid']
+      const sections = touchpadSubTab === 'bind' ? ['touch-bind'] : ['touch-grid']
       return (
         <>
           <KeymapControls
@@ -456,7 +501,7 @@ function App() {
             hasPendingChanges={hasPendingChanges}
             isCalibrating={isCalibrating}
             statusMessage={statusMessage}
-            onApply={applyConfig}
+            onApply={handleApplyWithFinalize}
             onCancel={handleCancel}
             onBindingChange={handleFaceButtonBindingChange}
             onAssignSpecialAction={handleSpecialActionAssignment}
@@ -514,7 +559,7 @@ function App() {
             hasPendingChanges={hasPendingChanges}
             isCalibrating={isCalibrating}
             statusMessage={statusMessage}
-            onApply={applyConfig}
+            onApply={handleApplyWithFinalize}
             onCancel={handleCancel}
             onBindingChange={handleFaceButtonBindingChange}
             onAssignSpecialAction={handleSpecialActionAssignment}
@@ -569,6 +614,7 @@ function App() {
 
   return (
     <div className="app-shell">
+      <ToastHost />
       <aside className="side-nav">
         <div className="nav-brand">JSM Custom Curve</div>
         <div className="nav-group">
@@ -627,11 +673,7 @@ function App() {
             <div className="profile-summary-card">
               <div className="profile-summary-header">
                 <div className="profile-summary-title">Profile</div>
-                <span className={`status-chip ${hasPendingChanges ? 'warning' : 'success'}`}>
-                  {hasPendingChanges ? 'Pending changes' : 'Applied'}
-                </span>
               </div>
-              <div className="profile-summary-name">{currentLibraryProfile ?? 'Unsaved profile'}</div>
               <label className="profile-summary-select">
                 Quick switch
                 <select
@@ -657,9 +699,6 @@ function App() {
                 <button className="secondary-btn" onClick={() => setProfileModalOpen(true)}>
                   Manage profiles
                 </button>
-                <button className="secondary-btn" onClick={handleImportProfile} disabled={!window.electronAPI?.saveLibraryProfile}>
-                  Import
-                </button>
               </div>
             </div>
             <div className="config-editor-desktop">
@@ -668,9 +707,9 @@ function App() {
                 label={profileFileLabel}
                 disabled={isCalibrating}
                 hasPendingChanges={hasPendingChanges}
-                statusMessage={statusMessage}
+                statusMessage={null}
                 onChange={setConfigText}
-                onApply={applyConfig}
+                onApply={handleApplyWithFinalize}
                 onCancel={handleCancel}
               />
             </div>
@@ -681,9 +720,9 @@ function App() {
               label={profileFileLabel}
               disabled={isCalibrating}
               hasPendingChanges={hasPendingChanges}
-              statusMessage={statusMessage}
+              statusMessage={null}
               onChange={setConfigText}
-              onApply={applyConfig}
+              onApply={handleApplyWithFinalize}
               onCancel={handleCancel}
             />
           </div>
@@ -782,6 +821,7 @@ function App() {
               onDeleteProfile={handleDeleteLibraryProfile}
               onAddProfile={handleCreateProfile}
               onLoadLibraryProfile={handleLoadProfileFromLibrary}
+              onCopyActiveProfile={handleCopyActiveProfile}
             />
           </div>
         </div>

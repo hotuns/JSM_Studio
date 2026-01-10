@@ -6,7 +6,6 @@ type ProfileManagerProps = {
   hasPendingChanges: boolean
   isCalibrating: boolean
   profileApplied: boolean
-  statusMessage?: string | null
   onImportProfile?: (fileName: string, content: string) => void
   libraryProfiles: string[]
   libraryLoading?: boolean
@@ -17,6 +16,7 @@ type ProfileManagerProps = {
   onAddProfile: () => void
   onLoadLibraryProfile: (name: string) => void
   lockMessage?: string
+  onCopyActiveProfile?: () => void
 }
 
 export function ProfileManager({
@@ -24,7 +24,6 @@ export function ProfileManager({
   hasPendingChanges,
   isCalibrating,
   profileApplied,
-  statusMessage,
   onImportProfile,
   libraryProfiles,
   libraryLoading = false,
@@ -35,6 +34,7 @@ export function ProfileManager({
   onAddProfile,
   onLoadLibraryProfile,
   lockMessage,
+  onCopyActiveProfile,
 }: ProfileManagerProps) {
   const fileInputRef = useRef<HTMLInputElement | null>(null)
   const [confirmingProfile, setConfirmingProfile] = useState<string | null>(null)
@@ -45,15 +45,11 @@ export function ProfileManager({
 
   return (
     <Card className="profile-card" lockable locked={isCalibrating} lockMessage={lockMessage}>
-      <h2>
-        <span>Profiles</span>
-        {(hasPendingChanges || statusMessage) && (
-          <div className="profile-flags">
-            {statusMessage && <span className="profile-status">{statusMessage}</span>}
-            {hasPendingChanges && <span className="profile-warning">Unsaved changes on current profile</span>}
-          </div>
-        )}
-      </h2>
+      {hasPendingChanges && (
+        <div className="profile-flags">
+          <span className="profile-warning">Unsaved changes on current profile</span>
+        </div>
+      )}
 
       <section className="profile-library">
         <div className="profile-library-header">
@@ -137,8 +133,13 @@ export function ProfileManager({
               </button>
             )}
           </div>
+          {onCopyActiveProfile && (
+            <button className="secondary-btn" onClick={onCopyActiveProfile}>
+              Copy Active Profile
+            </button>
+          )}
           <button className="secondary-btn" onClick={onAddProfile}>
-            Add profile
+            Add Profile
           </button>
         </div>
       </section>

@@ -7,6 +7,7 @@ export const CREATE_PROFILE_FAILED = 'Failed to create profile.'
 export const RENAME_PROFILE_FAILED = 'Failed to rename profile.'
 export const DELETE_PROFILE_FAILED = 'Failed to delete profile.'
 export const IMPORT_PROFILE_FAILED = 'Failed to import profile.'
+export const COPY_PROFILE_FAILED = 'Failed to copy active profile.'
 export const EMPTY_PROFILE_NAME = 'Profile name cannot be empty.'
 
 export const formatAppliedProfileMessage = (profileName: string, restarted: boolean) =>
@@ -21,6 +22,9 @@ export const formatDeletedProfileMessage = (profileName: string) => `Deleted "${
 
 export const formatImportedProfileMessage = (profileName: string) =>
   `Imported "${profileName}" into the editor. Click Apply to use it.`
+
+export const formatCopiedProfileMessage = (profileName: string) =>
+  `Copied active profile to "${profileName}".`
 
 // Calibration
 export const CALIBRATION_PRESET_LOADED = 'Calibration preset loaded.'

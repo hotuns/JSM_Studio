@@ -116,8 +116,10 @@ async function ensureLibraryDir() {
 
 const sanitizeProfileName = (rawName: string) => {
   const trimmed = rawName?.trim() ?? ''
-  const cleaned = trimmed.replace(/[^a-zA-Z0-9-_ ]/g, '').substring(0, 80)
-  return cleaned.length > 0 ? cleaned : 'Profile'
+  // Allow letters, numbers, spaces, dashes/underscores, parentheses, apostrophes, commas, and periods.
+  const cleaned = trimmed.replace(/[^a-zA-Z0-9-_.(),' ]/g, '').substring(0, 80)
+  const withoutTrailing = cleaned.replace(/[. ]+$/g, '')
+  return withoutTrailing.length > 0 ? withoutTrailing : 'Profile'
 }
 
 const relativeProfilePathFromName = (name: string) => `${PROFILE_LIBRARY_RELATIVE}/${name}.txt`
@@ -151,6 +153,21 @@ async function generateUniqueProfileName(preferred?: string) {
   while (used.has(candidate.toLowerCase())) {
     counter += 1
     candidate = `${prefix} ${counter}`.trim()
+  }
+  return candidate
+}
+
+async function generateCopyProfileName(baseName: string) {
+  const existing = await listLibraryProfiles()
+  const used = new Set(existing.map(name => name.toLowerCase()))
+  const safeBase = sanitizeProfileName(baseName)
+  const match = safeBase.match(/^(.*?)(?:\s*\((\d+)\))?$/)
+  const root = (match?.[1]?.trim() || safeBase || DEFAULT_PROFILE_NAME).trim() || DEFAULT_PROFILE_NAME
+  let counter = match?.[2] ? parseInt(match[2], 10) : 0
+  let candidate = counter > 0 ? `${root} (${counter})` : root
+  while (used.has(candidate.toLowerCase())) {
+    counter += 1
+    candidate = `${root} (${counter})`
   }
   return candidate
 }
@@ -726,6 +743,20 @@ ipcMain.handle('library-load-profile', async (_event, name: string) => {
 ipcMain.handle('library-delete-profile', async (_event, name: string) => {
   const fallback = await deleteLibraryProfile(name)
   return { success: true, fallback }
+})
+
+ipcMain.handle('library-copy-active-profile', async () => {
+  await ensureRequiredFiles()
+  const activeRelative = await ensureActiveProfileExists()
+  const activeAbsolute = absoluteProfilePath(activeRelative)
+  const content = await fs.readFile(activeAbsolute, 'utf8')
+  const activeName = path.basename(activeRelative, path.extname(activeRelative))
+  const copyName = await generateCopyProfileName(activeName)
+  const copyRelative = relativeProfilePathFromName(copyName)
+  const copyAbsolute = absoluteProfilePath(copyRelative)
+  await fs.writeFile(copyAbsolute, content ?? '', 'utf8')
+  await setStartupProfilePath(copyRelative)
+  return { name: copyName, path: copyRelative, content }
 })
 
 ipcMain.handle('recalibrate-gyro', async () => {

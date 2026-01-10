@@ -14,6 +14,7 @@ const electronAPI = {
   renameLibraryProfile: (oldName: string, newName: string) => ipcRenderer.invoke('library-rename-profile', oldName, newName),
   loadLibraryProfile: (name: string) => ipcRenderer.invoke('library-load-profile', name),
   deleteLibraryProfile: (name: string) => ipcRenderer.invoke('library-delete-profile', name),
+  copyActiveProfile: () => ipcRenderer.invoke('library-copy-active-profile'),
   getActiveProfile: () => ipcRenderer.invoke('get-active-profile'),
   activateLibraryProfile: (name: string) => ipcRenderer.invoke('activate-library-profile', name),
   loadCalibrationPreset: () => ipcRenderer.invoke('load-calibration-preset'),

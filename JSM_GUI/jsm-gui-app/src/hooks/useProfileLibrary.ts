@@ -9,11 +9,13 @@ import {
   IMPORT_PROFILE_FAILED,
   LOAD_PROFILE_FAILED,
   RENAME_PROFILE_FAILED,
+  COPY_PROFILE_FAILED,
   formatAppliedProfileMessage,
   formatDeletedProfileMessage,
   formatImportedProfileMessage,
-  formatLoadedProfileMessage,
+  formatCopiedProfileMessage,
 } from '../constants/messages'
+import { showToast } from '../utils/toast'
 
 type ApplyConfigOptions = {
   profileNameOverride?: string
@@ -27,6 +29,7 @@ type UseProfileLibraryParams = {
   setConfigText: (value: string) => void
   setAppliedConfig: (value: string) => void
   setStatusMessage: (value: string | null) => void
+  resetPendingSensitivityChanges: () => void
 }
 
 export function useProfileLibrary({
@@ -34,6 +37,7 @@ export function useProfileLibrary({
   setConfigText,
   setAppliedConfig,
   setStatusMessage,
+  resetPendingSensitivityChanges,
 }: UseProfileLibraryParams) {
   const [libraryProfiles, setLibraryProfiles] = useState<string[]>([])
   const [isLibraryLoading, setIsLibraryLoading] = useState(false)
@@ -45,6 +49,7 @@ export function useProfileLibrary({
     try {
       const result = await window.electronAPI.getActiveProfile()
       if (result) {
+        resetPendingSensitivityChanges()
         setConfigText(result.content ?? '')
         setAppliedConfig(result.content ?? '')
         setCurrentLibraryProfile(result.name ?? null)
@@ -110,12 +115,15 @@ export function useProfileLibrary({
           setActiveProfilePath(result.path)
         }
         const profileName = options?.profileNameOverride ?? currentLibraryProfile ?? 'Unsaved profile'
-        setStatusMessage(formatAppliedProfileMessage(profileName, Boolean(result?.restarted)))
+        const appliedMessage = formatAppliedProfileMessage(profileName, Boolean(result?.restarted))
+        setStatusMessage(appliedMessage)
+        showToast(appliedMessage)
         setAppliedConfig(normalizedConfig)
         setTimeout(() => setStatusMessage(null), 3000)
       } catch (err) {
         console.error(err)
         setStatusMessage(APPLY_KEYMAP_FAILED)
+        showToast(APPLY_KEYMAP_FAILED, 'error')
       }
     },
     [activeProfilePath, configText, currentLibraryProfile, setAppliedConfig, setConfigText, setStatusMessage]
@@ -130,6 +138,7 @@ export function useProfileLibrary({
           const profileContent = result.content ?? ''
           const profileName = result.name ?? name
           const profilePath = result.path ?? ''
+          resetPendingSensitivityChanges()
           setConfigText(profileContent)
           setAppliedConfig(profileContent)
           setCurrentLibraryProfile(profileName)
@@ -139,13 +148,15 @@ export function useProfileLibrary({
             textOverride: profileContent,
             profilePathOverride: profilePath,
           })
-          setStatusMessage(formatLoadedProfileMessage(profileName))
+          const appliedMessage = formatAppliedProfileMessage(profileName, false)
+          setStatusMessage(appliedMessage)
           setTimeout(() => setStatusMessage(null), 3000)
           return result.content
         }
       } catch (err) {
         console.error('Failed to load profile from library', err)
         setStatusMessage(LOAD_PROFILE_FAILED)
+        showToast(LOAD_PROFILE_FAILED, 'error')
         setTimeout(() => setStatusMessage(null), 3000)
         refreshLibraryProfiles()
       }
@@ -169,6 +180,7 @@ export function useProfileLibrary({
         const profileContent = result.content ?? ''
         const profileName = result.name ?? null
         const profilePath = result.path ?? ''
+        resetPendingSensitivityChanges()
         setConfigText(profileContent)
         setAppliedConfig(profileContent)
         setCurrentLibraryProfile(profileName)
@@ -197,21 +209,23 @@ export function useProfileLibrary({
       const pendingName = (editedLibraryNames[originalName] ?? originalName).trim()
       if (!pendingName) {
         setStatusMessage(EMPTY_PROFILE_NAME)
+        showToast(EMPTY_PROFILE_NAME, 'error')
         setTimeout(() => setStatusMessage(null), 3000)
         return
       }
       try {
         const result = await window.electronAPI.renameLibraryProfile(originalName, pendingName)
-        if (result) {
-          if (currentLibraryProfile === originalName) {
-            setCurrentLibraryProfile(result.name ?? originalName)
-            setActiveProfilePath(result.path ?? activeProfilePath)
-            if (result.content !== undefined) {
-              setConfigText(result.content)
-              setAppliedConfig(result.content)
+          if (result) {
+            if (currentLibraryProfile === originalName) {
+              setCurrentLibraryProfile(result.name ?? originalName)
+              setActiveProfilePath(result.path ?? activeProfilePath)
+              if (result.content !== undefined) {
+                resetPendingSensitivityChanges()
+                setConfigText(result.content)
+                setAppliedConfig(result.content)
+              }
             }
-          }
-          setEditedLibraryNames(prev => {
+            setEditedLibraryNames(prev => {
             const next = { ...prev }
             delete next[originalName]
             next[result.name ?? originalName] = result.name ?? originalName
@@ -222,6 +236,7 @@ export function useProfileLibrary({
       } catch (err) {
         console.error('Failed to rename profile', err)
         setStatusMessage(RENAME_PROFILE_FAILED)
+        showToast(RENAME_PROFILE_FAILED, 'error')
         setTimeout(() => setStatusMessage(null), 3000)
       }
     },
@@ -253,6 +268,7 @@ export function useProfileLibrary({
         if (currentLibraryProfile === name) {
           const fallback = response.fallback
           if (fallback) {
+            resetPendingSensitivityChanges()
             setCurrentLibraryProfile(fallback.name ?? null)
             setConfigText(fallback.content ?? '')
             setAppliedConfig(fallback.content ?? '')
@@ -267,6 +283,7 @@ export function useProfileLibrary({
             const content = await handleLoadProfileFromLibrary(fallbackName)
             if (content !== null) {
               const relativePath = `profiles-library/${fallbackName}.txt`
+              resetPendingSensitivityChanges()
               setCurrentLibraryProfile(fallbackName)
               setActiveProfilePath(relativePath)
               await applyConfig({
@@ -276,6 +293,7 @@ export function useProfileLibrary({
               })
             }
           } else {
+            resetPendingSensitivityChanges()
             setCurrentLibraryProfile(null)
             setConfigText('')
             setAppliedConfig('')
@@ -284,10 +302,12 @@ export function useProfileLibrary({
           }
         }
         setStatusMessage(formatDeletedProfileMessage(name))
+        showToast(formatDeletedProfileMessage(name))
         setTimeout(() => setStatusMessage(null), 3000)
       } catch (err) {
         console.error('Failed to delete profile', err)
         setStatusMessage(DELETE_PROFILE_FAILED)
+        showToast(DELETE_PROFILE_FAILED, 'error')
         setTimeout(() => setStatusMessage(null), 3000)
       }
     },
@@ -310,18 +330,49 @@ export function useProfileLibrary({
         const sanitized = sanitizeImportedConfig(fileContent)
         const result = await window.electronAPI?.saveLibraryProfile?.(baseName, sanitized)
         const savedName = result?.name ?? baseName
+        resetPendingSensitivityChanges()
         await handleLoadProfileFromLibrary(savedName)
-        setStatusMessage(formatImportedProfileMessage(savedName))
+        const importedMessage = formatImportedProfileMessage(savedName)
+        setStatusMessage(importedMessage)
+        showToast(importedMessage)
         setTimeout(() => setStatusMessage(null), 3000)
         refreshLibraryProfiles()
       } catch (err) {
         console.error('Failed to import profile', err)
         setStatusMessage(IMPORT_PROFILE_FAILED)
+        showToast(IMPORT_PROFILE_FAILED, 'error')
         setTimeout(() => setStatusMessage(null), 3000)
       }
     },
     [handleLoadProfileFromLibrary, refreshLibraryProfiles, setStatusMessage]
   )
+
+  const handleCopyActiveProfile = useCallback(async () => {
+    if (!window.electronAPI?.copyActiveProfile) return null
+    try {
+      const result = await window.electronAPI.copyActiveProfile()
+      if (result) {
+        const profileName = result.name ?? 'Copied profile'
+        resetPendingSensitivityChanges()
+        setConfigText(result.content ?? '')
+        setAppliedConfig(result.content ?? '')
+        setCurrentLibraryProfile(profileName)
+        setActiveProfilePath(result.path ?? '')
+        const message = formatCopiedProfileMessage(profileName)
+        setStatusMessage(message)
+        showToast(message)
+        setTimeout(() => setStatusMessage(null), 3000)
+        refreshLibraryProfiles()
+        return result
+      }
+    } catch (err) {
+      console.error('Failed to copy active profile', err)
+      setStatusMessage(COPY_PROFILE_FAILED)
+      showToast(COPY_PROFILE_FAILED, 'error')
+      setTimeout(() => setStatusMessage(null), 3000)
+    }
+    return null
+  }, [refreshLibraryProfiles, setActiveProfilePath, setAppliedConfig, setConfigText, setStatusMessage])
 
   return {
     libraryProfiles,
@@ -339,6 +390,7 @@ export function useProfileLibrary({
     handleRenameProfile,
     handleDeleteLibraryProfile,
     handleImportProfile,
+    handleCopyActiveProfile,
     setEditedLibraryNames,
     refreshActiveProfile,
   }

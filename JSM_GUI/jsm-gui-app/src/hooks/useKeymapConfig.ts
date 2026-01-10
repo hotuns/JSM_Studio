@@ -24,8 +24,11 @@ export function useKeymapConfig() {
       .map(token => token.toLowerCase())
   }, [configText])
 
-  const hasPendingChanges = configText !== appliedConfig
-  const handleCancel = () => setConfigText(appliedConfig)
+  const hasPendingChanges = configText !== appliedConfig || sensitivityConfig.hasPendingSensitivityChanges
+  const handleCancel = () => {
+    sensitivityConfig.resetPendingSensitivityChanges()
+    setConfigText(appliedConfig)
+  }
 
   return {
     configText,
@@ -35,6 +38,7 @@ export function useKeymapConfig() {
     hasPendingChanges,
     handleCancel,
     ignoredGyroDevices,
+    finalizePendingValues: sensitivityConfig.finalizePendingValues,
     // Sensitivity slice
     sensitivityView: sensitivityConfig.sensitivityView,
     setSensitivityView: sensitivityConfig.setSensitivityView,
@@ -44,6 +48,8 @@ export function useKeymapConfig() {
     activeSensitivityPrefix: sensitivityConfig.activeSensitivityPrefix,
     baseMode: sensitivityConfig.baseMode,
     modeshiftMode: sensitivityConfig.modeshiftMode,
+    selectedBaseMode: sensitivityConfig.selectedBaseMode,
+    selectedModeshiftMode: sensitivityConfig.selectedModeshiftMode,
     holdPressTimeSeconds: sensitivityConfig.holdPressTimeSeconds,
     holdPressTimeIsCustom: sensitivityConfig.holdPressTimeIsCustom,
     doublePressWindowSeconds: sensitivityConfig.doublePressWindowSeconds,
@@ -71,6 +77,7 @@ export function useKeymapConfig() {
     handleGyroAxisYChange: sensitivityConfig.handleGyroAxisYChange,
     handleDualSensChange: sensitivityConfig.handleDualSensChange,
     handleStaticSensChange: sensitivityConfig.handleStaticSensChange,
+    handleModeSelection: sensitivityConfig.handleModeSelection,
     handleInGameSensChange: sensitivityConfig.handleInGameSensChange,
     handleRealWorldCalibrationChange: sensitivityConfig.handleRealWorldCalibrationChange,
     switchToStaticMode: sensitivityConfig.switchToStaticMode,
@@ -123,5 +130,6 @@ export function useKeymapConfig() {
     handleClearSpecialAction: bindingsConfig.handleClearSpecialAction,
     trackballDecayValue: bindingsConfig.trackballDecayValue,
     handleTrackballDecayChange: bindingsConfig.handleTrackballDecayChange,
+    resetPendingSensitivityChanges: sensitivityConfig.resetPendingSensitivityChanges,
   }
 }

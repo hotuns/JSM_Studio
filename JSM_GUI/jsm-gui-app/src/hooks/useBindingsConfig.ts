@@ -3,11 +3,11 @@ import {
   BindingSlot,
   getKeymapValue,
   isTrackballBindingPresent,
+  removeComboBindingLine,
   removeKeymapEntry,
-  setChordBinding,
+  setComboBindingLine,
   setDoubleBinding,
   setHoldBinding,
-  setSimultaneousBinding,
   setTapBinding,
   updateKeymapEntry,
 } from '../utils/keymap'
@@ -65,6 +65,7 @@ export function useBindingsConfig({ configText, setConfigText }: BindingArgs) {
   const handleFaceButtonBindingChange = (
     button: string,
     slot: BindingSlot,
+    rowId: string,
     binding: string | null,
     options?: { modifier?: string }
   ) => {
@@ -82,10 +83,10 @@ export function useBindingsConfig({ configText, setConfigText }: BindingArgs) {
           next = setDoubleBinding(next, button, binding)
           break
         case 'chord':
-          next = setChordBinding(next, button, options?.modifier, binding)
+          next = setComboBindingLine(next, button, 'chord', rowId, options?.modifier, binding)
           break
         case 'simultaneous':
-          next = setSimultaneousBinding(next, button, options?.modifier, binding)
+          next = setComboBindingLine(next, button, 'simultaneous', rowId, options?.modifier, binding)
           break
         default:
           break
@@ -97,6 +98,7 @@ export function useBindingsConfig({ configText, setConfigText }: BindingArgs) {
   const handleModifierChange = (
     button: string,
     slot: BindingSlot,
+    rowId: string,
     previousModifier: string | undefined,
     nextModifier: string,
     binding: string | null
@@ -105,18 +107,14 @@ export function useBindingsConfig({ configText, setConfigText }: BindingArgs) {
     setConfigText(prev => {
       let next = prev
       if (slot === 'chord') {
-        if (previousModifier) {
-          next = setChordBinding(next, button, previousModifier, null)
-        }
+        next = removeComboBindingLine(next, button, 'chord', rowId)
         if (binding) {
-          next = setChordBinding(next, button, nextModifier, binding)
+          next = setComboBindingLine(next, button, 'chord', rowId, nextModifier, binding)
         }
       } else if (slot === 'simultaneous') {
-        if (previousModifier) {
-          next = setSimultaneousBinding(next, button, previousModifier, null)
-        }
+        next = removeComboBindingLine(next, button, 'simultaneous', rowId)
         if (binding) {
-          next = setSimultaneousBinding(next, button, nextModifier, binding)
+          next = setComboBindingLine(next, button, 'simultaneous', rowId, nextModifier, binding)
         }
       }
       return next

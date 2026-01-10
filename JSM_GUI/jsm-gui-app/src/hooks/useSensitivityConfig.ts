@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { getKeymapValue, parseSensitivityValues, removeKeymapEntry, updateKeymapEntry } from '../utils/keymap'
 import { DEFAULT_HOLD_PRESS_TIME, DEFAULT_WINDOW_SECONDS } from '../constants/defaults'
 import { keyName } from '../constants/configKeys'
@@ -25,8 +25,26 @@ type SensitivityArgs = {
   setConfigText: React.Dispatch<React.SetStateAction<string>>
 }
 
+type PendingDual = Record<
+  string,
+  {
+    min?: { x?: string; y?: string }
+    max?: { x?: string; y?: string }
+    static?: { x?: string; y?: string }
+  }
+>
+
+const prefixKey = (prefix?: string) => prefix ?? '__base__'
+
 export function useSensitivityConfig({ configText, setConfigText }: SensitivityArgs) {
   const [sensitivityView, setSensitivityView] = useState<'base' | 'modeshift'>('base')
+  const [pendingDual, setPendingDual] = useState<PendingDual>({})
+  const pendingDualRef = useRef<PendingDual>({})
+  const hasPendingSensitivityChanges = Object.keys(pendingDual).length > 0
+
+  useEffect(() => {
+    pendingDualRef.current = pendingDual
+  }, [pendingDual])
 
   const sensitivity = useMemo(() => parseSensitivityValues(configText), [configText])
   const SENS_MODE_REGEX = useMemo(
@@ -53,6 +71,23 @@ export function useSensitivityConfig({ configText, setConfigText }: SensitivityA
       setSensitivityView('base')
     }
   }, [sensitivityModeshiftButton, sensitivityView])
+
+  useEffect(() => {
+    setPendingDual(prev => {
+      const allowed = new Set<string>([prefixKey()])
+      if (sensitivityModeshiftButton) {
+        allowed.add(prefixKey(`${sensitivityModeshiftButton},`))
+      }
+      const filtered: PendingDual = {}
+      Object.entries(prev).forEach(([key, value]) => {
+        if (allowed.has(key)) {
+          filtered[key] = value
+        }
+      })
+      pendingDualRef.current = filtered
+      return filtered
+    })
+  }, [sensitivityModeshiftButton])
 
   const modeshiftSensitivity = useMemo(() => {
     if (!sensitivityModeshiftButton) return undefined
@@ -223,43 +258,103 @@ export function useSensitivityConfig({ configText, setConfigText }: SensitivityA
   }
 
   const handleDualSensChange = (key: typeof keyName.MIN_GYRO_SENS | typeof keyName.MAX_GYRO_SENS, index: 0 | 1) => (value: string) => {
+    const keyPrefix = prefixKey(activeSensitivityPrefix)
+    const axisKey = index === 0 ? 'x' : 'y'
+    const nextPending = { ...pendingDual }
+    const currentPending = nextPending[keyPrefix] ?? {}
+    const nextMin = { ...(currentPending.min ?? {}) }
+    const nextMax = { ...(currentPending.max ?? {}) }
+
     if (value === '') {
-      setConfigText(prev => removeKeymapEntry(prev, resolveSensitivityKey(key)))
+      if (key === keyName.MIN_GYRO_SENS) {
+        nextMin[axisKey] = ''
+      } else {
+        nextMax[axisKey] = ''
+      }
+      nextPending[keyPrefix] = {
+        min: Object.keys(nextMin).length ? nextMin : undefined,
+        max: Object.keys(nextMax).length ? nextMax : undefined,
+      }
+      setPendingDual(nextPending)
       return
     }
-    const next = parseFloat(value)
-    if (Number.isNaN(next) || next < 0) return
+
+    const parsedValue = parseFloat(value)
+    if (Number.isNaN(parsedValue) || parsedValue < 0) return
+
+    if (key === keyName.MIN_GYRO_SENS) {
+      nextMin[axisKey] = value
+    } else {
+      nextMax[axisKey] = value
+    }
+    nextPending[keyPrefix] = {
+      min: Object.keys(nextMin).length ? nextMin : undefined,
+      max: Object.keys(nextMax).length ? nextMax : undefined,
+    }
+    setPendingDual(nextPending)
+
     setConfigText(prev => {
       const parsed = parseSensitivityValues(prev, activeSensitivityPrefix ? { prefix: activeSensitivityPrefix } : undefined)
+      const pendingForPrefix = nextPending[keyPrefix] ?? {}
       const current =
         key === keyName.MIN_GYRO_SENS
-          ? [parsed.minSensX ?? 0, parsed.minSensY ?? parsed.minSensX ?? 0]
-          : [parsed.maxSensX ?? 0, parsed.maxSensY ?? parsed.maxSensX ?? 0]
-      current[index] = next
+          ? [
+              pendingForPrefix.min?.x === '' ? 0 : pendingForPrefix.min?.x !== undefined ? parseFloat(pendingForPrefix.min.x) : parsed.minSensX ?? 0,
+              pendingForPrefix.min?.y === '' ? 0 : pendingForPrefix.min?.y !== undefined ? parseFloat(pendingForPrefix.min.y) : parsed.minSensY ?? parsed.minSensX ?? 0,
+            ]
+          : [
+              pendingForPrefix.max?.x === '' ? 0 : pendingForPrefix.max?.x !== undefined ? parseFloat(pendingForPrefix.max.x) : parsed.maxSensX ?? 0,
+              pendingForPrefix.max?.y === '' ? 0 : pendingForPrefix.max?.y !== undefined ? parseFloat(pendingForPrefix.max.y) : parsed.maxSensY ?? parsed.maxSensX ?? 0,
+            ]
+      current[index] = parsedValue
       return updateKeymapEntry(prev, resolveSensitivityKey(key), current)
     })
   }
 
   const handleStaticSensChange = (index: 0 | 1) => (value: string) => {
+    const keyPrefix = prefixKey(activeSensitivityPrefix)
+    const axisKey = index === 0 ? 'x' : 'y'
+    const nextPending = { ...pendingDual }
+    const currentPending = nextPending[keyPrefix] ?? {}
+    const nextStatic = { ...(currentPending.static ?? {}) }
+
     if (value === '') {
-      setConfigText(prev => removeKeymapEntry(prev, resolveSensitivityKey(keyName.GYRO_SENS)))
+      nextStatic[axisKey] = ''
+      nextPending[keyPrefix] = { ...currentPending, static: nextStatic }
+      setPendingDual(nextPending)
       return
     }
-    const next = parseFloat(value)
-    if (Number.isNaN(next) || next < 0) return
+
+    const parsedValue = parseFloat(value)
+    if (Number.isNaN(parsedValue) || parsedValue < 0) return
+
+    nextStatic[axisKey] = value
+    nextPending[keyPrefix] = { ...currentPending, static: nextStatic }
+    setPendingDual(nextPending)
+
     setConfigText(prev => {
       const parsed = parseSensitivityValues(prev, activeSensitivityPrefix ? { prefix: activeSensitivityPrefix } : undefined)
-      const current: [number, number] = [
-        parsed.gyroSensX ?? parsed.minSensX ?? parsed.maxSensX ?? 1,
-        parsed.gyroSensY ??
-          parsed.minSensY ??
-          parsed.minSensX ??
-          parsed.maxSensY ??
-          parsed.maxSensX ??
-          parsed.gyroSensX ??
-          1,
-      ]
-      current[index] = next
+      const pendingForPrefix = nextPending[keyPrefix] ?? {}
+      const baseX =
+        pendingForPrefix.static?.x === ''
+          ? 0
+          : pendingForPrefix.static?.x !== undefined
+            ? parseFloat(pendingForPrefix.static.x)
+            : parsed.gyroSensX ?? parsed.minSensX ?? parsed.maxSensX ?? 1
+      const baseY =
+        pendingForPrefix.static?.y === ''
+          ? 0
+          : pendingForPrefix.static?.y !== undefined
+            ? parseFloat(pendingForPrefix.static.y)
+            : parsed.gyroSensY ??
+              parsed.minSensY ??
+              parsed.minSensX ??
+              parsed.maxSensY ??
+              parsed.maxSensX ??
+              parsed.gyroSensX ??
+              1
+      const current: [number, number] = [baseX, baseY]
+      current[index] = parsedValue
       return updateKeymapEntry(prev, resolveSensitivityKey(keyName.GYRO_SENS), current)
     })
   }
@@ -287,11 +382,24 @@ export function useSensitivityConfig({ configText, setConfigText }: SensitivityA
   const switchToStaticMode = (prefix?: string) => {
     setConfigText(prev => {
       const values = parseSensitivityValues(prev, prefix ? { prefix } : undefined)
-      if (values.gyroSensX !== undefined) {
+      const hasExistingStatic = values.gyroSensX !== undefined
+      const hasAccelFields =
+        values.minSensX !== undefined ||
+        values.maxSensX !== undefined ||
+        values.minThreshold !== undefined ||
+        values.maxThreshold !== undefined ||
+        values.accelCurve !== undefined ||
+        values.naturalVHalf !== undefined ||
+        values.powerVRef !== undefined ||
+        values.powerExponent !== undefined ||
+        values.sigmoidMid !== undefined ||
+        values.sigmoidWidth !== undefined ||
+        values.jumpTau !== undefined
+      if (!hasExistingStatic && !hasAccelFields) {
         return prev
       }
-      const defaultX = values.minSensX ?? values.maxSensX ?? 1
-      const defaultY = values.minSensY ?? values.minSensX ?? values.maxSensY ?? values.maxSensX ?? defaultX
+      const defaultX = values.gyroSensX ?? values.minSensX ?? values.maxSensX ?? 1
+      const defaultY = values.gyroSensY ?? values.minSensY ?? values.maxSensY ?? defaultX
       let next = updateKeymapEntry(prev, prefixedKey(keyName.GYRO_SENS, prefix), [defaultX, defaultY])
       ;[
         keyName.MIN_GYRO_SENS,
@@ -560,18 +668,192 @@ export function useSensitivityConfig({ configText, setConfigText }: SensitivityA
     return 0
   }, [configText])
 
-  const baseMode: 'static' | 'accel' = sensitivity.gyroSensX !== undefined ? 'static' : 'accel'
-  const modeshiftMode: 'static' | 'accel' = modeshiftSensitivity?.gyroSensX !== undefined ? 'static' : 'accel'
+  const hasAccelValues = (values?: ReturnType<typeof parseSensitivityValues>) => {
+    if (!values) return false
+    return (
+      values.minSensX !== undefined ||
+      values.minSensY !== undefined ||
+      values.maxSensX !== undefined ||
+      values.maxSensY !== undefined ||
+      values.minThreshold !== undefined ||
+      values.maxThreshold !== undefined ||
+      values.accelCurve !== undefined ||
+      values.naturalVHalf !== undefined ||
+      values.powerVRef !== undefined ||
+      values.powerExponent !== undefined ||
+      values.sigmoidMid !== undefined ||
+      values.sigmoidWidth !== undefined ||
+      values.jumpTau !== undefined
+    )
+  }
+
+  const baseMode: 'static' | 'accel' =
+    sensitivity.gyroSensX !== undefined ? 'static' : hasAccelValues(sensitivity) ? 'accel' : 'static'
+  const modeshiftMode: 'static' | 'accel' =
+    modeshiftSensitivity?.gyroSensX !== undefined
+      ? 'static'
+      : hasAccelValues(modeshiftSensitivity)
+        ? 'accel'
+        : 'static'
+
+  const baseModeDerivedRef = useRef(baseMode)
+  const modeshiftModeDerivedRef = useRef(modeshiftMode)
+  const [selectedBaseMode, setSelectedBaseMode] = useState<'static' | 'accel'>(baseMode)
+  const [selectedModeshiftMode, setSelectedModeshiftMode] = useState<'static' | 'accel'>(modeshiftMode)
+
+  const displaySensitivity = useMemo(() => {
+    const source = activeSensitivityPrefix
+      ? modeshiftSensitivity ?? parseSensitivityValues(configText, { prefix: activeSensitivityPrefix })
+      : sensitivity
+    const clone = { ...source }
+    const keyPrefix = prefixKey(activeSensitivityPrefix)
+    const pending = pendingDual[keyPrefix] ?? {}
+    if (pending.min?.x !== undefined) clone.minSensX = pending.min.x === '' ? undefined : parseFloat(pending.min.x)
+    if (pending.min?.y !== undefined) clone.minSensY = pending.min.y === '' ? undefined : parseFloat(pending.min.y)
+    if (pending.max?.x !== undefined) clone.maxSensX = pending.max.x === '' ? undefined : parseFloat(pending.max.x)
+    if (pending.max?.y !== undefined) clone.maxSensY = pending.max.y === '' ? undefined : parseFloat(pending.max.y)
+    if (pending.static?.x !== undefined) clone.gyroSensX = pending.static.x === '' ? undefined : parseFloat(pending.static.x)
+    if (pending.static?.y !== undefined) clone.gyroSensY = pending.static.y === '' ? undefined : parseFloat(pending.static.y)
+    return clone
+  }, [activeSensitivityPrefix, configText, modeshiftSensitivity, pendingDual, sensitivity])
+
+  const finalizePendingValues = useCallback((): string => {
+    let next = configText
+    const allowed = new Set<string>([prefixKey()])
+    if (sensitivityModeshiftButton) {
+      allowed.add(prefixKey(`${sensitivityModeshiftButton},`))
+    }
+    Object.entries(pendingDualRef.current).forEach(([key, pending]) => {
+      if (!allowed.has(key)) return
+      const prefix = key === '__base__' ? undefined : key
+      const mode = key === '__base__' ? selectedBaseMode : selectedModeshiftMode
+      const parsed = parseSensitivityValues(next, prefix ? { prefix } : undefined)
+      if (pending.min && mode !== 'static') {
+        const clearedX = pending.min.x === ''
+        const clearedY = pending.min.y === ''
+        if (clearedX && clearedY) {
+          next = removeKeymapEntry(next, prefixedKey(keyName.MIN_GYRO_SENS, prefix))
+        } else {
+          const minX =
+            clearedX
+              ? 0
+              : pending.min.x !== undefined
+                ? parseFloat(pending.min.x)
+                : parsed.minSensX ?? 0
+          const minY =
+            clearedY
+              ? 0
+              : pending.min.y !== undefined
+                ? parseFloat(pending.min.y)
+                : parsed.minSensY ?? parsed.minSensX ?? 0
+          next = updateKeymapEntry(next, prefixedKey(keyName.MIN_GYRO_SENS, prefix), [minX, minY])
+        }
+      }
+      if (pending.max && mode !== 'static') {
+        const clearedX = pending.max.x === ''
+        const clearedY = pending.max.y === ''
+        if (clearedX && clearedY) {
+          next = removeKeymapEntry(next, prefixedKey(keyName.MAX_GYRO_SENS, prefix))
+        } else {
+          const maxX =
+            clearedX
+              ? 0
+              : pending.max.x !== undefined
+                ? parseFloat(pending.max.x)
+                : parsed.maxSensX ?? 0
+          const maxY =
+            clearedY
+              ? 0
+              : pending.max.y !== undefined
+                ? parseFloat(pending.max.y)
+                : parsed.maxSensY ?? parsed.maxSensX ?? 0
+          next = updateKeymapEntry(next, prefixedKey(keyName.MAX_GYRO_SENS, prefix), [maxX, maxY])
+        }
+      }
+      if (pending.static && mode === 'static') {
+        const clearedX = pending.static.x === ''
+        const clearedY = pending.static.y === ''
+        if (clearedX && clearedY) {
+          next = removeKeymapEntry(next, prefixedKey(keyName.GYRO_SENS, prefix))
+        } else {
+          const x =
+            clearedX
+              ? 0
+              : pending.static.x !== undefined
+                ? parseFloat(pending.static.x)
+                : parsed.gyroSensX ?? parsed.minSensX ?? parsed.maxSensX ?? 0
+          const y =
+            clearedY
+              ? 0
+              : pending.static.y !== undefined
+                ? parseFloat(pending.static.y)
+                : parsed.gyroSensY ??
+                  parsed.minSensY ??
+                  parsed.minSensX ??
+                  parsed.maxSensY ??
+                  parsed.maxSensX ??
+                  parsed.gyroSensX ??
+                  0
+          next = updateKeymapEntry(next, prefixedKey(keyName.GYRO_SENS, prefix), [x, y])
+        }
+      }
+    })
+    setPendingDual({})
+    pendingDualRef.current = {}
+    if (next !== configText) {
+      setConfigText(next)
+    }
+    return next
+  }, [configText, selectedBaseMode, selectedModeshiftMode, setConfigText])
+
+  const resetPendingSensitivityChanges = useCallback(() => {
+    setPendingDual({})
+    pendingDualRef.current = {}
+  }, [])
+
+  useEffect(() => {
+    if (selectedBaseMode === baseModeDerivedRef.current && baseMode !== baseModeDerivedRef.current) {
+      setSelectedBaseMode(baseMode)
+    }
+    baseModeDerivedRef.current = baseMode
+  }, [baseMode, selectedBaseMode])
+
+  useEffect(() => {
+    if (selectedModeshiftMode === modeshiftModeDerivedRef.current && modeshiftMode !== modeshiftModeDerivedRef.current) {
+      setSelectedModeshiftMode(modeshiftMode)
+    }
+    modeshiftModeDerivedRef.current = modeshiftMode
+  }, [modeshiftMode, selectedModeshiftMode])
+
+  const handleModeSelection = (mode: 'static' | 'accel', prefix?: string) => {
+    if (mode === 'static') {
+      switchToStaticMode(prefix)
+      if (prefix) {
+        setSelectedModeshiftMode('static')
+      } else {
+        setSelectedBaseMode('static')
+      }
+      return
+    }
+    switchToAccelMode(prefix)
+    if (prefix) {
+      setSelectedModeshiftMode('accel')
+    } else {
+      setSelectedBaseMode('accel')
+    }
+  }
 
   return {
     sensitivityView,
     setSensitivityView,
-    sensitivity,
+    sensitivity: displaySensitivity,
     sensitivityModeshiftButton,
     modeshiftSensitivity,
     activeSensitivityPrefix,
     baseMode,
     modeshiftMode,
+    selectedBaseMode,
+    selectedModeshiftMode,
     holdPressTimeSeconds,
     holdPressTimeIsCustom,
     doublePressWindowSeconds,
@@ -599,8 +881,10 @@ export function useSensitivityConfig({ configText, setConfigText }: SensitivityA
     handleGyroAxisYChange,
     handleDualSensChange,
     handleStaticSensChange,
+    handleModeSelection,
     handleInGameSensChange,
     handleRealWorldCalibrationChange,
+    finalizePendingValues,
     switchToStaticMode,
     handleAccelCurveChange,
     handleNaturalVHalfChange,
@@ -610,5 +894,7 @@ export function useSensitivityConfig({ configText, setConfigText }: SensitivityA
     handleSigmoidMidChange,
     handleSigmoidWidthChange,
     switchToAccelMode,
+    hasPendingSensitivityChanges,
+    resetPendingSensitivityChanges,
   }
 }

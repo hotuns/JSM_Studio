@@ -46,13 +46,13 @@ export function AccelSensForm({
   const jumpTauValue = sensitivity.jumpTau ?? ''
 
   const minSensXValue = sensitivity.minSensX ?? ''
-  const minSensYValue = sensitivity.minSensY ?? sensitivity.minSensX ?? ''
+  const minSensYValue = sensitivity.minSensY ?? ''
   const maxSensXValue = sensitivity.maxSensX ?? ''
-  const maxSensYValue = sensitivity.maxSensY ?? sensitivity.maxSensX ?? ''
+  const maxSensYValue = sensitivity.maxSensY ?? ''
   const minSensXRange = sensitivity.minSensX ?? 0
-  const minSensYRange = sensitivity.minSensY ?? sensitivity.minSensX ?? 0
+  const minSensYRange = sensitivity.minSensY ?? 0
   const maxSensXRange = sensitivity.maxSensX ?? 0
-  const maxSensYRange = sensitivity.maxSensY ?? sensitivity.maxSensX ?? 0
+  const maxSensYRange = sensitivity.maxSensY ?? 0
   return (
     <>
       <div className="flex-inputs">

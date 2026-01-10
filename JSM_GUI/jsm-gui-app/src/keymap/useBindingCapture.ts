@@ -2,10 +2,16 @@ import { useEffect, useState } from 'react'
 import { BindingSlot } from '../utils/keymap'
 import { keyboardEventToBinding, mouseButtonToBinding, shouldIgnoreCapture, wheelEventToBinding } from './bindings'
 
-type CaptureTarget = { button: string; slot: BindingSlot; modifier?: string }
+type CaptureTarget = { button: string; slot: BindingSlot; rowId: string; modifier?: string }
 
 export const useBindingCapture = (
-  onBindingChange: (button: string, slot: BindingSlot, value: string | null, options?: { modifier?: string }) => void
+  onBindingChange: (
+    button: string,
+    slot: BindingSlot,
+    rowId: string,
+    value: string | null,
+    options?: { modifier?: string }
+  ) => void
 ) => {
   const [captureTarget, setCaptureTarget] = useState<CaptureTarget | null>(null)
   const [captureLabel, setCaptureLabel] = useState<string>('')
@@ -15,9 +21,15 @@ export const useBindingCapture = (
     if (!captureTarget) return
     const handleBinding = (value: string | null, suppress: boolean) => {
       if (value) {
-        onBindingChange(captureTarget.button, captureTarget.slot, value, { modifier: captureTarget.modifier })
+        onBindingChange(
+          captureTarget.button,
+          captureTarget.slot,
+          captureTarget.rowId,
+          value,
+          { modifier: captureTarget.modifier }
+        )
         if (suppress) {
-          setSuppressKey(`${captureTarget.button}-${captureTarget.slot}`)
+          setSuppressKey(`${captureTarget.button}-${captureTarget.slot}-${captureTarget.rowId}`)
         } else {
           setSuppressKey(null)
         }
@@ -61,14 +73,14 @@ export const useBindingCapture = (
     }
   }, [captureTarget, onBindingChange])
 
-  const beginCapture = (button: string, slot: BindingSlot, label: string, modifier?: string) => {
-    const key = `${button}-${slot}`
+  const beginCapture = (button: string, slot: BindingSlot, rowId: string, label: string, modifier?: string) => {
+    const key = `${button}-${slot}-${rowId}`
     if (suppressKey === key) {
       setSuppressKey(null)
       return
     }
     setCaptureLabel(label)
-    setCaptureTarget({ button, slot, modifier })
+    setCaptureTarget({ button, slot, rowId, modifier })
   }
 
   const cancelCapture = () => {
@@ -76,8 +88,8 @@ export const useBindingCapture = (
     setSuppressKey(null)
   }
 
-  const isCapturing = (button: string, slot: BindingSlot) =>
-    captureTarget?.button === button && captureTarget.slot === slot
+  const isCapturing = (button: string, slot: BindingSlot, rowId?: string) =>
+    captureTarget?.button === button && captureTarget.slot === slot && (!rowId || captureTarget.rowId === rowId)
 
   return {
     captureLabel,

@@ -37,7 +37,13 @@ type KeymapControlsProps = {
   statusMessage?: string | null
   onApply: () => void
   onCancel: () => void
-  onBindingChange: (button: string, slot: BindingSlot, value: string | null, options?: { modifier?: string }) => void
+  onBindingChange: (
+    button: string,
+    slot: BindingSlot,
+    rowId: string,
+    value: string | null,
+    options?: { modifier?: string }
+  ) => void
   onAssignSpecialAction: (special: string, buttonCommand: string) => void
   onClearSpecialAction: (special: string, buttonCommand: string) => void
   trackballDecay: string
@@ -49,6 +55,7 @@ type KeymapControlsProps = {
   onModifierChange: (
     button: string,
     slot: BindingSlot,
+    rowId: string,
     previousModifier: string | undefined,
     nextModifier: string,
     binding: string | null
@@ -363,7 +370,13 @@ export function KeymapControls({
     updateStickShiftDisplayMode,
     replaceStickShiftDisplayModes,
   } = useButtonRowState()
-  const { captureLabel, beginCapture, cancelCapture, isCapturing } = useBindingCapture(onBindingChange)
+  const { captureLabel, beginCapture, cancelCapture, isCapturing } = useBindingCapture((button, slot, rowId, value, options) => {
+    onBindingChange(button, slot, rowId, value, options)
+    const isComboSlot = slot === 'chord' || slot === 'simultaneous'
+    if (value && isComboSlot && manualRows[button]?.[slot]?.some(entry => entry.id === rowId)) {
+      removeManualRow(button, slot, rowId)
+    }
+  })
   const currentStickView = stickForcedView ?? stickView
   const stickToggleVisible = view === 'sticks' && showStickViewToggle && !stickForcedView
   useEffect(() => {
