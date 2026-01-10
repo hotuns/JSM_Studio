@@ -726,8 +726,9 @@ export function useSensitivityConfig({ configText, setConfigText }: SensitivityA
     Object.entries(pendingDualRef.current).forEach(([key, pending]) => {
       if (!allowed.has(key)) return
       const prefix = key === '__base__' ? undefined : key
+      const mode = key === '__base__' ? selectedBaseMode : selectedModeshiftMode
       const parsed = parseSensitivityValues(next, prefix ? { prefix } : undefined)
-      if (pending.min) {
+      if (pending.min && mode !== 'static') {
         const clearedX = pending.min.x === ''
         const clearedY = pending.min.y === ''
         if (clearedX && clearedY) {
@@ -748,7 +749,7 @@ export function useSensitivityConfig({ configText, setConfigText }: SensitivityA
           next = updateKeymapEntry(next, prefixedKey(keyName.MIN_GYRO_SENS, prefix), [minX, minY])
         }
       }
-      if (pending.max) {
+      if (pending.max && mode !== 'static') {
         const clearedX = pending.max.x === ''
         const clearedY = pending.max.y === ''
         if (clearedX && clearedY) {
@@ -803,7 +804,7 @@ export function useSensitivityConfig({ configText, setConfigText }: SensitivityA
       setConfigText(next)
     }
     return next
-  }, [configText, setConfigText])
+  }, [configText, selectedBaseMode, selectedModeshiftMode, setConfigText])
 
   const resetPendingSensitivityChanges = useCallback(() => {
     setPendingDual({})
