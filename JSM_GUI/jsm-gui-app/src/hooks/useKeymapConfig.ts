@@ -24,8 +24,11 @@ export function useKeymapConfig() {
       .map(token => token.toLowerCase())
   }, [configText])
 
-  const hasPendingChanges = configText !== appliedConfig
-  const handleCancel = () => setConfigText(appliedConfig)
+  const hasPendingChanges = configText !== appliedConfig || sensitivityConfig.hasPendingSensitivityChanges
+  const handleCancel = () => {
+    sensitivityConfig.resetPendingSensitivityChanges()
+    setConfigText(appliedConfig)
+  }
 
   return {
     configText,

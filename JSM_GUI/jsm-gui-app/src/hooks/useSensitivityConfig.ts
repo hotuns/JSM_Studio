@@ -40,6 +40,7 @@ export function useSensitivityConfig({ configText, setConfigText }: SensitivityA
   const [sensitivityView, setSensitivityView] = useState<'base' | 'modeshift'>('base')
   const [pendingDual, setPendingDual] = useState<PendingDual>({})
   const pendingDualRef = useRef<PendingDual>({})
+  const hasPendingSensitivityChanges = Object.keys(pendingDual).length > 0
 
   useEffect(() => {
     pendingDualRef.current = pendingDual
@@ -769,6 +770,11 @@ export function useSensitivityConfig({ configText, setConfigText }: SensitivityA
     return next
   }, [configText, setConfigText])
 
+  const resetPendingSensitivityChanges = useCallback(() => {
+    setPendingDual({})
+    pendingDualRef.current = {}
+  }, [])
+
   useEffect(() => {
     if (selectedBaseMode === baseModeDerivedRef.current && baseMode !== baseModeDerivedRef.current) {
       setSelectedBaseMode(baseMode)
@@ -852,5 +858,7 @@ export function useSensitivityConfig({ configText, setConfigText }: SensitivityA
     handleSigmoidMidChange,
     handleSigmoidWidthChange,
     switchToAccelMode,
+    hasPendingSensitivityChanges,
+    resetPendingSensitivityChanges,
   }
 }
