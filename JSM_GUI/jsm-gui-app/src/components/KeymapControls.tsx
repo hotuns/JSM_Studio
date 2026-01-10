@@ -370,7 +370,13 @@ export function KeymapControls({
     updateStickShiftDisplayMode,
     replaceStickShiftDisplayModes,
   } = useButtonRowState()
-  const { captureLabel, beginCapture, cancelCapture, isCapturing } = useBindingCapture(onBindingChange)
+  const { captureLabel, beginCapture, cancelCapture, isCapturing } = useBindingCapture((button, slot, rowId, value, options) => {
+    onBindingChange(button, slot, rowId, value, options)
+    const isComboSlot = slot === 'chord' || slot === 'simultaneous'
+    if (value && isComboSlot && manualRows[button]?.[slot]?.some(entry => entry.id === rowId)) {
+      removeManualRow(button, slot, rowId)
+    }
+  })
   const currentStickView = stickForcedView ?? stickView
   const stickToggleVisible = view === 'sticks' && showStickViewToggle && !stickForcedView
   useEffect(() => {
