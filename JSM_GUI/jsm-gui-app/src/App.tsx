@@ -221,6 +221,25 @@ function App() {
     }).catch(() => {})
   }, [])
 
+  useEffect(() => {
+    const handleFocusIn = (event: FocusEvent) => {
+      const target = event.target as HTMLElement
+      const isTextInput = (el: HTMLInputElement) => {
+        const excluded = ['checkbox', 'radio', 'range', 'file', 'color', 'button', 'submit', 'reset']
+        return !excluded.includes(el.type)
+      }
+      if (target instanceof HTMLInputElement) {
+        if (target.disabled || target.readOnly || !isTextInput(target)) return
+        requestAnimationFrame(() => target.select())
+      } else if (target instanceof HTMLTextAreaElement) {
+        if (target.disabled || target.readOnly) return
+        requestAnimationFrame(() => target.select())
+      }
+    }
+    window.addEventListener('focusin', handleFocusIn)
+    return () => window.removeEventListener('focusin', handleFocusIn)
+  }, [])
+
   const handleBackendChange = (choice: 'SDL' | 'legacy') => {
     setBackendChoice(choice)
     window.electronAPI?.setBackendChoice?.(choice)

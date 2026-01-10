@@ -711,55 +711,73 @@ export function useSensitivityConfig({ configText, setConfigText }: SensitivityA
       const prefix = key === '__base__' ? undefined : key
       const parsed = parseSensitivityValues(next, prefix ? { prefix } : undefined)
       if (pending.min) {
-        const minX =
-          pending.min.x === ''
-            ? 0
-            : pending.min.x !== undefined
-              ? parseFloat(pending.min.x)
-              : parsed.minSensX ?? 0
-        const minY =
-          pending.min.y === ''
-            ? 0
-            : pending.min.y !== undefined
-              ? parseFloat(pending.min.y)
-              : parsed.minSensY ?? parsed.minSensX ?? 0
-        next = updateKeymapEntry(next, prefixedKey(keyName.MIN_GYRO_SENS, prefix), [minX, minY])
+        const clearedX = pending.min.x === ''
+        const clearedY = pending.min.y === ''
+        if (clearedX && clearedY) {
+          next = removeKeymapEntry(next, prefixedKey(keyName.MIN_GYRO_SENS, prefix))
+        } else {
+          const minX =
+            clearedX
+              ? 0
+              : pending.min.x !== undefined
+                ? parseFloat(pending.min.x)
+                : parsed.minSensX ?? 0
+          const minY =
+            clearedY
+              ? 0
+              : pending.min.y !== undefined
+                ? parseFloat(pending.min.y)
+                : parsed.minSensY ?? parsed.minSensX ?? 0
+          next = updateKeymapEntry(next, prefixedKey(keyName.MIN_GYRO_SENS, prefix), [minX, minY])
+        }
       }
       if (pending.max) {
-        const maxX =
-          pending.max.x === ''
-            ? 0
-            : pending.max.x !== undefined
-              ? parseFloat(pending.max.x)
-              : parsed.maxSensX ?? 0
-        const maxY =
-          pending.max.y === ''
-            ? 0
-            : pending.max.y !== undefined
-              ? parseFloat(pending.max.y)
-              : parsed.maxSensY ?? parsed.maxSensX ?? 0
-        next = updateKeymapEntry(next, prefixedKey(keyName.MAX_GYRO_SENS, prefix), [maxX, maxY])
+        const clearedX = pending.max.x === ''
+        const clearedY = pending.max.y === ''
+        if (clearedX && clearedY) {
+          next = removeKeymapEntry(next, prefixedKey(keyName.MAX_GYRO_SENS, prefix))
+        } else {
+          const maxX =
+            clearedX
+              ? 0
+              : pending.max.x !== undefined
+                ? parseFloat(pending.max.x)
+                : parsed.maxSensX ?? 0
+          const maxY =
+            clearedY
+              ? 0
+              : pending.max.y !== undefined
+                ? parseFloat(pending.max.y)
+                : parsed.maxSensY ?? parsed.maxSensX ?? 0
+          next = updateKeymapEntry(next, prefixedKey(keyName.MAX_GYRO_SENS, prefix), [maxX, maxY])
+        }
       }
       if (pending.static) {
-        const x =
-          pending.static.x === ''
-            ? 0
-            : pending.static.x !== undefined
-              ? parseFloat(pending.static.x)
-              : parsed.gyroSensX ?? parsed.minSensX ?? parsed.maxSensX ?? 0
-        const y =
-          pending.static.y === ''
-            ? 0
-            : pending.static.y !== undefined
-              ? parseFloat(pending.static.y)
-              : parsed.gyroSensY ??
-                parsed.minSensY ??
-                parsed.minSensX ??
-                parsed.maxSensY ??
-                parsed.maxSensX ??
-                parsed.gyroSensX ??
-                0
-        next = updateKeymapEntry(next, prefixedKey(keyName.GYRO_SENS, prefix), [x, y])
+        const clearedX = pending.static.x === ''
+        const clearedY = pending.static.y === ''
+        if (clearedX && clearedY) {
+          next = removeKeymapEntry(next, prefixedKey(keyName.GYRO_SENS, prefix))
+        } else {
+          const x =
+            clearedX
+              ? 0
+              : pending.static.x !== undefined
+                ? parseFloat(pending.static.x)
+                : parsed.gyroSensX ?? parsed.minSensX ?? parsed.maxSensX ?? 0
+          const y =
+            clearedY
+              ? 0
+              : pending.static.y !== undefined
+                ? parseFloat(pending.static.y)
+                : parsed.gyroSensY ??
+                  parsed.minSensY ??
+                  parsed.minSensX ??
+                  parsed.maxSensY ??
+                  parsed.maxSensX ??
+                  parsed.gyroSensX ??
+                  0
+          next = updateKeymapEntry(next, prefixedKey(keyName.GYRO_SENS, prefix), [x, y])
+        }
       }
     })
     setPendingDual({})
