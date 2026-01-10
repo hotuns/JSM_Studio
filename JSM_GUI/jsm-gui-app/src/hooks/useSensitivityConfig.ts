@@ -770,7 +770,7 @@ export function useSensitivityConfig({ configText, setConfigText }: SensitivityA
           next = updateKeymapEntry(next, prefixedKey(keyName.MAX_GYRO_SENS, prefix), [maxX, maxY])
         }
       }
-      if (pending.static) {
+      if (pending.static && mode === 'static') {
         const clearedX = pending.static.x === ''
         const clearedY = pending.static.y === ''
         if (clearedX && clearedY) {
