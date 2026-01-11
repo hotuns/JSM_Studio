@@ -46,6 +46,8 @@ public:
 	AxisSignPair getSetting<AxisSignPair>(SettingID index);
 
 	void getSmoothedGyro(float x, float y, float length, float bottomThreshold, float topThreshold, int maxSamples, float &outX, float &outY);
+	void applyGyroDecaySmoothing(float rawX, float rawY, float deltaTime, float smoothingTime, float threshold, float &outX, float &outY);
+	void disableGyroDecaySmoothing();
 
 	void handleButtonChange(ButtonID id, bool pressed, int touchpadID = -1);
 
@@ -134,6 +136,10 @@ private:
 
 	array<FloatXY, MAX_GYRO_SAMPLES> _gyroSamples;
 	int _frontGyroSample = 0;
+	float _gyroDecayX = 0.f;
+	float _gyroDecayY = 0.f;
+	bool _gyroDecayInit = false;
+	bool _gyroDecayEnabledLast = false;
 
 	Vec _lastGrav = Vec(0.f, -1.f, 0.f);
 
