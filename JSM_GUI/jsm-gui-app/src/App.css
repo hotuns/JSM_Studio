@@ -17,6 +17,10 @@ body {
   box-sizing: border-box;
 }
 
+.responsive-header {
+  display: contents;
+}
+
 .side-nav {
   border-right: 1px solid #1f1f1f;
   background: linear-gradient(180deg, #0f1014 0%, #0d0e12 100%);
@@ -259,21 +263,59 @@ body {
     grid-template-columns: 1fr;
   }
 
+  .responsive-header {
+    display: flex;
+    flex-direction: column;
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: #0e1118;
+  }
+
   .side-nav {
+    position: static;
+    height: auto;
     flex-direction: row;
     flex-wrap: wrap;
     border-right: none;
     border-bottom: 1px solid #1f1f1f;
+    width: 100%;
+    justify-content: center;
+    align-items: stretch;
   }
 
   .nav-group {
     flex-direction: row;
     flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.75rem;
   }
 
   .nav-item {
-    flex: 1;
-    min-width: 140px;
+    flex: 0 1 auto;
+    min-width: 120px;
+    text-align: center;
+    border-radius: 999px;
+    border: 1px solid #343434;
+    background: #161616;
+    color: #ddd;
+    padding: 0.6rem 1.1rem;
+    font-weight: 600;
+    font-size: 0.95rem;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease, background-color 0.2s ease;
+  }
+
+  .nav-item:hover {
+    border-color: #5f73ff;
+    background: #242424;
+    color: #f0f0f0;
+  }
+
+  .nav-item.active {
+    border-color: #6a8bff;
+    color: #fff;
+    box-shadow: 0 0 0 1px rgba(106, 139, 255, 0.35), 0 0 12px rgba(106, 139, 255, 0.25);
+    background: #161616;
   }
 
   .content-grid {
@@ -309,30 +351,39 @@ body {
   }
 
   .top-bar {
-    flex-direction: column;
+    flex-direction: row;
+    flex-wrap: wrap;
     align-items: center;
-    gap: 0.75rem;
+    justify-content: space-between;
+    gap: 0.5rem;
+    width: 100%;
+    background: linear-gradient(180deg, #0f1014 0%, #0d0e12 100%);
   }
 
   .top-bar-left {
-    width: 100%;
-    flex-direction: column;
+    flex: 1 1 auto;
+    width: auto;
+    flex-direction: row;
     align-items: center;
+    justify-content: flex-start;
     gap: 0.4rem;
+    flex-wrap: wrap;
   }
 
   .nav-brand {
     width: 100%;
     text-align: center;
     margin-bottom: 0.5rem;
+    font-size: 1.75rem;
   }
 
   .subnav {
-    justify-content: center;
+    justify-content: flex-start;
   }
 
   .top-bar-right {
-    width: 100%;
+    width: auto;
+    flex: 0 0 auto;
     justify-content: flex-end;
   }
 }

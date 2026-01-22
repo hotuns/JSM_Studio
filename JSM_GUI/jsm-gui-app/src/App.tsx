@@ -617,45 +617,46 @@ function App() {
   return (
     <div className="app-shell">
       <ToastHost />
-      <aside className="side-nav">
-        <div className="nav-brand">JSM Custom Curve</div>
-        <div className="nav-group">
-          <button className={`nav-item ${primaryTab === 'gyro' ? 'active' : ''}`} onClick={() => setPrimaryTab('gyro')}>
-            Gyro & Sensitivity
-          </button>
-          <button className={`nav-item ${primaryTab === 'keybinds' ? 'active' : ''}`} onClick={() => setPrimaryTab('keybinds')}>
-            Keybinds
-          </button>
-          <button className={`nav-item ${primaryTab === 'touchpad' ? 'active' : ''}`} onClick={() => setPrimaryTab('touchpad')}>
-            Touchpad
-          </button>
-          <button className={`nav-item ${primaryTab === 'sticks' ? 'active' : ''}`} onClick={() => setPrimaryTab('sticks')}>
-            Sticks
-          </button>
-        </div>
-      </aside>
-      <div className="shell-main">
-          <div className="top-bar">
-          <div className="top-bar-left">
-            {primaryTab === 'gyro' && renderGyroNav()}
-            {primaryTab === 'keybinds' && renderKeybindsNav()}
-            {primaryTab === 'touchpad' && renderTouchpadNav()}
-            {primaryTab === 'sticks' && renderSticksNav()}
+      <div className="responsive-header">
+        <aside className="side-nav">
+          <div className="nav-brand">JSM Custom Curve</div>
+          <div className="nav-group">
+            <button className={`nav-item ${primaryTab === 'gyro' ? 'active' : ''}`} onClick={() => setPrimaryTab('gyro')}>
+              Gyro & Sensitivity
+            </button>
+            <button className={`nav-item ${primaryTab === 'keybinds' ? 'active' : ''}`} onClick={() => setPrimaryTab('keybinds')}>
+              Keybinds
+            </button>
+            <button className={`nav-item ${primaryTab === 'touchpad' ? 'active' : ''}`} onClick={() => setPrimaryTab('touchpad')}>
+              Touchpad
+            </button>
+            <button className={`nav-item ${primaryTab === 'sticks' ? 'active' : ''}`} onClick={() => setPrimaryTab('sticks')}>
+              Sticks
+            </button>
           </div>
-          <div className="top-bar-right">
-            <label className="inline-select">
-              <span>JSM Version</span>
-              <select
-                className="app-select"
-                value={backendChoice}
-                onChange={(e) => handleBackendChange(e.target.value as 'SDL' | 'legacy')}
-              >
-                <option value="SDL">SDL</option>
-                <option value="legacy">Legacy</option>
-              </select>
-            </label>
+        </aside>
+        <div className="shell-main">
+            <div className="top-bar">
+            <div className="top-bar-left">
+              {primaryTab === 'gyro' && renderGyroNav()}
+              {primaryTab === 'keybinds' && renderKeybindsNav()}
+              {primaryTab === 'touchpad' && renderTouchpadNav()}
+              {primaryTab === 'sticks' && renderSticksNav()}
+            </div>
+            <div className="top-bar-right">
+              <label className="inline-select">
+                <span>JSM Version</span>
+                <select
+                  className="app-select"
+                  value={backendChoice}
+                  onChange={(e) => handleBackendChange(e.target.value as 'SDL' | 'legacy')}
+                >
+                  <option value="SDL">SDL</option>
+                  <option value="legacy">Legacy</option>
+                </select>
+              </label>
+            </div>
           </div>
-        </div>
         <div className="content-grid">
           <main className="main-pane">{renderPrimaryContent()}</main>
           <aside className="right-rail">
@@ -729,6 +730,7 @@ function App() {
             />
           </div>
         </div>
+      </div>
       </div>
       {isCalibrationModalOpen && (
         <div className="modal-overlay">
