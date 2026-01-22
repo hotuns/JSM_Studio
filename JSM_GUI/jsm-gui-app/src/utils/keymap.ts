@@ -20,6 +20,7 @@ export interface SensitivityValues {
   cutoffRecovery?: number
   smoothTime?: number
   smoothThreshold?: number
+  smoothingDecay?: string
   angleSnap?: number
   angleSnapEase?: string
   decelBrakeStrength?: number
@@ -70,6 +71,7 @@ export function parseSensitivityValues(text: string, options?: { prefix?: string
   const staticSens = get('GYRO_SENS', 2)
   const angleSnap = single('GYRO_ANGLE_SNAP')
   const angleSnapEaseRaw = raw('GYRO_ANGLE_SNAP_EASE')
+  const smoothingDecayRaw = raw('GYRO_SMOOTHING_DECAY')
   const decelBrakeStrength = single('DECEL_BRAKE_STRENGTH')
   const decelBrakeThreshold = single('DECEL_BRAKE_THRESHOLD')
 
@@ -88,6 +90,7 @@ export function parseSensitivityValues(text: string, options?: { prefix?: string
     cutoffRecovery: single('GYRO_CUTOFF_RECOVERY'),
     smoothTime: single('GYRO_SMOOTH_TIME'),
     smoothThreshold: single('GYRO_SMOOTH_THRESHOLD'),
+    smoothingDecay: smoothingDecayRaw ? smoothingDecayRaw.toUpperCase() : undefined,
     angleSnap,
     angleSnapEase: angleSnapEaseRaw ? angleSnapEaseRaw.toUpperCase() : undefined,
     decelBrakeStrength,
