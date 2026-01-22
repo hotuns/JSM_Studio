@@ -211,8 +211,23 @@ export function useSensitivityConfig({ configText, setConfigText }: SensitivityA
   const handleCutoffRecoveryChange = makeScalarHandler(keyName.GYRO_CUTOFF_RECOVERY)
   const handleSmoothTimeChange = makeScalarHandler(keyName.GYRO_SMOOTH_TIME)
   const handleSmoothThresholdChange = makeScalarHandler(keyName.GYRO_SMOOTH_THRESHOLD)
+  const handleSmoothingDecayChange = (value: string) => {
+    const upper = value.trim().toUpperCase()
+    if (!upper || upper === 'OFF') {
+      setConfigText(prev => removeKeymapEntry(prev, keyName.GYRO_SMOOTHING_DECAY))
+      return
+    }
+    setConfigText(prev => updateKeymapEntry(prev, keyName.GYRO_SMOOTHING_DECAY, [upper]))
+  }
   const handleAngleSnapChange = makeScalarHandler(keyName.GYRO_ANGLE_SNAP)
-  const handleAngleSnapSmoothChange = makeStringHandler(keyName.GYRO_ANGLE_SNAP_EASE)
+  const handleAngleSnapSmoothChange = (value: string) => {
+    const upper = value.trim().toUpperCase()
+    if (!upper || upper === 'OFF') {
+      setConfigText(prev => removeKeymapEntry(prev, keyName.GYRO_ANGLE_SNAP_EASE))
+      return
+    }
+    setConfigText(prev => updateKeymapEntry(prev, keyName.GYRO_ANGLE_SNAP_EASE, [upper]))
+  }
   const handleDecelBrakeStrengthChange = makeScalarHandler(keyName.DECEL_BRAKE_STRENGTH)
   const handleDecelBrakeThresholdChange = makeScalarHandler(keyName.DECEL_BRAKE_THRESHOLD)
   const handleTickTimeChange = makeScalarHandler(keyName.TICK_TIME)
@@ -867,6 +882,7 @@ export function useSensitivityConfig({ configText, setConfigText }: SensitivityA
     handleCutoffRecoveryChange,
     handleSmoothTimeChange,
     handleSmoothThresholdChange,
+    handleSmoothingDecayChange,
     handleAngleSnapChange,
     handleAngleSnapSmoothChange,
     handleDecelBrakeStrengthChange,

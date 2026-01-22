@@ -66,6 +66,7 @@ function App() {
     handleCutoffRecoveryChange,
     handleSmoothTimeChange,
     handleSmoothThresholdChange,
+    handleSmoothingDecayChange,
     handleAngleSnapChange,
     handleAngleSnapSmoothChange,
     handleDecelBrakeStrengthChange,
@@ -409,24 +410,25 @@ function App() {
             />
           )}
           {gyroSubTab === 'noise' && (
-            <NoiseSteadyingControls
-              sensitivity={sensitivity}
-              isCalibrating={isCalibrating}
-              statusMessage={statusMessage}
-              hasPendingChanges={hasPendingChanges}
-              onApply={handleApplyWithFinalize}
-              onCancel={handleCancel}
-              lockMessage={lockMessage}
-          onCutoffSpeedChange={handleCutoffSpeedChange}
-          onCutoffRecoveryChange={handleCutoffRecoveryChange}
-          onSmoothTimeChange={handleSmoothTimeChange}
-          onSmoothThresholdChange={handleSmoothThresholdChange}
-          onAngleSnapChange={handleAngleSnapChange}
-          onAngleSnapSmoothChange={handleAngleSnapSmoothChange}
-          onDecelBrakeStrengthChange={handleDecelBrakeStrengthChange}
-          onDecelBrakeThresholdChange={handleDecelBrakeThresholdChange}
-          telemetry={{ omega: telemetryValues.omega, timestamp: telemetryValues.timestamp, sampleHz: telemetryValues.sampleHz }}
-        />
+          <NoiseSteadyingControls
+            sensitivity={sensitivity}
+            isCalibrating={isCalibrating}
+            statusMessage={statusMessage}
+            hasPendingChanges={hasPendingChanges}
+            onApply={handleApplyWithFinalize}
+            onCancel={handleCancel}
+            lockMessage={lockMessage}
+            onCutoffSpeedChange={handleCutoffSpeedChange}
+            onCutoffRecoveryChange={handleCutoffRecoveryChange}
+            onSmoothTimeChange={handleSmoothTimeChange}
+            onSmoothThresholdChange={handleSmoothThresholdChange}
+            onSmoothingDecayChange={handleSmoothingDecayChange}
+            onAngleSnapChange={handleAngleSnapChange}
+            onAngleSnapSmoothChange={handleAngleSnapSmoothChange}
+            onDecelBrakeStrengthChange={handleDecelBrakeStrengthChange}
+            onDecelBrakeThresholdChange={handleDecelBrakeThresholdChange}
+            telemetry={{ omega: telemetryValues.omega, timestamp: telemetryValues.timestamp, sampleHz: telemetryValues.sampleHz }}
+          />
       )}
         </>
       )

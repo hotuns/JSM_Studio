@@ -677,14 +677,25 @@ void joyShockPollCallback(int jcHandle, JOY_SHOCK_STATE state, JOY_SHOCK_STATE l
 	}
 	float gyroLength = sqrt(gyroX * gyroX + gyroY * gyroY);
 	// do gyro smoothing
-	// convert gyro smooth time to number of samples
-	auto tick_time = SettingsManager::get<float>(SettingID::TICK_TIME)->value();
-	auto numGyroSamples = jc->getSetting(SettingID::GYRO_SMOOTH_TIME) * 1000.f / tick_time;
-	if (numGyroSamples < 1)
-		numGyroSamples = 1; // need at least 1 sample
-	auto threshold = jc->getSetting(SettingID::GYRO_SMOOTH_THRESHOLD);
-	jc->getSmoothedGyro(gyroX, gyroY, gyroLength, threshold / 2.0f, threshold, int(numGyroSamples), gyroX, gyroY);
-	// COUT << "%d Samples for threshold: %0.4f\n", numGyroSamples, gyro_smooth_threshold * maxSmoothingSamples);
+	const bool useDecaySmoothing = jc->getSetting<Switch>(SettingID::GYRO_SMOOTHING_DECAY) == Switch::ON;
+	if (useDecaySmoothing)
+	{
+		auto smoothingTime = jc->getSetting(SettingID::GYRO_SMOOTH_TIME);
+		auto threshold = jc->getSetting(SettingID::GYRO_SMOOTH_THRESHOLD);
+		jc->applyGyroDecaySmoothing(gyroX, gyroY, deltaTime, smoothingTime, threshold, gyroX, gyroY);
+	}
+	else
+	{
+		jc->disableGyroDecaySmoothing();
+		// convert gyro smooth time to number of samples
+		auto tick_time = SettingsManager::get<float>(SettingID::TICK_TIME)->value();
+		auto numGyroSamples = jc->getSetting(SettingID::GYRO_SMOOTH_TIME) * 1000.f / tick_time;
+		if (numGyroSamples < 1)
+			numGyroSamples = 1; // need at least 1 sample
+		auto threshold = jc->getSetting(SettingID::GYRO_SMOOTH_THRESHOLD);
+		jc->getSmoothedGyro(gyroX, gyroY, gyroLength, threshold / 2.0f, threshold, int(numGyroSamples), gyroX, gyroY);
+		// COUT << "%d Samples for threshold: %0.4f\n", numGyroSamples, gyro_smooth_threshold * maxSmoothingSamples);
+	}
 
 	// Decel brake detection should use IMU-based, post-smoothing gyro before cutoff/recovery and before synthetic additions
 	jc->decelBrakeOmegaRaw = sqrt(gyroX * gyroX + gyroY * gyroY);
@@ -2719,6 +2730,12 @@ void initJsmSettings(CmdRegistry *commandRegistry)
 	SettingsManager::add(gyro_smooth_threshold);
 	commandRegistry->add((new JSMAssignment<float>(*gyro_smooth_threshold))
 	                       ->setHelp("When the controller's angular velocity is below this threshold (in degrees per second), smoothing will be applied."));
+
+	auto gyro_smoothing_decay = new JSMSetting<Switch>(SettingID::GYRO_SMOOTHING_DECAY, Switch::OFF);
+	gyro_smoothing_decay->setFilter(&filterInvalidValue<Switch, Switch::INVALID>);
+	SettingsManager::add(gyro_smoothing_decay);
+	commandRegistry->add((new JSMAssignment<Switch>(*gyro_smoothing_decay))
+	                       ->setHelp("When ON, uses speed-decay EMA smoothing instead of the legacy moving-average gyro smoothing."));
 
 	auto gyro_cutoff_speed = new JSMSetting<float>(SettingID::GYRO_CUTOFF_SPEED, 0.0f);
 	gyro_cutoff_speed->setFilter(&filterPositive);

@@ -16,6 +16,7 @@ type NoiseSteadyingControlsProps = {
   onCutoffRecoveryChange: (value: string) => void
   onSmoothTimeChange: (value: string) => void
   onSmoothThresholdChange: (value: string) => void
+  onSmoothingDecayChange: (value: string) => void
   onAngleSnapChange: (value: string) => void
   onAngleSnapSmoothChange: (value: string) => void
   onDecelBrakeStrengthChange: (value: string) => void
@@ -39,6 +40,7 @@ export function NoiseSteadyingControls({
   onCutoffRecoveryChange,
   onSmoothTimeChange,
   onSmoothThresholdChange,
+  onSmoothingDecayChange,
   onAngleSnapChange,
   onAngleSnapSmoothChange,
   onDecelBrakeStrengthChange,
@@ -136,6 +138,18 @@ export function NoiseSteadyingControls({
             value={sensitivity.smoothThreshold ?? 0}
             onChange={(e) => onSmoothThresholdChange(e.target.value)}
           />
+        </label>
+      </div>
+      <div className="flex-inputs">
+        <label>
+          Gyro Smoothing Decay
+          <select
+            value={sensitivity.smoothingDecay ?? 'OFF'}
+            onChange={(e) => onSmoothingDecayChange(e.target.value)}
+          >
+            <option value="OFF">Off</option>
+            <option value="ON">On</option>
+          </select>
         </label>
       </div>
       <div className="flex-inputs">
