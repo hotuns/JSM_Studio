@@ -27,7 +27,7 @@
   text-align: left;
   border-radius: 10px;
   border: 1px solid var(--border-1);
-  background: var(--bg-btn);
+  background: var(--bg-input);
   color: var(--text-strong);
   padding: 0.65rem 0.8rem;
   cursor: pointer;
@@ -39,9 +39,12 @@
   background: var(--bg-btn-hover);
 }
 
-.active {
+.navItem.active:hover {
   border-color: var(--accent);
-  box-shadow: 0 0 0 1px rgba(76, 125, 255, 0.35);
+}
+
+.active {
+  border: 1.7px solid var(--accent);
   background: var(--bg-btn-hover);
 }
 
@@ -63,7 +66,7 @@
     text-align: center;
     border-radius: 999px;
     border: 1px solid var(--border-1);
-    background: var(--bg-btn);
+    background: var(--bg-input);
     color: var(--text-strong);
     padding: 0.6rem 1.1rem;
     font-weight: 600;
@@ -78,10 +81,13 @@
   }
 
   .active {
-    border-color: var(--accent);
+    border: 1.5px solid var(--accent);
     color: var(--text-strong);
-    box-shadow: 0 0 0 1px rgba(76, 125, 255, 0.35), 0 0 12px rgba(76, 125, 255, 0.25);
     background: var(--bg-btn-hover);
+  }
+
+  .navItem.active:hover {
+    border-color: var(--accent);
   }
 
   :global(.responsive-header) .navGroup {
@@ -95,7 +101,7 @@
     text-align: center;
     border-radius: 999px;
     border: 1px solid var(--border-1);
-    background: var(--bg-btn);
+    background: var(--bg-input);
     color: var(--text-strong);
     padding: 0.6rem 1.1rem;
     font-weight: 600;

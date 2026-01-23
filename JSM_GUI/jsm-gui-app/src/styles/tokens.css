@@ -4,24 +4,25 @@
   --bp-main: 1060px;
 
   /* Backgrounds */
-  --bg-0: #0b0e13;
-  --bg-1: #12151b;
-  --bg-1-5: #141821;
-  --bg-2: #0e1116;
-  --bg-btn: #1a1f27;
-  --bg-btn-hover: #202635;
-  --bg-btn-primary: #1f2a3d;
+  --bg-0: #161618;      /* page backdrop */
+  --bg-1: #25262b;      /* side nav */
+  --bg-1-5: #232327;    /* top bar / tabs strip */
+  --bg-2: #1e1e20;      /* cards / panels */
+  --bg-btn: #1e1e20;    /* button + input base (match cards) */
+  --bg-btn-hover: #23252b;
+  --bg-btn-primary: #262933;
+  --bg-input: #111111;  /* config editor + inputs */
 
   /* Text */
-  --text-strong: #e6eaf2;
-  --text-mid: #aab0bc;
-  --text-muted: #7c8494;
+  --text-strong: #e8ecf3;
+  --text-mid: #bcc2cc;
+  --text-muted: #8f949e;
 
   /* Borders */
-  --border-1: #242a36;
-  --border-strong: #2f3646;
+  --border-1: #2a2c33;
+  --border-strong: #343741;
 
   /* Accent */
-  --accent: #4c7dff;
+  --accent: #6fa7ff;
 
 }

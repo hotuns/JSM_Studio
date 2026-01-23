@@ -2,6 +2,7 @@
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  padding: 0; /* no extra chrome inside modal */
 }
 
 .profileCardHeader {
@@ -160,16 +161,16 @@
   justify-content: flex-start;
   align-items: stretch;
   gap: 0.5rem;
-  padding: 0.45rem 0.75rem;
-  border: 1px solid var(--border-1);
-  border-radius: 12px;
-  background: #121212;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  padding: 0.4rem 0.35rem;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
 }
 
 .profileLibraryItemActive {
-  border-color: #6a8bff;
-  box-shadow: 0 0 0 1px rgba(106, 139, 255, 0.3);
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
 }
 
 .profileLibraryName {
@@ -185,8 +186,8 @@
   padding: 0.45rem 0.75rem;
   border-radius: 8px;
   border: 1px solid #3a3a3a;
-  background: #0f0f0f;
-  color: #f5f5f5;
+  background: var(--bg-input);
+  color: var(--text-strong);
   font-weight: 600;
 }
 

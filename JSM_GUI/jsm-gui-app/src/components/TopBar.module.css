@@ -35,6 +35,11 @@
 
 .inlineSelect select {
   min-width: 140px;
+  border-radius: 999px;
+  border: 1.7px solid var(--border-1);
+  background: var(--bg-input);
+  color: var(--text-strong);
+  padding: 0.35rem 0.7rem;
 }
 
 .responsiveTopBar {

@@ -24,9 +24,6 @@ interface SensitivityGraphProps {
 const MAX_OMEGA = 500
 
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max)
-const LIVE_SENS_COLOR = '#6a8bff'
-const LIVE_OUTPUT_COLOR = '#52c1ff'
-
 export function SensitivityGraph(props: SensitivityGraphProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const {
@@ -65,6 +62,10 @@ export function SensitivityGraph(props: SensitivityGraphProps) {
     canvas.style.height = `${(baseHeight / baseWidth) * 100}%`
     ctx.resetTransform()
     ctx.scale(ratio, ratio)
+
+    const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#6fa7ff'
+    const liveSensColor = accent
+    const liveOutputColor = '#5bc7d7'
 
     ctx.fillStyle = '#0f0f0f'
     ctx.fillRect(0, 0, baseWidth, baseHeight)
@@ -267,7 +268,7 @@ export function SensitivityGraph(props: SensitivityGraphProps) {
     }
 
     const drawSensitivityCurve = () => {
-      ctx.strokeStyle = '#6a8bff'
+      ctx.strokeStyle = accent
       ctx.lineWidth = 2.2
       ctx.beginPath()
       const points = 250
@@ -289,7 +290,7 @@ export function SensitivityGraph(props: SensitivityGraphProps) {
       const speeds = Array.from({ length: points }, (_, i) => (axisMaxX / (points - 1)) * i)
       const outputs = speeds.map(speed => speed * sensitivityAt(speed))
       const maxOutput = Math.max(...outputs, 1)
-      ctx.strokeStyle = '#52c1ff'
+      ctx.strokeStyle = liveOutputColor
       ctx.setLineDash([6, 6])
       ctx.lineWidth = 2
       ctx.beginPath()
@@ -330,8 +331,8 @@ export function SensitivityGraph(props: SensitivityGraphProps) {
         ctx.fillStyle = color
         ctx.fill()
       }
-      drawDot(sensX, LIVE_SENS_COLOR)
-      drawDot(normalizedOutput, LIVE_OUTPUT_COLOR)
+      drawDot(sensX, liveSensColor)
+      drawDot(normalizedOutput, liveOutputColor)
     }
 
     ctx.textAlign = 'center'

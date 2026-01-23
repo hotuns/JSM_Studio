@@ -12,7 +12,7 @@
 .pill-tab {
   border: 1px solid var(--border-1);
   border-radius: 999px;
-  background: var(--bg-btn);
+  background: var(--bg-input);
   color: var(--text-strong);
   padding: 0.55rem 1rem;
   font-weight: 600;
@@ -28,9 +28,8 @@
 }
 
 .pill-tab.active {
-  border-color: var(--accent);
+  border: 1.7px solid var(--accent);
   color: var(--text-strong);
-  box-shadow: 0 0 0 1px rgba(76, 125, 255, 0.35), 0 0 12px rgba(76, 125, 255, 0.25);
 }
 
 .mode-toggle {
@@ -49,9 +48,9 @@
 
 .app-select {
   border-radius: 999px;
-  border: 1px solid #3b3b3b;
-  background: #1a1a1a;
-  color: #eee;
+  border: 1px solid var(--border-1);
+  background: var(--bg-input);
+  color: var(--text-strong);
   padding: 0.45rem 0.75rem;
   font-family: inherit;
 }
@@ -88,17 +87,17 @@
   margin-top: 0.35rem;
   padding: 0.45rem 0.75rem;
   border-radius: 8px;
-  border: 1px solid #3a3a3a;
-  background: #0f0f0f;
-  color: #f5f5f5;
+  border: 1px solid var(--border-1);
+  background: var(--bg-input);
+  color: var(--text-strong);
   font-size: 1rem;
   font-weight: 600;
   box-sizing: border-box;
 }
 
 .flex-inputs input:not([type='range']):focus {
-  border-color: #6a8bff;
-  box-shadow: 0 0 0 1px rgba(106, 139, 255, 0.35);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 35%, transparent);
   outline: none;
 }
 
@@ -106,9 +105,9 @@
   margin-top: 0.35rem;
   padding: 0.45rem 0.75rem;
   border-radius: 8px;
-  border: 1px solid #3a3a3a;
-  background: #0f0f0f;
-  color: #f5f5f5;
+  border: 1px solid var(--border-1);
+  background: var(--bg-input);
+  color: var(--text-strong);
   font-size: 0.85rem;
   font-weight: 600;
   box-sizing: border-box;
@@ -116,9 +115,9 @@
 
 .flex-inputs select.app-select {
   border-radius: 8px;
-  border: 1px solid #3a3a3a;
-  background: #0f0f0f;
-  color: #f5f5f5;
+  border: 1px solid var(--border-1);
+  background: var(--bg-input);
+  color: var(--text-strong);
   font-size: 0.85rem;
   font-weight: 600;
   appearance: auto;
@@ -126,8 +125,8 @@
 
 .sensitivity-shift-row select {
   border-radius: 999px;
-  border: 1px solid #2d2d2d;
-  background: #101010;
+  border: 1px solid var(--border-1);
+  background: var(--bg-input);
   color: var(--text-strong);
   padding: 0.4rem 0.75rem;
   font-weight: 600;
@@ -141,8 +140,8 @@
 }
 
 .flex-inputs select:focus {
-  border-color: #6a8bff;
-  box-shadow: 0 0 0 1px rgba(106, 139, 255, 0.35);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 35%, transparent);
   outline: none;
 }
 
@@ -158,17 +157,18 @@ input[type=number] {
 
 .flex-inputs input[type=range] {
   margin-top: 0.4rem;
-  accent-color: #6a8bff;
+  accent-color: var(--accent);
 }
 
 .secondary-btn {
   padding: 0.5rem 1.2rem;
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  background: transparent;
-  color: #f7f7f7;
+  border: 1px solid var(--border-1);
+  background: var(--bg-input);
+  color: var(--text-strong);
   cursor: pointer;
   font-size: 0.85rem;
+  transition: border-color 0.2s ease, background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .danger-btn {
@@ -178,10 +178,12 @@ input[type=number] {
   background: rgba(255, 120, 111, 0.08);
   color: #ffb7af;
   cursor: pointer;
+  transition: border-color 0.2s ease, background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .secondary-btn:hover {
-  border-color: rgba(255, 255, 255, 0.4);
+  border-color: var(--border-strong);
+  background: var(--bg-btn-hover);
 }
 
 .secondary-btn:disabled,

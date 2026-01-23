@@ -8,7 +8,7 @@
   display: flex;
   gap: 1.5rem;
   font-size: 0.85rem;
-  color: #bbb;
+  color: var(--text-mid);
   margin-bottom: 0.6rem;
 }
 
@@ -21,15 +21,15 @@
 }
 
 .legendDotSensitivity {
-  background: #6a8bff;
+  background: var(--accent);
 }
 
 .legendDotVelocity {
-  background: #52c1ff;
+  background: #5bc7d7;
 }
 
 .graphPanel small {
-  color: #999;
+  color: var(--text-muted);
   margin-top: 0.5rem;
   display: block;
 }
@@ -40,9 +40,9 @@
 
 .graphPlaceholder {
   padding: 1rem;
-  border: 1px dashed #444;
+  border: 1px dashed var(--border-1);
   border-radius: 10px;
-  color: #999;
+  color: var(--text-muted);
   text-align: center;
 }
 
@@ -55,7 +55,7 @@
 
 .graphLiveReadout span strong {
   font-weight: 600;
-  color: #fff;
+  color: var(--text-strong);
 }
 
 .legacyCurveCanvas {
@@ -63,5 +63,5 @@
   height: auto;
   display: block;
   border-radius: 12px;
-  background: #0f0f0f;
+  background: var(--bg-btn);
 }
