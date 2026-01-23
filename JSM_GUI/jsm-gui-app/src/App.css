@@ -168,41 +168,6 @@
   }
 }
 
-.tab-bar {
-  display: flex;
-  gap: 0.75rem;
-}
-
-.tab-button {
-  flex: 1;
-  min-width: 140px;
-  text-align: center;
-}
-
-.pill-tab {
-  border: 1px solid var(--border-1);
-  border-radius: 999px;
-  background: var(--bg-btn);
-  color: var(--text-strong);
-  padding: 0.55rem 1rem;
-  font-weight: 600;
-  font-size: 0.95rem;
-  cursor: pointer;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease, background-color 0.2s ease;
-}
-
-.pill-tab:hover:not(.active) {
-  border-color: var(--border-strong);
-  background: var(--bg-btn-hover);
-  color: var(--text-strong);
-}
-
-.pill-tab.active {
-  border-color: var(--accent);
-  color: var(--text-strong);
-  box-shadow: 0 0 0 1px rgba(76, 125, 255, 0.35), 0 0 12px rgba(76, 125, 255, 0.25);
-}
-
 .app-card {
   border: 1px solid var(--border-1);
   border-radius: 12px;
@@ -317,15 +282,6 @@
 
 .touchpad-binding-list .keymap-grid {
   margin-top: 0.5rem;
-}
-
-.app-select {
-  border-radius: 999px;
-  border: 1px solid #3b3b3b;
-  background: #1a1a1a;
-  color: #eee;
-  padding: 0.45rem 0.75rem;
-  font-family: inherit;
 }
 
 .stick-subtabs {
@@ -537,104 +493,6 @@ header h1 {
   margin: 0;
 }
 
-.flex-inputs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-}
-
-.flex-inputs label {
-  flex: 1;
-  min-width: 120px;
-  display: flex;
-  flex-direction: column;
-  font-weight: 600;
-  color: var(--text-strong);
-}
-
-.label-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-}
-
-.inline-helper {
-  margin: 0;
-  padding: 0;
-  line-height: 1;
-}
-
-.flex-inputs input:not([type='range']) {
-  margin-top: 0.35rem;
-  padding: 0.45rem 0.75rem;
-  border-radius: 8px;
-  border: 1px solid #3a3a3a;
-  background: #0f0f0f;
-  color: #f5f5f5;
-  font-size: 1rem;
-  font-weight: 600;
-  box-sizing: border-box;
-}
-
-.flex-inputs input:not([type='range']):focus {
-  border-color: #6a8bff;
-  box-shadow: 0 0 0 1px rgba(106, 139, 255, 0.35);
-  outline: none;
-}
-
-.flex-inputs select {
-  margin-top: 0.35rem;
-  padding: 0.45rem 0.75rem;
-  border-radius: 8px;
-  border: 1px solid #3a3a3a;
-  background: #0f0f0f;
-  color: #f5f5f5;
-  font-size: 0.85rem;
-  font-weight: 600;
-  box-sizing: border-box;
-}
-
-.flex-inputs select.app-select {
-  border-radius: 8px;
-  border: 1px solid #3a3a3a;
-  background: #0f0f0f;
-  color: #f5f5f5;
-  font-size: 0.85rem;
-  font-weight: 600;
-  appearance: auto;
-}
-
-.sensitivity-shift-row select {
-  border-radius: 999px;
-  border: 1px solid #2d2d2d;
-  background: #101010;
-  color: var(--text-strong);
-  padding: 0.4rem 0.75rem;
-  font-weight: 600;
-}
-
-.flex-inputs select:focus {
-  border-color: #6a8bff;
-  box-shadow: 0 0 0 1px rgba(106, 139, 255, 0.35);
-  outline: none;
-}
-
-input[type=number]::-webkit-outer-spin-button,
-input[type=number]::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-
-input[type=number] {
-  -moz-appearance: textfield;
-}
-
-.flex-inputs input[type=range] {
-  margin-top: 0.4rem;
-  accent-color: #6a8bff;
-}
-
 
 
 .lockable.locked .locked-overlay {
@@ -660,35 +518,6 @@ input[type=number] {
   align-items: center;
   gap: 0.75rem;
   margin-top: 0.75rem;
-}
-
-.secondary-btn {
-  padding: 0.5rem 1.2rem;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  background: transparent;
-  color: #f7f7f7;
-  cursor: pointer;
-  font-size: 0.85rem;
-}
-
-.danger-btn {
-  padding: 0.5rem 1.2rem;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 120, 111, 0.6);
-  background: rgba(255, 120, 111, 0.08);
-  color: #ffb7af;
-  cursor: pointer;
-}
-
-.secondary-btn:hover {
-  border-color: rgba(255, 255, 255, 0.4);
-}
-
-.secondary-btn:disabled,
-.danger-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
 }
 
 .pending-banner {
@@ -987,14 +816,6 @@ input[type=number] {
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
-}
-
-.sensitivity-shift-row select {
-  border-radius: 999px;
-  border: 1px solid #2d2d2d;
-  background: #101010;
-  color: var(--text-strong);
-  padding: 0.4rem 0.75rem;
 }
 
 .keymap-card-header {
