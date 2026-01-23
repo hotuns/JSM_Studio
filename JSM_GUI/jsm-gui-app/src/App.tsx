@@ -24,6 +24,70 @@ type SticksSubTab = 'bindings' | 'modes'
 const asNumber = (value: unknown) => (typeof value === 'number' ? value : undefined)
 const formatNumber = (value: number | undefined, digits = 2) =>
   typeof value === 'number' && Number.isFinite(value) ? value.toFixed(digits) : '0.00'
+
+type PrimaryNavProps = {
+  primaryTab: PrimaryTab
+  setPrimaryTab: (tab: PrimaryTab) => void
+}
+
+const PrimaryNav = ({ primaryTab, setPrimaryTab }: PrimaryNavProps) => (
+  <div className="nav-group">
+    <button className={`nav-item ${primaryTab === 'gyro' ? 'active' : ''}`} onClick={() => setPrimaryTab('gyro')}>
+      Gyro & Sensitivity
+    </button>
+    <button className={`nav-item ${primaryTab === 'keybinds' ? 'active' : ''}`} onClick={() => setPrimaryTab('keybinds')}>
+      Keybinds
+    </button>
+    <button className={`nav-item ${primaryTab === 'touchpad' ? 'active' : ''}`} onClick={() => setPrimaryTab('touchpad')}>
+      Touchpad
+    </button>
+    <button className={`nav-item ${primaryTab === 'sticks' ? 'active' : ''}`} onClick={() => setPrimaryTab('sticks')}>
+      Sticks
+    </button>
+  </div>
+)
+
+type TopBarContentProps = {
+  primaryTab: PrimaryTab
+  backendChoice: 'SDL' | 'legacy'
+  onBackendChange: (choice: 'SDL' | 'legacy') => void
+  renderGyroNav: () => JSX.Element
+  renderKeybindsNav: () => JSX.Element
+  renderTouchpadNav: () => JSX.Element
+  renderSticksNav: () => JSX.Element
+}
+
+const TopBarContent = ({
+  primaryTab,
+  backendChoice,
+  onBackendChange,
+  renderGyroNav,
+  renderKeybindsNav,
+  renderTouchpadNav,
+  renderSticksNav,
+}: TopBarContentProps) => (
+  <>
+    <div className="top-bar-left">
+      {primaryTab === 'gyro' && renderGyroNav()}
+      {primaryTab === 'keybinds' && renderKeybindsNav()}
+      {primaryTab === 'touchpad' && renderTouchpadNav()}
+      {primaryTab === 'sticks' && renderSticksNav()}
+    </div>
+    <div className="top-bar-right">
+      <label className="inline-select">
+        <span>JSM Version</span>
+        <select
+          className="app-select"
+          value={backendChoice}
+          onChange={(e) => onBackendChange(e.target.value as 'SDL' | 'legacy')}
+        >
+          <option value="SDL">SDL</option>
+          <option value="legacy">Legacy</option>
+        </select>
+      </label>
+    </div>
+  </>
+)
 function App() {
   const { sample, isCalibrating, countdown } = useTelemetry()
   const [statusMessage, setStatusMessage] = useState<string | null>(null)
@@ -617,44 +681,39 @@ function App() {
   return (
     <div className="app-shell">
       <ToastHost />
+      {/* Desktop sidebar */}
       <aside className="side-nav">
         <div className="nav-brand">JSM Custom Curve</div>
-        <div className="nav-group">
-          <button className={`nav-item ${primaryTab === 'gyro' ? 'active' : ''}`} onClick={() => setPrimaryTab('gyro')}>
-            Gyro & Sensitivity
-          </button>
-          <button className={`nav-item ${primaryTab === 'keybinds' ? 'active' : ''}`} onClick={() => setPrimaryTab('keybinds')}>
-            Keybinds
-          </button>
-          <button className={`nav-item ${primaryTab === 'touchpad' ? 'active' : ''}`} onClick={() => setPrimaryTab('touchpad')}>
-            Touchpad
-          </button>
-          <button className={`nav-item ${primaryTab === 'sticks' ? 'active' : ''}`} onClick={() => setPrimaryTab('sticks')}>
-            Sticks
-          </button>
-        </div>
+        <PrimaryNav primaryTab={primaryTab} setPrimaryTab={setPrimaryTab} />
       </aside>
+      {/* Narrow-width sticky header */}
+      <div className="responsive-header">
+        <div className="nav-brand">JSM Custom Curve</div>
+        <PrimaryNav primaryTab={primaryTab} setPrimaryTab={setPrimaryTab} />
+        <div className="responsive-header-divider" />
+        <div className="top-bar">
+          <TopBarContent
+            primaryTab={primaryTab}
+            backendChoice={backendChoice}
+            onBackendChange={handleBackendChange}
+            renderGyroNav={renderGyroNav}
+            renderKeybindsNav={renderKeybindsNav}
+            renderTouchpadNav={renderTouchpadNav}
+            renderSticksNav={renderSticksNav}
+          />
+        </div>
+      </div>
       <div className="shell-main">
-          <div className="top-bar">
-          <div className="top-bar-left">
-            {primaryTab === 'gyro' && renderGyroNav()}
-            {primaryTab === 'keybinds' && renderKeybindsNav()}
-            {primaryTab === 'touchpad' && renderTouchpadNav()}
-            {primaryTab === 'sticks' && renderSticksNav()}
-          </div>
-          <div className="top-bar-right">
-            <label className="inline-select">
-              <span>JSM Version</span>
-              <select
-                className="app-select"
-                value={backendChoice}
-                onChange={(e) => handleBackendChange(e.target.value as 'SDL' | 'legacy')}
-              >
-                <option value="SDL">SDL</option>
-                <option value="legacy">Legacy</option>
-              </select>
-            </label>
-          </div>
+        <div className="top-bar">
+          <TopBarContent
+            primaryTab={primaryTab}
+            backendChoice={backendChoice}
+            onBackendChange={handleBackendChange}
+            renderGyroNav={renderGyroNav}
+            renderKeybindsNav={renderKeybindsNav}
+            renderTouchpadNav={renderTouchpadNav}
+            renderSticksNav={renderSticksNav}
+          />
         </div>
         <div className="content-grid">
           <main className="main-pane">{renderPrimaryContent()}</main>

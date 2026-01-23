@@ -71,6 +71,14 @@ body {
   position: relative;
 }
 
+.responsive-header {
+  display: none;
+}
+
+.mobile-header {
+  display: none;
+}
+
 .top-bar {
   display: flex;
   align-items: center;
@@ -82,7 +90,6 @@ body {
   position: sticky;
   top: 0;
   z-index: 10;
-  min-height: var(--top-bar-height);
 }
 
 .top-bar-left {
@@ -256,24 +263,47 @@ body {
 
 @media (max-width: 1060px) {
   .app-shell {
-    grid-template-columns: 1fr;
+    display: flex;
+    flex-direction: column;
+    height: auto;
   }
 
   .side-nav {
-    flex-direction: row;
-    flex-wrap: wrap;
-    border-right: none;
-    border-bottom: 1px solid #1f1f1f;
+    display: none;
   }
 
   .nav-group {
     flex-direction: row;
     flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.75rem;
   }
 
   .nav-item {
-    flex: 1;
-    min-width: 140px;
+    flex: 0 1 auto;
+    min-width: 120px;
+    text-align: center;
+    border-radius: 999px;
+    border: 1px solid #343434;
+    background: #161616;
+    color: #ddd;
+    padding: 0.6rem 1.1rem;
+    font-weight: 600;
+    font-size: 0.95rem;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease, background-color 0.2s ease;
+  }
+
+  .nav-item:hover {
+    border-color: #5f73ff;
+    background: #242424;
+    color: #f0f0f0;
+  }
+
+  .nav-item.active {
+    border-color: #6a8bff;
+    color: #fff;
+    box-shadow: 0 0 0 1px rgba(106, 139, 255, 0.35), 0 0 12px rgba(106, 139, 255, 0.25);
+    background: #161616;
   }
 
   .content-grid {
@@ -283,6 +313,7 @@ body {
       "main"
       "editor";
     row-gap: 1.5rem;
+    padding-top: 1rem;
   }
 
   .right-rail {
@@ -297,6 +328,12 @@ body {
     width: 100%;
   }
 
+  /* Single scrollbar: let body own scroll */
+  .shell-main {
+    height: auto;
+    overflow: visible;
+  }
+
   .config-editor-desktop {
     display: none;
   }
@@ -308,32 +345,114 @@ body {
     width: 100%;
   }
 
-  .top-bar {
-    flex-direction: column;
-    align-items: center;
-    gap: 0.75rem;
-  }
-
   .top-bar-left {
-    width: 100%;
-    flex-direction: column;
+    flex: 1 1 auto;
+    width: auto;
+    flex-direction: row;
     align-items: center;
+    justify-content: flex-start;
     gap: 0.4rem;
+    flex-wrap: wrap;
   }
 
   .nav-brand {
     width: 100%;
     text-align: center;
     margin-bottom: 0.5rem;
+    font-size: 1.75rem;
   }
 
   .subnav {
-    justify-content: center;
+    justify-content: flex-start;
   }
 
   .top-bar-right {
-    width: 100%;
+    width: auto;
+    flex: 0 0 auto;
     justify-content: flex-end;
+  }
+
+  /* hide desktop top bar; responsive header provides its own */
+  .top-bar {
+    display: none;
+  }
+
+  /* narrow-width sticky header (sidebar buttons + subnav/version) */
+  .responsive-header {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    gap: 0;
+    padding: 0.5rem 1.75rem;
+    background: linear-gradient(180deg, #0f1014 0%, #0d0e12 100%);
+    border-bottom: 1px solid #1f1f1f;
+  }
+
+  .responsive-header .nav-brand {
+    text-align: center;
+    font-size: 1.6rem;
+    margin: 0;
+  }
+
+  .responsive-header .nav-group {
+    gap: 0;
+    padding: 0.5rem 0;
+  }
+
+  .responsive-header-divider {
+    height: 1px;
+    background: #1f1f1f;
+    margin: 0.35rem 0;
+    /* stretch to full content width by canceling header horizontal padding */
+    margin-left: -1.75rem;
+    margin-right: -1.75rem;
+  }
+
+  .responsive-header .nav-item {
+    flex: 0 1 auto;
+    min-width: 120px;
+    text-align: center;
+    border-radius: 999px;
+    border: 1px solid #343434;
+    background: #161616;
+    color: #ddd;
+    padding: 0.6rem 1.1rem;
+    font-weight: 600;
+    font-size: 0.95rem;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease, background-color 0.2s ease;
+  }
+
+  .responsive-header .nav-item:hover {
+    border-color: #5f73ff;
+    background: #242424;
+    color: #f0f0f0;
+  }
+
+  .responsive-header .nav-item.active {
+    border-color: #6a8bff;
+    color: #fff;
+    box-shadow: 0 0 0 1px rgba(106, 139, 255, 0.35), 0 0 12px rgba(106, 139, 255, 0.25);
+    background: #161616;
+  }
+
+  .responsive-header .top-bar {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0;
+    width: 100%;
+    background: transparent;
+    border: none;
+    padding: 0.5rem 0;
+  }
+
+  .responsive-header .subnav {
+    justify-content: flex-start;
   }
 }
 

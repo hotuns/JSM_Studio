@@ -543,6 +543,8 @@ async function createWindow() {
   win = new BrowserWindow({
     width: state.width ?? 1200,
     height: state.height ?? 900,
+    minWidth: 775,
+    minHeight: 600,
     x: state.x,
     y: state.y,
     title: 'JSM Custom Curve',
