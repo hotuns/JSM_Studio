@@ -73,6 +73,10 @@
   margin-bottom: 0.8rem;
 }
 
-.touchpadBindingList .keymap-grid {
+:global(.keymapGrid) {
+  /* spacing handled on the element; keep empty to avoid hash mismatch */
+}
+
+.touchpadBindingList :global(.keymapGrid) {
   margin-top: 0.5rem;
 }

@@ -2,6 +2,7 @@ import { ReactNode } from 'react'
 import { KeymapSection } from '../KeymapSection'
 import { SectionActions } from '../SectionActions'
 import { type ButtonDefinition } from '../../keymap/schema'
+import keymapStyles from '../Keymap.module.css'
 
 type ButtonGridSectionProps = {
   title: string
@@ -31,7 +32,7 @@ export function ButtonGridSection({
   return (
     <>
       <KeymapSection title={title} description={description}>
-        <div className="keymap-grid">
+        <div className={keymapStyles.keymapGrid}>
           {buttons.map(button => (
             <div key={button.command}>{renderButton(button)}</div>
           ))}
@@ -39,7 +40,7 @@ export function ButtonGridSection({
         {extraContent}
       </KeymapSection>
       <SectionActions
-        className="keymap-section-actions"
+        className={keymapStyles.keymapSectionActions}
         hasPendingChanges={hasPendingChanges}
         statusMessage={statusMessage}
         onApply={onApply}

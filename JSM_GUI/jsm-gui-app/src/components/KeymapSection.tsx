@@ -1,4 +1,5 @@
 import { ReactNode } from 'react'
+import styles from './Keymap.module.css'
 
 type KeymapSectionProps = {
   title: string
@@ -8,8 +9,8 @@ type KeymapSectionProps = {
 
 export function KeymapSection({ title, description, children }: KeymapSectionProps) {
   return (
-    <section className="keymap-section">
-      <div className="keymap-section-header">
+    <section className={styles.keymapSection}>
+      <div className={styles.keymapSectionHeader}>
         <div>
           <h3>{title}</h3>
           {description && <p>{description}</p>}

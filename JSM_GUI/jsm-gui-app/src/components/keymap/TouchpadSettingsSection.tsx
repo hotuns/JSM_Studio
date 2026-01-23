@@ -1,6 +1,7 @@
 import { KeymapSection } from '../KeymapSection'
 import { SectionActions } from '../SectionActions'
 import styles from './Touchpad.module.css'
+import keymapStyles from '../Keymap.module.css'
 
 type TouchpadSettingsSectionProps = {
   touchpadMode: string
@@ -85,7 +86,7 @@ export function TouchpadSettingsSection({
         </div>
       </KeymapSection>
       <SectionActions
-        className="keymap-section-actions"
+        className={keymapStyles.keymapSectionActions}
         hasPendingChanges={hasPendingChanges}
         statusMessage={statusMessage}
         onApply={onApply}

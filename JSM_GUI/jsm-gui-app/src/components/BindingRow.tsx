@@ -1,3 +1,5 @@
+import styles from './Keymap.module.css'
+
 type SpecialOption = { value: string; label: string; disabled?: boolean }
 
 type ModifierOption = {
@@ -56,14 +58,14 @@ export function BindingRow({
     }
   }
   return (
-    <div className="binding-row">
+    <div className={styles.bindingRow}>
       {showHeader && (
-        <div className="binding-row-header">
+        <div className={styles.bindingRowHeader}>
           <span>{label}</span>
         </div>
       )}
       {modifierOptions && modifierOptions.length > 0 && (
-        <div className="row-modifier-select" data-capture-ignore="true">
+        <div className={styles.rowModifierSelect} data-capture-ignore="true">
           <label>{modifierLabel ?? 'Modifier button'}</label>
           <select className="app-select" value={modifierValue ?? ''} onChange={(event) => onModifierChange?.(event.target.value)}>
             {modifierOptions.map(option => (
@@ -75,9 +77,9 @@ export function BindingRow({
         </div>
       )}
       {specialOptions && specialOptions.length > 0 && (
-        <div className="row-special-select-wrapper" data-capture-ignore="true">
+        <div className={styles.rowSpecialSelectWrapper} data-capture-ignore="true">
           <select
-            className="row-special-select app-select"
+            className={`${styles.rowSpecialSelect} app-select`}
             value={specialValue ?? ''}
             onChange={(event) => onSpecialChange?.(event.target.value)}
           >
@@ -90,13 +92,17 @@ export function BindingRow({
           </select>
         </div>
       )}
-      <div className="primary-binding-row">
-        <button type="button" className={`binding-input ${isCapturing ? 'recording' : ''}`} onClick={onBeginCapture}>
+      <div className={styles.primaryBindingRow}>
+        <button
+          type="button"
+          className={`${styles.bindingInput} ${isCapturing ? styles.bindingInputRecording : ''}`}
+          onClick={onBeginCapture}
+        >
           {buttonLabel}
         </button>
         <button
           type="button"
-          className="clear-binding-btn"
+          className={`${styles.clearBindingBtn}`}
           onClick={handleClear}
           disabled={!isManual && disableClear}
           data-capture-ignore="true"

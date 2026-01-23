@@ -3,6 +3,7 @@ import { KeymapSection } from '../KeymapSection'
 import { SectionActions } from '../SectionActions'
 import { type ButtonDefinition } from '../../keymap/schema'
 import styles from './Touchpad.module.css'
+import keymapStyles from '../Keymap.module.css'
 
 type TouchpadGridSectionProps = {
   gridColumns: number
@@ -48,11 +49,11 @@ export function TouchpadGridSection({
           })}
         </div>
         <div className={styles.touchpadBindingList} data-touchpad-binding-list>
-          <div className="keymap-grid">{touchpadButtons.map(renderButton)}</div>
+          <div className={keymapStyles.keymapGrid}>{touchpadButtons.map(renderButton)}</div>
         </div>
       </KeymapSection>
       <SectionActions
-        className="keymap-section-actions"
+        className={keymapStyles.keymapSectionActions}
         hasPendingChanges={hasPendingChanges}
         statusMessage={statusMessage}
         onApply={onApply}

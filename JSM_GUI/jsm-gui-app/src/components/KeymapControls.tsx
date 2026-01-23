@@ -30,6 +30,7 @@ import { TouchpadSettingsSection } from './keymap/TouchpadSettingsSection'
 import { TouchpadGridSection } from './keymap/TouchpadGridSection'
 import { ButtonBindingsCard } from './keymap/ButtonBindingsCard'
 import stickStyles from './Sticks.module.css'
+import keymapStyles from './Keymap.module.css'
 
 type KeymapControlsProps = {
   configText: string
@@ -220,7 +221,7 @@ const StickFlickSettings = ({ values, handlers, disabled }: StickFlickSettingsPr
   return (
     <div className="stick-flick-settings" data-capture-ignore="true">
       <small>Flick stick timing and snapping controls.</small>
-      <div className="stick-aim-grid">
+      <div className={stickStyles.stickAimGrid}>
         <label>
           Flick time (seconds)
           <input
@@ -536,7 +537,7 @@ export function KeymapControls({
       return (
         <div className={stickStyles.stickFlickSettings} data-capture-ignore="true">
           <small>Mouse area radius (pixels from center).</small>
-          <div className="stick-aim-grid">
+          <div className={stickStyles.stickAimGrid}>
             <label>
               Mouse area radius
               <input
@@ -557,7 +558,7 @@ export function KeymapControls({
       return (
         <div className={stickStyles.stickFlickSettings} data-capture-ignore="true">
           <small>Scroll wheel sensitivity (degrees per pulse). Higher values require larger rotations.</small>
-          <div className="stick-aim-grid">
+          <div className={stickStyles.stickAimGrid}>
             <label>
               Scroll sensitivity
               <input
@@ -584,7 +585,7 @@ export function KeymapControls({
 
   return (
     <Card className="control-panel" lockable locked={isCalibrating} lockMessage={resolvedLockMessage}>
-      <div className="keymap-card-header">
+      <div className={keymapStyles.keymapCardHeader}>
         <h2>
           {view === 'touchpad' ? 'Touchpad Controls' : view === 'sticks' ? 'Stick Bindings' : 'Keymap Controls'}
         </h2>
@@ -685,14 +686,14 @@ export function KeymapControls({
                         </select>
                       </label>
                     </div>
-                    <div className="global-control-row">
-                      <div className="global-control-text">
-                        <span className="global-control-title">Trigger threshold</span>
-                        <span className="global-control-caption">
+                    <div className={keymapStyles.globalControlRow}>
+                      <div className={keymapStyles.globalControlText}>
+                        <span className={keymapStyles.globalControlTitle}>Trigger threshold</span>
+                        <span className={keymapStyles.globalControlCaption}>
                           {triggerThreshold > 0 ? `Custom TRIGGER_THRESHOLD = ${triggerThreshold.toFixed(2)}` : 'Default (0.00)'}
                         </span>
                       </div>
-                      <div className="global-control-input-group">
+                      <div className={keymapStyles.globalControlInputGroup}>
                         <input
                           type="number"
                           min="0"
@@ -701,7 +702,7 @@ export function KeymapControls({
                           value={triggerThreshold}
                           onChange={(event) => onTriggerThresholdChange?.(event.target.value)}
                         />
-                        <span className="global-control-unit">seconds</span>
+                        <span className={keymapStyles.globalControlUnit}>seconds</span>
                       </div>
                     </div>
                   </div>
