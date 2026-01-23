@@ -124,67 +124,11 @@ header h1 {
   cursor: not-allowed;
 }
 
-.graph-legend {
-  display: flex;
-  gap: 1.5rem;
-  font-size: 0.85rem;
-  color: #bbb;
-  margin-bottom: 0.6rem;
-}
 
-.legend-dot {
-  display: inline-block;
-  width: 14px;
-  height: 4px;
-  border-radius: 2px;
-  margin-right: 0.35rem;
-}
 
-.legend-dot.sensitivity {
-  background: #6a8bff;
-}
 
-.legend-dot.velocity {
-  background: #52c1ff;
-}
 
-.legacy-curve-canvas {
-  width: 100%;
-  height: auto;
-  display: block;
-  border-radius: 12px;
-  background: #0f0f0f;
-}
 
-.graph-panel small {
-  color: #999;
-  margin-top: 0.5rem;
-  display: block;
-}
-
-.graph-footer {
-  margin-top: 0.85rem;
-}
-
-.graph-placeholder {
-  padding: 1rem;
-  border: 1px dashed #444;
-  border-radius: 10px;
-  color: #999;
-  text-align: center;
-}
-
-.graph-live-readout {
-  display: flex;
-  gap: 1rem;
-  font-size: 0.9rem;
-  color: var(--text-strong);
-}
-
-.graph-live-readout span strong {
-  font-weight: 600;
-  color: #fff;
-}
 
 .config-panel {
   display: flex;

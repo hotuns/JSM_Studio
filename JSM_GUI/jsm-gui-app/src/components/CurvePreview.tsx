@@ -1,5 +1,6 @@
 import { SensitivityValues } from '../utils/keymap'
 import { SensitivityGraph } from './SensitivityGraph'
+import graphStyles from './Graph.module.css'
 import { TelemetrySample } from '../hooks/useTelemetry'
 
 type CurvePreviewProps = {
@@ -18,10 +19,10 @@ export function CurvePreview({ sensitivity, sample, hasPendingChanges, telemetry
   const asNumber = (value: unknown) => (typeof value === 'number' ? value : undefined)
   const curveType = (sensitivity.accelCurve ?? 'LINEAR').toUpperCase() as 'LINEAR' | 'NATURAL' | 'POWER' | 'QUADRATIC' | 'SIGMOID' | 'JUMP'
   return (
-    <div className="graph-panel">
-      <div className="graph-legend">
-        <span><span className="legend-dot sensitivity" /> Sensitivity</span>
-        <span><span className="legend-dot velocity" /> Normalized output velocity</span>
+    <div className={graphStyles.graphPanel}>
+      <div className={graphStyles.graphLegend}>
+        <span><span className={`${graphStyles.legendDot} ${graphStyles.legendDotSensitivity}`} /> Sensitivity</span>
+        <span><span className={`${graphStyles.legendDot} ${graphStyles.legendDotVelocity}`} /> Normalized output velocity</span>
       </div>
       <SensitivityGraph
         minThreshold={sensitivity.minThreshold}
@@ -42,7 +43,7 @@ export function CurvePreview({ sensitivity, sample, hasPendingChanges, telemetry
         omega={asNumber(sample?.omega)}
         disableLiveDot={hasPendingChanges}
       />
-      <div className="graph-live-readout">
+      <div className={graphStyles.graphLiveReadout}>
         <span>Gyro Speed: <strong>{telemetry.omega}°/s</strong></span>
         <span>Active Sens: <strong>{telemetry.sensX}/{telemetry.sensY}</strong></span>
       </div>
