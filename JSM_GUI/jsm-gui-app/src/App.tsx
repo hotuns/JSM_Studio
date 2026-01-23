@@ -1,4 +1,5 @@
 import './App.css'
+import sideNavStyles from './components/SideNav.module.css'
 import { useState, useEffect } from 'react'
 import { useTelemetry } from './hooks/useTelemetry'
 import { SensitivityControls } from './components/SensitivityControls'
@@ -31,17 +32,29 @@ type PrimaryNavProps = {
 }
 
 const PrimaryNav = ({ primaryTab, setPrimaryTab }: PrimaryNavProps) => (
-  <div className="nav-group">
-    <button className={`nav-item ${primaryTab === 'gyro' ? 'active' : ''}`} onClick={() => setPrimaryTab('gyro')}>
+  <div className={sideNavStyles.navGroup}>
+    <button
+      className={`${sideNavStyles.navItem} ${primaryTab === 'gyro' ? sideNavStyles.active : ''}`}
+      onClick={() => setPrimaryTab('gyro')}
+    >
       Gyro & Sensitivity
     </button>
-    <button className={`nav-item ${primaryTab === 'keybinds' ? 'active' : ''}`} onClick={() => setPrimaryTab('keybinds')}>
+    <button
+      className={`${sideNavStyles.navItem} ${primaryTab === 'keybinds' ? sideNavStyles.active : ''}`}
+      onClick={() => setPrimaryTab('keybinds')}
+    >
       Keybinds
     </button>
-    <button className={`nav-item ${primaryTab === 'touchpad' ? 'active' : ''}`} onClick={() => setPrimaryTab('touchpad')}>
+    <button
+      className={`${sideNavStyles.navItem} ${primaryTab === 'touchpad' ? sideNavStyles.active : ''}`}
+      onClick={() => setPrimaryTab('touchpad')}
+    >
       Touchpad
     </button>
-    <button className={`nav-item ${primaryTab === 'sticks' ? 'active' : ''}`} onClick={() => setPrimaryTab('sticks')}>
+    <button
+      className={`${sideNavStyles.navItem} ${primaryTab === 'sticks' ? sideNavStyles.active : ''}`}
+      onClick={() => setPrimaryTab('sticks')}
+    >
       Sticks
     </button>
   </div>
@@ -682,13 +695,13 @@ function App() {
     <div className="app-shell">
       <ToastHost />
       {/* Desktop sidebar */}
-      <aside className="side-nav">
-        <div className="nav-brand">JSM Custom Curve</div>
+      <aside className={sideNavStyles.sideNav}>
+        <div className={sideNavStyles.navBrand}>JSM Custom Curve</div>
         <PrimaryNav primaryTab={primaryTab} setPrimaryTab={setPrimaryTab} />
       </aside>
       {/* Narrow-width sticky header */}
       <div className="responsive-header">
-        <div className="nav-brand">JSM Custom Curve</div>
+        <div className={sideNavStyles.navBrand}>JSM Custom Curve</div>
         <PrimaryNav primaryTab={primaryTab} setPrimaryTab={setPrimaryTab} />
         <div className="responsive-header-divider" />
         <div className="top-bar">
