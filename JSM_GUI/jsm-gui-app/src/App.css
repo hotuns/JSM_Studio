@@ -85,21 +85,7 @@
   }
 }
 
-.legacy-binding-warning {
-  margin: 0.3rem 0 0.8rem 0;
-  padding: 0.45rem 0.75rem;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 196, 80, 0.4);
-  background: rgba(255, 196, 80, 0.08);
-  color: #ffc450;
-  font-size: 0.85rem;
-}
 
-.field-description {
-  margin: 0.25rem 0 0.35rem 0;
-  color: #bcbcbc;
-  font-size: 0.9rem;
-}
 
 header {
   text-align: center;
@@ -111,17 +97,6 @@ header h1 {
   margin: 0;
 }
 
-.calibration-pill {
-  display: inline-flex;
-  padding: 0.3rem 0.9rem;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 182, 128, 0.6);
-  background: rgba(255, 182, 128, 0.12);
-  color: #ffb680;
-  font-weight: 600;
-  align-items: center;
-  white-space: nowrap;
-}
 
 .telemetry-banner {
   border: 1px solid var(--border-1);
@@ -212,18 +187,6 @@ header h1 {
   cursor: not-allowed;
 }
 
-.link-btn {
-  border: none;
-  background: none;
-  color: #9cb6ff;
-  cursor: pointer;
-  padding: 0.2rem 0.4rem;
-  font-size: 0.85rem;
-  text-decoration: underline;
-}
-.link-btn:hover {
-  color: #cdd8ff;
-}
 .graph-legend {
   display: flex;
   gap: 1.5rem;
@@ -397,7 +360,3 @@ header h1 {
   gap: 0.35rem;
 }
 
-.full-width-btn {
-  width: 100%;
-  justify-content: center;
-}
