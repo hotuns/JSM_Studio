@@ -101,8 +101,10 @@ export const ButtonBindingsCard = ({
   )
   const trackballSliderValue = trackballDecay && !Number.isNaN(Number(trackballDecay)) ? Number(trackballDecay) : 1
 
+  const rowCapturing = rows.some(row => isCapturing(button.command, row.slot, row.id))
+
   return (
-    <div className={`${keymapStyles.keymapRow} ${isCapturing(button.command, 'tap') ? keymapStyles.keymapRowCapturing : ''}`} key={button.command}>
+    <div className={`${keymapStyles.keymapRow} ${rowCapturing ? keymapStyles.keymapRowCapturing : ''}`} key={button.command}>
       <div className={keymapStyles.keymapLabel}>
         <span className={keymapStyles.buttonName}>{layout === 'playstation' ? button.playstation : button.xbox}</span>
         <span className={keymapStyles.buttonMeta}>{button.description}</span>

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Card } from './Card'
+import styles from './ProfileManager.module.css'
 
 type ProfileManagerProps = {
   currentProfileName: string | null
@@ -44,37 +45,40 @@ export function ProfileManager({
   }, [libraryProfiles])
 
   return (
-    <Card className="profile-card" lockable locked={isCalibrating} lockMessage={lockMessage}>
+    <Card className={styles.profileCard} lockable locked={isCalibrating} lockMessage={lockMessage}>
       {hasPendingChanges && (
-        <div className="profile-flags">
-          <span className="profile-warning">Unsaved changes on current profile</span>
+        <div className={styles.profileFlags}>
+          <span className={styles.profileWarning}>Unsaved changes on current profile</span>
         </div>
       )}
 
       <section className="profile-library">
-        <div className="profile-library-header">
+        <div className={styles.profileLibraryHeader}>
           <div>
             <h3>Library</h3>
             <p>Select a profile to load it into the editor, or rename/delete existing ones.</p>
           </div>
-          {libraryLoading && <span className="profile-library-loading">Refreshing…</span>}
+          {libraryLoading && <span className={styles.profileLibraryLoading}>Refreshing…</span>}
         </div>
         {libraryProfiles.length === 0 ? (
-          <p className="profile-library-empty">No saved profiles yet. Click Add profile to get started.</p>
+          <p className={styles.profileLibraryEmpty}>No saved profiles yet. Click Add profile to get started.</p>
         ) : (
-          <ul className="profile-library-list">
+          <ul className={styles.profileLibraryList}>
             {libraryProfiles.map(profileName => (
-              <li key={profileName} className={currentProfileName === profileName ? 'active' : ''}>
-                <div className="profile-library-name">
+              <li
+                key={profileName}
+                className={`${styles.profileLibraryItem} ${currentProfileName === profileName ? styles.profileLibraryItemActive : ''}`}
+              >
+                <div className={styles.profileLibraryName}>
                   <input
                     type="text"
                     maxLength={80}
                     value={editedProfileNames[profileName] ?? profileName}
                     onChange={(event) => onProfileNameChange(profileName, event.target.value)}
                   />
-                  {currentProfileName === profileName && <span className="profile-library-active-badge">Active</span>}
+                  {currentProfileName === profileName && <span className={styles.profileLibraryActiveBadge}>Active</span>}
                 </div>
-                <div className="profile-library-buttons">
+                <div className={styles.profileLibraryButtons}>
                   <button
                     className="secondary-btn"
                     onClick={() => onRenameProfile(profileName)}
@@ -109,7 +113,7 @@ export function ProfileManager({
             ))}
           </ul>
         )}
-        <div className="profile-library-actions-row">
+        <div className={styles.profileLibraryActionsRow}>
           <div className="profile-import">
             <input
               type="file"
@@ -144,7 +148,7 @@ export function ProfileManager({
         </div>
       </section>
 
-      {!profileApplied && <span className="profile-not-applied">Not running in JoyShockMapper yet</span>}
+      {!profileApplied && <span className={styles.profileNotApplied}>Not running in JoyShockMapper yet</span>}
     </Card>
   )
 }
