@@ -1,5 +1,6 @@
 import './App.css'
 import sideNavStyles from './components/SideNav.module.css'
+import topBarStyles from './components/TopBar.module.css'
 import { useState, useEffect } from 'react'
 import { useTelemetry } from './hooks/useTelemetry'
 import { SensitivityControls } from './components/SensitivityControls'
@@ -80,14 +81,14 @@ const TopBarContent = ({
   renderSticksNav,
 }: TopBarContentProps) => (
   <>
-    <div className="top-bar-left">
+    <div className={topBarStyles.topBarLeft}>
       {primaryTab === 'gyro' && renderGyroNav()}
       {primaryTab === 'keybinds' && renderKeybindsNav()}
       {primaryTab === 'touchpad' && renderTouchpadNav()}
       {primaryTab === 'sticks' && renderSticksNav()}
     </div>
-    <div className="top-bar-right">
-      <label className="inline-select">
+    <div className={topBarStyles.topBarRight}>
+      <label className={topBarStyles.inlineSelect}>
         <span>JSM Version</span>
         <select
           className="app-select"
@@ -704,7 +705,7 @@ function App() {
         <div className={sideNavStyles.navBrand}>JSM Custom Curve</div>
         <PrimaryNav primaryTab={primaryTab} setPrimaryTab={setPrimaryTab} />
         <div className="responsive-header-divider" />
-        <div className="top-bar">
+        <div className={`${topBarStyles.topBar} ${topBarStyles.responsiveTopBar}`}>
           <TopBarContent
             primaryTab={primaryTab}
             backendChoice={backendChoice}
@@ -717,7 +718,7 @@ function App() {
         </div>
       </div>
       <div className="shell-main">
-        <div className="top-bar">
+        <div className={`${topBarStyles.topBar} ${topBarStyles.desktopTopBar}`}>
           <TopBarContent
             primaryTab={primaryTab}
             backendChoice={backendChoice}
