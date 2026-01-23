@@ -1,6 +1,7 @@
 import { Card } from './Card'
 import { SensitivityValues } from '../utils/keymap'
 import { TelemetryBanner } from './TelemetryBanner'
+import telemetryStyles from './Telemetry.module.css'
 import { SectionActions } from './SectionActions'
 import { LOCK_MESSAGE } from '../constants/messages'
 
@@ -61,7 +62,7 @@ export function NoiseSteadyingControls({
           controller is at rest.
         </p>
       </div>
-      <div className="telemetry-inline">
+      <div className={telemetryStyles.telemetryInline}>
         <TelemetryBanner {...telemetry} />
       </div>
       <div className="flex-inputs">

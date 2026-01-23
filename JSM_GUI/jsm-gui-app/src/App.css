@@ -98,69 +98,6 @@ header h1 {
 }
 
 
-.telemetry-banner {
-  border: 1px solid var(--border-1);
-  border-radius: 12px;
-  padding: 1rem;
-  margin: 1rem 0 1.5rem;
-  background-color: #1b1b1b;
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-}
-
-.telemetry-heading {
-  margin: 0;
-  font-weight: 600;
-  color: #9fe5c2;
-}
-
-.telemetry-subheading {
-  margin: 0;
-  font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.7);
-}
-
-.telemetry-readouts {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 0.8rem;
-  font-size: 0.95rem;
-}
-
-.telemetry-node {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.telemetry-label {
-  font-size: 0.85rem;
-  color: rgba(255, 255, 255, 0.7);
-  text-transform: uppercase;
-  font-weight: 600;
-}
-
-.telemetry-value {
-  font-weight: 600;
-  color: #f2f2f2;
-}
-
-.telemetry-inline {
-  background: #111;
-  border: 1px solid var(--border-1);
-  border-radius: 12px;
-  padding: 0.75rem 1rem;
-}
-
-.telemetry-inline .telemetry-banner {
-  margin: 0;
-  padding: 0;
-  border: none;
-  border-radius: 0;
-  background: transparent;
-}
-
 .config-panel textarea:disabled,
 .config-actions button:disabled {
   opacity: 0.55;
@@ -359,4 +296,3 @@ header h1 {
   flex-direction: column;
   gap: 0.35rem;
 }
-
