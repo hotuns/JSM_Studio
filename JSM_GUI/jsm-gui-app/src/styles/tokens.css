@@ -1,8 +1,9 @@
 :root {
+  /* Layout */
   --top-bar-height: 72px;
   --bp-main: 1060px;
 
-  /* Dark theme tokens */
+  /* Backgrounds */
   --bg-0: #0b0e13;
   --bg-1: #12151b;
   --bg-1-5: #141821;
@@ -11,12 +12,16 @@
   --bg-btn-hover: #202635;
   --bg-btn-primary: #1f2a3d;
 
+  /* Text */
   --text-strong: #e6eaf2;
   --text-mid: #aab0bc;
   --text-muted: #7c8494;
 
+  /* Borders */
   --border-1: #242a36;
   --border-strong: #2f3646;
 
+  /* Accent */
   --accent: #4c7dff;
+
 }
