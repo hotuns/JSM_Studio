@@ -3,6 +3,7 @@ import sideNavStyles from './components/SideNav.module.css'
 import topBarStyles from './components/TopBar.module.css'
 import { useState, useEffect } from 'react'
 import { useTelemetry } from './hooks/useTelemetry'
+import miscStyles from './components/Misc.module.css'
 import { SensitivityControls } from './components/SensitivityControls'
 import { ConfigEditor } from './components/ConfigEditor'
 import { ProfileManager } from './components/ProfileManager'
@@ -16,6 +17,7 @@ import { useProfileLibrary } from './hooks/useProfileLibrary'
 import { useKeymapConfig } from './hooks/useKeymapConfig'
 import { useCalibration } from './hooks/useCalibration'
 import { ToastHost } from './components/ToastHost'
+import telemetryStyles from './components/Telemetry.module.css'
 
 type PrimaryTab = 'gyro' | 'keybinds' | 'touchpad' | 'sticks'
 type GyroSubTab = 'behavior' | 'sensitivity' | 'noise'
@@ -863,8 +865,8 @@ function App() {
             </div>
             {calibrationOutput && (
               <>
-                <div className="calibration-output__label">Calculation result</div>
-                <div className="calibration-output" data-capture-ignore="true">
+                <div className={miscStyles.calibrationOutputLabel}>Calculation result</div>
+                <div className={miscStyles.calibrationOutput} data-capture-ignore="true">
                   <pre>{calibrationOutput}</pre>
                 </div>
               </>

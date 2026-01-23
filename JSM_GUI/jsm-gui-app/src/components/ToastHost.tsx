@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { toastEventName, type ToastKind } from '../utils/toast'
+import styles from './Misc.module.css'
 
 type ToastPayload = {
   message: string
@@ -37,9 +38,14 @@ export function ToastHost() {
   if (!toasts.length) return null
 
   return (
-    <div className="toast-stack">
+    <div className={styles.toastStack}>
       {toasts.map(toast => (
-        <div key={toast.id} className={`toast toast-${toast.kind ?? 'success'}`}>
+        <div
+          key={toast.id}
+          className={`${styles.toast} ${
+            toast.kind === 'error' ? styles.toastError : toast.kind === 'warn' ? styles.toastWarn : styles.toastSuccess
+          }`}
+        >
           {toast.message}
         </div>
       ))}

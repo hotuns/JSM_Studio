@@ -4,6 +4,7 @@ import { SectionActions } from './SectionActions'
 import { LOCK_MESSAGE } from '../constants/messages'
 import { controllerLabel, formatVidPid } from '../utils/controllers'
 import styles from './Gyro.module.css'
+import miscStyles from './Misc.module.css'
 
 const TICK_TIME_OPTIONS = [
   { value: '1', label: '1 ms' },
@@ -71,12 +72,7 @@ export function GyroBehaviorControls({
   backendChoice = 'SDL',
 }: GyroBehaviorControlsProps) {
   return (
-    <Card
-      className="control-panel"
-      lockable
-      locked={isCalibrating}
-      lockMessage={lockMessage}
-    >
+    <Card className="control-panel" lockable locked={isCalibrating} lockMessage={lockMessage}>
       <h2>Gyro Behavior</h2>
       {onOpenCalibration && (
         <div className="flex-inputs">
