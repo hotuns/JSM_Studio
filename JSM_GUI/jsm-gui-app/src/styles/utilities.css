@@ -108,3 +108,23 @@
   width: 100%;
   justify-content: center;
 }
+
+/* Inline status flags (e.g., calibration preset load) */
+.profile-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-1);
+  background: var(--bg-btn);
+  color: var(--text-strong);
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.profile-status.inline-flag {
+  border-color: rgba(255, 182, 128, 0.6);
+  background: rgba(255, 182, 128, 0.12);
+  color: #ffb680;
+}
