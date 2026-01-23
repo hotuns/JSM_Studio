@@ -1234,61 +1234,6 @@ header h1 {
   justify-content: center;
 }
 
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.6);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 999;
-}
-
-.modal-card {
-  background: #0e0e0e;
-  border: 1px solid var(--border-1);
-  border-radius: 12px;
-  padding: 1.25rem;
-  width: min(640px, 90vw);
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
-}
-
-.modal-card.profile-modal {
-  width: min(820px, 92vw);
-}
-
-.modal-card h3 {
-  margin: 0 0 0.35rem 0;
-}
-
-.modal-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-}
-
-.inline-flag {
-  margin: 0;
-}
-
-.modal-description {
-  margin: 0 0 1rem 0;
-  color: #cfcfcf;
-  font-size: 0.9rem;
-  line-height: 1.5;
-}
-
-.modal-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.5rem;
-}
-
-.modal-card .flex-inputs + .flex-inputs {
-  margin-top: 0.6rem;
-}
-
 .calibration-output {
   margin-top: 1rem;
   border: 1px solid var(--border-1);
