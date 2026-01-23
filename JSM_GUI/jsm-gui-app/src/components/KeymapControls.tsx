@@ -672,7 +672,7 @@ export function KeymapControls({
                 renderButton={renderButtonCard}
                 extraContent={
                   <div className="trigger-settings" data-capture-ignore="true">
-                    <div className="adaptive-toggle">
+                    <div className={keymapStyles.adaptiveToggle}>
                       <label>
                         Adaptive triggers (DualSense)
                         <select

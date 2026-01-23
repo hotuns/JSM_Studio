@@ -303,3 +303,22 @@
   font-size: 0.85rem;
   color: #bbbbbb;
 }
+
+.adaptiveToggle {
+  margin-top: 0;
+  padding: 0.85rem 0.95rem;
+  border-radius: 10px;
+  border: 1px solid var(--border-1);
+  background: var(--bg-2);
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.adaptiveToggle label {
+  font-weight: 600;
+  color: var(--text-strong);
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
