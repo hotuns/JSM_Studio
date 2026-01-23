@@ -29,6 +29,7 @@ import { StickModesSection } from './keymap/StickModesSection'
 import { TouchpadSettingsSection } from './keymap/TouchpadSettingsSection'
 import { TouchpadGridSection } from './keymap/TouchpadGridSection'
 import { ButtonBindingsCard } from './keymap/ButtonBindingsCard'
+import stickStyles from './Sticks.module.css'
 
 type KeymapControlsProps = {
   configText: string
@@ -144,9 +145,9 @@ const StickAimSettings = ({ values, handlers, disabled }: StickAimSettingsProps)
   const accelCapValue = values.accelerationCap ?? ''
   const formatDefault = (value: string) => `Default (${value})`
   return (
-    <div className="stick-aim-settings" data-capture-ignore="true">
+    <div className={stickStyles.stickAimSettings} data-capture-ignore="true">
       <small>Applies to STICK_SENS / POWER / ACCEL settings when Aim mode is active.</small>
-      <div className="stick-aim-grid">
+      <div className={stickStyles.stickAimGrid}>
         <label>
           Stick sensitivity (horizontal)
           <input
@@ -533,7 +534,7 @@ export function KeymapControls({
     }
     if (mode === 'MOUSE_AREA' && mouseRingRadius !== undefined && onMouseRingRadiusChange) {
       return (
-        <div className="stick-flick-settings" data-capture-ignore="true">
+        <div className={stickStyles.stickFlickSettings} data-capture-ignore="true">
           <small>Mouse area radius (pixels from center).</small>
           <div className="stick-aim-grid">
             <label>
@@ -554,7 +555,7 @@ export function KeymapControls({
     }
     if (mode === 'SCROLL_WHEEL' && scrollSens !== undefined && onScrollSensChange) {
       return (
-        <div className="stick-flick-settings" data-capture-ignore="true">
+        <div className={stickStyles.stickFlickSettings} data-capture-ignore="true">
           <small>Scroll wheel sensitivity (degrees per pulse). Higher values require larger rotations.</small>
           <div className="stick-aim-grid">
             <label>
@@ -727,7 +728,7 @@ export function KeymapControls({
       {showStickLayout && (
         <>
           {stickToggleVisible && (
-            <div className="mode-toggle stick-subtabs">
+            <div className={`mode-toggle ${stickStyles.stickSubtabs}`}>
               <button className={`pill-tab ${currentStickView === 'bindings' ? 'active' : ''}`} onClick={() => setStickView('bindings')}>
                 Bindings
               </button>

@@ -20,6 +20,7 @@ import {
   type ButtonDefinition,
 } from '../../keymap/schema'
 import { formatStickModeLabel } from '../../constants/sticks'
+import stickStyles from '../Sticks.module.css'
 
 type ButtonBindingsCardProps = {
   button: ButtonDefinition
@@ -359,7 +360,7 @@ export const ButtonBindingsCard = ({
           )
         })()}
         {stickShiftEntries.length > 0 && (
-          <div className="stick-shift-rows">
+          <div className={stickStyles.stickShiftRows}>
             {stickShiftEntries.map(entry => {
               const tapDisplaysShift =
                 rows.length === 1 &&
