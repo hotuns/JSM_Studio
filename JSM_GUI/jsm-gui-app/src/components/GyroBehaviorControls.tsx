@@ -3,6 +3,7 @@ import { Card } from './Card'
 import { SectionActions } from './SectionActions'
 import { LOCK_MESSAGE } from '../constants/messages'
 import { controllerLabel, formatVidPid } from '../utils/controllers'
+import styles from './Gyro.module.css'
 
 const TICK_TIME_OPTIONS = [
   { value: '1', label: '1 ms' },
@@ -179,20 +180,20 @@ export function GyroBehaviorControls({
           <label>
             Connected controllers
             <p className="field-description">Controller type and VID:PID detected by JSM. Toggle to ignore gyro output per device.</p>
-            <div className="controller-list">
+            <div className={styles.controllerList}>
               {devices.map(dev => {
                 const id = formatVidPid(dev.vid, dev.pid)
                 const isIgnored = id ? ignoredDevices?.includes(id.toLowerCase()) : false
                 const disabled = !dev.vid || !dev.pid
                 return (
-                  <div key={dev.handle} className="controller-card">
-                    <div className="controller-entry">
+                  <div key={dev.handle} className={styles.controllerCard}>
+                    <div className={styles.controllerEntry}>
                       {controllerLabel(dev.type)}
-                      {id && <span className="controller-vidpid">: {id}</span>}
+                      {id && <span className={styles.controllerVidpid}>: {id}</span>}
                     </div>
-                    <label className="toggle-switch">
-                      <span className="toggle-label">Ignore gyro output</span>
-                      <div className="toggle-wrapper">
+                    <label className={styles.toggleSwitch}>
+                      <span className={styles.toggleLabel}>Ignore gyro output</span>
+                      <div className={styles.toggleWrapper}>
                         <input
                           type="checkbox"
                           disabled={disabled}
@@ -202,7 +203,7 @@ export function GyroBehaviorControls({
                             onToggleIgnoreDevice?.(dev.vid, dev.pid, event.target.checked)
                           }}
                         />
-                        <span className="toggle-slider" />
+                        <span className={styles.toggleSlider} />
                       </div>
                     </label>
                   </div>

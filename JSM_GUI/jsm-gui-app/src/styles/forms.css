@@ -33,6 +33,20 @@
   box-shadow: 0 0 0 1px rgba(76, 125, 255, 0.35), 0 0 12px rgba(76, 125, 255, 0.25);
 }
 
+.mode-toggle {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.mode-toggle.secondary {
+  margin-top: 0.75rem;
+}
+
+.mode-toggle .pill-tab {
+  flex: 1;
+  text-align: center;
+}
+
 .app-select {
   border-radius: 999px;
   border: 1px solid #3b3b3b;
@@ -117,6 +131,13 @@
   color: var(--text-strong);
   padding: 0.4rem 0.75rem;
   font-weight: 600;
+}
+
+.sensitivity-shift-row {
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
 }
 
 .flex-inputs select:focus {

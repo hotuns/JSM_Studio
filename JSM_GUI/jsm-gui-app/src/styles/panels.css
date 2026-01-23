@@ -88,6 +88,16 @@
   gap: 1rem;
 }
 
+.control-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.control-panel h2 {
+  margin: 0;
+}
+
 .tab-placeholder {
   border: 1px solid var(--border-1);
   border-radius: 12px;
