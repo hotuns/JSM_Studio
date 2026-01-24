@@ -16,7 +16,7 @@
 
 .keymapSectionHeader p {
   margin: 0.25rem 0 0;
-  color: #b5b5b5;
+  color: var(--text-mid);
   font-size: 0.9rem;
 }
 
@@ -33,7 +33,7 @@
   padding: 0.75rem 1rem;
   border: 1px solid var(--border-1);
   border-radius: 12px;
-  background: #121212;
+  background: var(--bg-input);
   flex-wrap: wrap;
 }
 
@@ -57,7 +57,7 @@
 
 .buttonMeta {
   font-size: 0.85rem;
-  color: #a0a0a0;
+  color: var(--text-mid);
 }
 
 .keymapBindingControls {
@@ -92,7 +92,7 @@
 .bindingRowHeader {
   font-size: 0.85rem;
   font-weight: 600;
-  color: #bdbdbd;
+  color: var(--text-mid);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -124,9 +124,9 @@
   width: 100%;
   padding: 0.45rem 0.75rem;
   border-radius: 999px;
-  border: 1px solid #3b3b3b;
-  background: #1a1a1a;
-  color: #eee;
+  border: 1px solid var(--border-1);
+  background: var(--bg-input);
+  color: var(--text-strong);
   box-sizing: border-box;
 }
 
@@ -135,16 +135,16 @@
   text-align: left;
   padding: 0.6rem 0.95rem;
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  background: transparent;
-  color: #f7f7f7;
+  border: 1px solid var(--border-1);
+  background: var(--bg-input);
+  color: var(--text-strong);
   cursor: pointer;
   font-size: 0.95rem;
   transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
 }
 
 .bindingInput:hover {
-  border-color: rgba(255, 255, 255, 0.45);
+  border-color: var(--border-strong);
 }
 
 .bindingInputRecording {
@@ -169,9 +169,9 @@
 .addBindingRow select {
   padding: 0.45rem 0.75rem;
   border-radius: 999px;
-  border: 1px solid #3b3b3b;
-  background: #1a1a1a;
-  color: #eee;
+  border: 1px solid var(--border-1);
+  background: var(--bg-input);
+  color: var(--text-strong);
 }
 
 .rowSpecialSelectWrapper + .primaryBindingRow,
@@ -200,7 +200,7 @@
   padding: 0.5rem 0.75rem;
   border-radius: 8px;
   border: 1px solid var(--border-1);
-  background: #151515;
+  background: var(--bg-input);
   display: flex;
   flex-direction: column;
   gap: 0.6rem;
@@ -217,9 +217,9 @@
 .trackballInline input[type='number'] {
   padding: 0.45rem 0.6rem;
   border-radius: 6px;
-  border: 1px solid #3c3c3c;
-  background: #1d1d1d;
-  color: #eee;
+  border: 1px solid var(--border-1);
+  background: var(--bg-input);
+  color: var(--text-strong);
 }
 
 .trackballInline input[type='range'] {
@@ -229,7 +229,7 @@
 .clearBindingBtn {
   padding: 0.6rem 0.95rem;
   border-radius: 999px;
-  border: 1px solid #3b3b3b;
+  border: 1px solid var(--border-1);
   background: transparent;
   color: #ffb0b0;
   font-size: 0.85rem;
@@ -256,7 +256,7 @@
   padding: 0.6rem 1rem;
   border: 1px solid var(--border-1);
   border-radius: 12px;
-  background: #121212;
+  background: var(--bg-input);
 }
 
 .globalControlText {
@@ -272,7 +272,7 @@
 
 .globalControlCaption {
   font-size: 0.85rem;
-  color: #a0a0a0;
+  color: var(--text-mid);
 }
 
 .globalControlInputGroup {
@@ -285,9 +285,9 @@
   width: 5rem;
   padding: 0.45rem 0.75rem;
   border-radius: 8px;
-  border: 1px solid #3a3a3a;
-  background: #0f0f0f;
-  color: #f5f5f5;
+  border: 1px solid var(--border-1);
+  background: var(--bg-input);
+  color: var(--text-strong);
   font-size: 1rem;
   font-weight: 600;
   box-sizing: border-box;

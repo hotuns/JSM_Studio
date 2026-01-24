@@ -23,6 +23,28 @@
   gap: 0.5rem;
 }
 
+.navHeaderRow {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.navToggleFloat {
+  position: absolute;
+  right: 0;
+  top: 2px;
+}
+
+.navFooter {
+  margin-top: auto;
+  padding-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
 .navItem {
   text-align: left;
   border-radius: 10px;

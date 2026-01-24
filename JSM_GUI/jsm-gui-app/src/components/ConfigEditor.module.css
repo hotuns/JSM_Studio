@@ -15,9 +15,9 @@
   min-height: 220px;
   font-family: 'JetBrains Mono', Consolas, monospace;
   font-size: 0.9rem;
-  color: #f7f7f7;
-  background: #111;
-  border: 1px solid #444;
+  color: var(--text-strong);
+  background: var(--bg-input);
+  border: 1px solid var(--border-1);
   border-radius: 10px;
   padding: 0.9rem;
   resize: vertical;

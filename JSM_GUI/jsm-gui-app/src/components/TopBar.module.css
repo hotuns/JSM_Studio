@@ -47,7 +47,7 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 0;
+  gap: 0.75rem;
   width: 100%;
   background: transparent;
   border: none;
@@ -57,6 +57,13 @@
 }
 
 .desktopTopBar {
+}
+
+.themeToggleInline {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-left: auto;
 }
 
 @media (max-width: 1060px) {

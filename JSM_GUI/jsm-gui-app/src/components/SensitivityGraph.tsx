@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import graphStyles from './Graph.module.css'
+import { useTheme } from '../hooks/useTheme'
 
 interface SensitivityGraphProps {
   minThreshold?: number
@@ -26,6 +27,7 @@ const MAX_OMEGA = 500
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max)
 export function SensitivityGraph(props: SensitivityGraphProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
+  const { theme } = useTheme()
   const {
     minThreshold,
     maxThreshold,
@@ -67,9 +69,14 @@ export function SensitivityGraph(props: SensitivityGraphProps) {
     const liveSensColor = accent
     const liveOutputColor = '#5bc7d7'
 
-    ctx.fillStyle = '#0f0f0f'
+    const styles = getComputedStyle(document.documentElement)
+    const bg = styles.getPropertyValue('--bg-input').trim() || '#0f0f0f'
+    const grid = styles.getPropertyValue('--border-1').trim() || '#2d2d2d'
+    const labelColor = styles.getPropertyValue('--text-mid').trim() || '#aaa'
+    const axisColor = styles.getPropertyValue('--text-muted').trim() || '#999'
+    ctx.fillStyle = bg
     ctx.fillRect(0, 0, baseWidth, baseHeight)
-    ctx.strokeStyle = '#2d2d2d'
+    ctx.strokeStyle = grid
     ctx.lineWidth = 2
     ctx.strokeRect(0, 0, baseWidth, baseHeight)
 
@@ -128,7 +135,7 @@ export function SensitivityGraph(props: SensitivityGraphProps) {
     const graphWidth = baseWidth - paddingLeft - paddingRight
     const graphHeight = baseHeight - paddingTop - paddingBottom
 
-    ctx.fillStyle = '#ddd'
+    ctx.fillStyle = labelColor
     ctx.font = '14px sans-serif'
     ctx.textAlign = 'center'
     ctx.fillText('Threshold (°/s)', paddingLeft + graphWidth / 2, baseHeight - 10)
@@ -155,10 +162,10 @@ export function SensitivityGraph(props: SensitivityGraphProps) {
     const toX = (speed: number) => paddingLeft + (graphWidth * (speed / axisMaxX))
     const toY = (sens: number) => paddingTop + graphHeight - (graphHeight * (sens / axisMaxY))
 
-    ctx.strokeStyle = '#3b3b3b'
+    ctx.strokeStyle = grid
     ctx.lineWidth = 1
     ctx.font = '12px sans-serif'
-    ctx.fillStyle = '#aaa'
+    ctx.fillStyle = axisColor
     ctx.textAlign = 'right'
     for (let i = 0; i <= 6; i++) {
       const value = (axisMaxY / 6) * i
@@ -336,7 +343,7 @@ export function SensitivityGraph(props: SensitivityGraphProps) {
     }
 
     ctx.textAlign = 'center'
-  }, [minThreshold, maxThreshold, minSensX, minSensY, maxSensX, maxSensY, normalized, currentSensX, omega, disableLiveDot, curveType, naturalVHalf, powerVRef, powerExponent, sigmoidMid, sigmoidWidth, jumpTau])
+  }, [minThreshold, maxThreshold, minSensX, minSensY, maxSensX, maxSensY, normalized, currentSensX, omega, disableLiveDot, curveType, naturalVHalf, powerVRef, powerExponent, sigmoidMid, sigmoidWidth, jumpTau, theme])
 
   return <canvas ref={canvasRef} className={graphStyles.legacyCurveCanvas} />
 }

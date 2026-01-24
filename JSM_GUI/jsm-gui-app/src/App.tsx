@@ -1,6 +1,7 @@
 import './App.css'
 import sideNavStyles from './components/SideNav.module.css'
 import topBarStyles from './components/TopBar.module.css'
+import { ThemeToggle } from './components/ThemeToggle'
 import { useState, useEffect } from 'react'
 import { useTelemetry } from './hooks/useTelemetry'
 import miscStyles from './components/Misc.module.css'
@@ -701,11 +702,21 @@ function App() {
       <aside className={sideNavStyles.sideNav}>
         <div className={sideNavStyles.navBrand}>JSM Custom Curve</div>
         <PrimaryNav primaryTab={primaryTab} setPrimaryTab={setPrimaryTab} />
+        <div className={sideNavStyles.navFooter}>
+          <ThemeToggle />
+        </div>
       </aside>
       {/* Narrow-width sticky header */}
       <div className="responsive-header">
-        <div className={sideNavStyles.navBrand}>JSM Custom Curve</div>
-        <PrimaryNav primaryTab={primaryTab} setPrimaryTab={setPrimaryTab} />
+        <div className={sideNavStyles.navHeaderRow}>
+          <div>
+            <div className={sideNavStyles.navBrand}>JSM Custom Curve</div>
+            <PrimaryNav primaryTab={primaryTab} setPrimaryTab={setPrimaryTab} />
+          </div>
+          <div className={sideNavStyles.navToggleFloat}>
+            <ThemeToggle compact />
+          </div>
+        </div>
         <div className="responsive-header-divider" />
         <div className={`${topBarStyles.topBar} ${topBarStyles.responsiveTopBar}`}>
           <TopBarContent
