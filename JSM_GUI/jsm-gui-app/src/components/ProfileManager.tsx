@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { Card } from './Card'
 import styles from './ProfileManager.module.css'
 
 type ProfileManagerProps = {
@@ -44,7 +45,7 @@ export function ProfileManager({
   }, [libraryProfiles])
 
   return (
-    <section className={styles.profileCard} data-lockable={isCalibrating ? 'true' : 'false'}>
+    <Card className={`${styles.profileCard} profile-card`} lockable locked={isCalibrating} lockMessage={lockMessage}>
       {hasPendingChanges && (
         <div className={styles.profileFlags}>
           <span className={styles.profileWarning}>Unsaved changes on current profile</span>
@@ -148,6 +149,6 @@ export function ProfileManager({
       </section>
 
       {!profileApplied && <span className={styles.profileNotApplied}>Not running in JoyShockMapper yet</span>}
-    </section>
+    </Card>
   )
 }
