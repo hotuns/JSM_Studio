@@ -117,7 +117,7 @@
 
 .rowModifierSelect label {
   font-size: 0.85rem;
-  color: #bdbdbd;
+  color: var(--text-mid);
 }
 
 .rowModifierSelect select {
@@ -192,7 +192,7 @@
 
 .manualStickShift .bindingRowHeader span {
   font-size: 0.85rem;
-  color: #bfbfbf;
+  color: var(--text-muted);
 }
 
 .trackballInline {
@@ -301,7 +301,7 @@
 
 .globalControlUnit {
   font-size: 0.85rem;
-  color: #bbbbbb;
+  color: var(--text-mid);
 }
 
 .adaptiveToggle {

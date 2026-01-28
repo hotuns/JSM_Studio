@@ -74,7 +74,7 @@
 
 .field-description {
   margin: 0.25rem 0 0.35rem 0;
-  color: #bcbcbc;
+  color: var(--text-muted);
   font-size: 0.9rem;
 }
 
