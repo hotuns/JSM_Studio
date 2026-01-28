@@ -766,6 +766,7 @@ function App() {
                 Quick switch
                 <select
                   className="app-select"
+                  disabled={isCalibrating}
                   value={currentLibraryProfile ?? ''}
                   onChange={event => {
                     const name = event.target.value
