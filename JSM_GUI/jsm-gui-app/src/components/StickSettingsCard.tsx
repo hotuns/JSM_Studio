@@ -1,5 +1,6 @@
 import { ReactNode } from 'react'
 import { STICK_MODE_VALUES, formatStickModeLabel } from '../constants/sticks'
+import styles from './Sticks.module.css'
 
 type StickSettingsCardProps = {
   title: string
@@ -43,7 +44,7 @@ export function StickSettingsCard({
   const selectableStickModes = STICK_MODE_VALUES.filter(mode => mode !== 'NO_MOUSE')
 
   return (
-    <div className="stick-mode-card" data-capture-ignore="true">
+    <div className={styles.stickModeCard} data-capture-ignore="true">
       <h3>{title}</h3>
       <label>
         Stick mode
@@ -118,7 +119,7 @@ export function StickSettingsCard({
           disabled={disabled}
         />
       </label>
-      {modeExtras && <div className="stick-mode-extras">{modeExtras}</div>}
+      {modeExtras && <div className={styles.stickModeExtras}>{modeExtras}</div>}
     </div>
   )
 }

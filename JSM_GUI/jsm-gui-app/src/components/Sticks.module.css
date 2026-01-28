@@ -1,0 +1,87 @@
+.stickModeCard {
+  border: 1px solid var(--border-1);
+  border-radius: 12px;
+  padding: 1rem;
+  background: var(--bg-input);
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.stickModeCard h3 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.stickModeCard label {
+  display: flex;
+  flex-direction: column;
+  font-weight: 600;
+  color: var(--text-strong);
+  font-size: 0.95rem;
+}
+
+.stickModeCard input[type='number'] {
+  margin-top: 0.35rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-1);
+  background: var(--bg-input);
+  color: var(--text-strong);
+  padding: 0.45rem 0.8rem;
+  font-size: 1rem;
+}
+
+.stickModeCard input[type='range'] {
+  margin-top: 0.4rem;
+  accent-color: var(--accent);
+}
+
+.stickModeExtras {
+  border-top: 1px solid #242424;
+  padding-top: 0.75rem;
+  margin-top: 0.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.stickAimSettings,
+.stickFlickSettings {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.stickAimSettings small,
+.stickFlickSettings small {
+  color: #aaa;
+}
+
+.stickAimGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.75rem;
+}
+
+.stickAimGrid label {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--text-strong);
+}
+
+.stickFlickSettings .stickAimGrid label {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--text-strong);
+}
+
+.stickSubtabs {
+  margin-bottom: 1rem;
+}
+
+.stickShiftRows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  margin-top: 0.5rem;
+}

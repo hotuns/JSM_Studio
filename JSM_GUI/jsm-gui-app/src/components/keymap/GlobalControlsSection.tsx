@@ -1,5 +1,6 @@
 import { KeymapSection } from '../KeymapSection'
 import { SectionActions } from '../SectionActions'
+import keymapStyles from '../Keymap.module.css'
 
 type GlobalControlsSectionProps = {
   holdPressTimeSeconds: number
@@ -42,14 +43,14 @@ export function GlobalControlsSection({
     value: number,
     onChange: (value: string) => void
   ) => (
-    <div className="global-control-row" data-capture-ignore="true">
-      <div className="global-control-text">
-        <span className="global-control-title">{title}</span>
-        <span className="global-control-caption">{caption}</span>
+    <div className={keymapStyles.globalControlRow} data-capture-ignore="true">
+      <div className={keymapStyles.globalControlText}>
+        <span className={keymapStyles.globalControlTitle}>{title}</span>
+        <span className={keymapStyles.globalControlCaption}>{caption}</span>
       </div>
-      <div className="global-control-input-group">
+      <div className={keymapStyles.globalControlInputGroup}>
         <input type="number" min="0" max="1" step="0.01" value={value} onChange={(event) => onChange(event.target.value)} />
-        <span className="global-control-unit">seconds</span>
+        <span className={keymapStyles.globalControlUnit}>seconds</span>
       </div>
     </div>
   )
@@ -57,7 +58,7 @@ export function GlobalControlsSection({
   return (
     <>
       <KeymapSection title="Global controls" description="Timing windows that apply whenever those binding types are in use.">
-        <div className="global-controls">
+        <div className={keymapStyles.globalControls}>
           {renderRow(
             'Tap vs hold press threshold',
             holdPressTimeIsCustom ? 'Custom HOLD_PRESS_TIME saved' : `Using default (${Math.round(holdPressTimeDefault * 1000)} ms)`,
@@ -79,7 +80,7 @@ export function GlobalControlsSection({
         </div>
       </KeymapSection>
       <SectionActions
-        className="keymap-section-actions"
+        className={keymapStyles.keymapSectionActions}
         hasPendingChanges={hasPendingChanges}
         statusMessage={statusMessage}
         onApply={onApply}

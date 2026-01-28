@@ -1,0 +1,67 @@
+.graphPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.graphLegend {
+  display: flex;
+  gap: 1.5rem;
+  font-size: 0.85rem;
+  color: var(--text-mid);
+  margin-bottom: 0.6rem;
+}
+
+.legendDot {
+  display: inline-block;
+  width: 14px;
+  height: 4px;
+  border-radius: 2px;
+  margin-right: 0.35rem;
+}
+
+.legendDotSensitivity {
+  background: var(--accent);
+}
+
+.legendDotVelocity {
+  background: #5bc7d7;
+}
+
+.graphPanel small {
+  color: var(--text-muted);
+  margin-top: 0.5rem;
+  display: block;
+}
+
+.graphFooter {
+  margin-top: 0.85rem;
+}
+
+.graphPlaceholder {
+  padding: 1rem;
+  border: 1px dashed var(--border-1);
+  border-radius: 10px;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.graphLiveReadout {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.9rem;
+  color: var(--text-strong);
+}
+
+.graphLiveReadout span strong {
+  font-weight: 600;
+  color: var(--text-strong);
+}
+
+.legacyCurveCanvas {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 12px;
+  background: var(--bg-btn);
+}

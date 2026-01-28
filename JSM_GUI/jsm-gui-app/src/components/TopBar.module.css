@@ -1,0 +1,73 @@
+.topBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.8rem 1.75rem 0.8rem;
+  border-bottom: 1px solid var(--border-1);
+  background: var(--bg-1-5);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.topBarLeft {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.topBarRight {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.inlineSelect {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-mid);
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.inlineSelect select {
+  min-width: 140px;
+  border-radius: 999px;
+  border: 1.7px solid var(--border-1);
+  background: var(--bg-input);
+  color: var(--text-strong);
+  padding: 0.35rem 0.7rem;
+}
+
+.responsiveTopBar {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  width: 100%;
+  background: transparent;
+  border: none;
+  padding: 0.5rem 0;
+  position: static;
+  top: auto;
+}
+
+.desktopTopBar {
+}
+
+.themeToggleInline {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-left: auto;
+}
+
+@media (max-width: 1060px) {
+  .desktopTopBar {
+    display: none;
+  }
+}

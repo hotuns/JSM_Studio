@@ -1,5 +1,7 @@
 import { KeymapSection } from '../KeymapSection'
 import { SectionActions } from '../SectionActions'
+import styles from './Touchpad.module.css'
+import keymapStyles from '../Keymap.module.css'
 
 type TouchpadSettingsSectionProps = {
   touchpadMode: string
@@ -33,7 +35,7 @@ export function TouchpadSettingsSection({
   return (
     <>
       <KeymapSection title="Touchpad mode and grid" description="Adjust mode, grid size, and sensitivity for the touchpad.">
-        <div className="touchpad-settings">
+        <div className={styles.touchpadSettings}>
           <label>
             Mode
             <select className="app-select" value={touchpadMode} onChange={(event) => onTouchpadModeChange?.(event.target.value)}>
@@ -44,7 +46,7 @@ export function TouchpadSettingsSection({
           </label>
           {touchpadMode === 'GRID_AND_STICK' && (
             <>
-              <div className="grid-size-inputs">
+              <div className={styles.gridSizeInputs}>
                 <label>
                   Columns
                   <input
@@ -66,7 +68,7 @@ export function TouchpadSettingsSection({
                   />
                 </label>
               </div>
-              <small className="grid-limit-hint">Columns × Rows cannot exceed 25 total regions.</small>
+              <small className={styles.gridLimitHint}>Columns × Rows cannot exceed 25 total regions.</small>
             </>
           )}
           {touchpadMode === 'MOUSE' && (
@@ -84,7 +86,7 @@ export function TouchpadSettingsSection({
         </div>
       </KeymapSection>
       <SectionActions
-        className="keymap-section-actions"
+        className={keymapStyles.keymapSectionActions}
         hasPendingChanges={hasPendingChanges}
         statusMessage={statusMessage}
         onApply={onApply}

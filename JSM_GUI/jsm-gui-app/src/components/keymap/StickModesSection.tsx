@@ -2,6 +2,7 @@ import { ReactNode } from 'react'
 import { StickSettingsCard } from '../StickSettingsCard'
 import { KeymapSection } from '../KeymapSection'
 import { SectionActions } from '../SectionActions'
+import keymapStyles from '../Keymap.module.css'
 
 type StickModesSectionProps = {
   leftExtras?: ReactNode | null
@@ -60,7 +61,7 @@ export function StickModesSection({
         />
       </KeymapSection>
       <SectionActions
-        className="keymap-section-actions"
+        className={keymapStyles.keymapSectionActions}
         hasPendingChanges={hasPendingChanges}
         statusMessage={statusMessage}
         onApply={onApply}
@@ -85,7 +86,7 @@ export function StickModesSection({
         />
       </KeymapSection>
       <SectionActions
-        className="keymap-section-actions"
+        className={keymapStyles.keymapSectionActions}
         hasPendingChanges={hasPendingChanges}
         statusMessage={statusMessage}
         onApply={onApply}

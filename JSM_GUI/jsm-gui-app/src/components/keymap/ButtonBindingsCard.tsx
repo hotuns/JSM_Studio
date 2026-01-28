@@ -20,6 +20,8 @@ import {
   type ButtonDefinition,
 } from '../../keymap/schema'
 import { formatStickModeLabel } from '../../constants/sticks'
+import stickStyles from '../Sticks.module.css'
+import keymapStyles from '../Keymap.module.css'
 
 type ButtonBindingsCardProps = {
   button: ButtonDefinition
@@ -99,13 +101,15 @@ export const ButtonBindingsCard = ({
   )
   const trackballSliderValue = trackballDecay && !Number.isNaN(Number(trackballDecay)) ? Number(trackballDecay) : 1
 
+  const rowCapturing = rows.some(row => isCapturing(button.command, row.slot, row.id))
+
   return (
-    <div className="keymap-row" key={button.command}>
-      <div className="keymap-label">
-        <span className="button-name">{layout === 'playstation' ? button.playstation : button.xbox}</span>
-        <span className="button-meta">{button.description}</span>
+    <div className={`${keymapStyles.keymapRow} ${rowCapturing ? keymapStyles.keymapRowCapturing : ''}`} key={button.command}>
+      <div className={keymapStyles.keymapLabel}>
+        <span className={keymapStyles.buttonName}>{layout === 'playstation' ? button.playstation : button.xbox}</span>
+        <span className={keymapStyles.buttonMeta}>{button.description}</span>
       </div>
-      <div className="keymap-binding-controls">
+      <div className={keymapStyles.keymapBindingControls}>
         {rows.map(row => {
           const rowCapturing = isCapturing(button.command, row.slot, row.id)
           const hasExtraRows = rows.length > 1
@@ -299,7 +303,7 @@ export const ButtonBindingsCard = ({
             return true
           })
           return (
-            <div className="binding-row add-binding-row" data-capture-ignore="true">
+            <div className={`${keymapStyles.bindingRow} ${keymapStyles.addBindingRow}`} data-capture-ignore="true">
               <select
                 className="app-select"
                 value=""
@@ -359,7 +363,7 @@ export const ButtonBindingsCard = ({
           )
         })()}
         {stickShiftEntries.length > 0 && (
-          <div className="stick-shift-rows">
+          <div className={stickStyles.stickShiftRows}>
             {stickShiftEntries.map(entry => {
               const tapDisplaysShift =
                 rows.length === 1 &&
@@ -374,17 +378,17 @@ export const ButtonBindingsCard = ({
               const label = entry.target === 'LEFT' ? 'Left stick mode shift' : 'Right stick mode shift'
               const buttonLabel = `${entry.target === 'LEFT' ? 'Left stick' : 'Right stick'} → ${formatStickModeLabel(entry.mode)}`
               return (
-                <div className="binding-row manual-stick-shift" key={`${button.command}-${entry.target}`}>
-                  <div className="binding-row-header">
+                <div className={`${keymapStyles.bindingRow} ${keymapStyles.manualStickShift}`} key={`${button.command}-${entry.target}`}>
+                  <div className={keymapStyles.bindingRowHeader}>
                     <span>{label}</span>
                   </div>
-                  <div className="primary-binding-row">
-                    <button type="button" className="binding-input" disabled>
+                  <div className={keymapStyles.primaryBindingRow}>
+                    <button type="button" className={keymapStyles.bindingInput} disabled>
                       {buttonLabel}
                     </button>
                     <button
                       type="button"
-                      className="clear-binding-btn"
+                      className={keymapStyles.clearBindingBtn}
                       onClick={() => {
                         onStickModeShiftChange?.(button.command, entry.target)
                         if (stickShiftEntries.length === 1) {

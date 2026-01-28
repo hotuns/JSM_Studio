@@ -1,6 +1,10 @@
 import './App.css'
+import sideNavStyles from './components/SideNav.module.css'
+import topBarStyles from './components/TopBar.module.css'
+import { ThemeToggle } from './components/ThemeToggle'
 import { useState, useEffect } from 'react'
 import { useTelemetry } from './hooks/useTelemetry'
+import miscStyles from './components/Misc.module.css'
 import { SensitivityControls } from './components/SensitivityControls'
 import { ConfigEditor } from './components/ConfigEditor'
 import { ProfileManager } from './components/ProfileManager'
@@ -14,6 +18,7 @@ import { useProfileLibrary } from './hooks/useProfileLibrary'
 import { useKeymapConfig } from './hooks/useKeymapConfig'
 import { useCalibration } from './hooks/useCalibration'
 import { ToastHost } from './components/ToastHost'
+import telemetryStyles from './components/Telemetry.module.css'
 
 type PrimaryTab = 'gyro' | 'keybinds' | 'touchpad' | 'sticks'
 type GyroSubTab = 'behavior' | 'sensitivity' | 'noise'
@@ -31,17 +36,29 @@ type PrimaryNavProps = {
 }
 
 const PrimaryNav = ({ primaryTab, setPrimaryTab }: PrimaryNavProps) => (
-  <div className="nav-group">
-    <button className={`nav-item ${primaryTab === 'gyro' ? 'active' : ''}`} onClick={() => setPrimaryTab('gyro')}>
+  <div className={sideNavStyles.navGroup}>
+    <button
+      className={`${sideNavStyles.navItem} ${primaryTab === 'gyro' ? sideNavStyles.active : ''}`}
+      onClick={() => setPrimaryTab('gyro')}
+    >
       Gyro & Sensitivity
     </button>
-    <button className={`nav-item ${primaryTab === 'keybinds' ? 'active' : ''}`} onClick={() => setPrimaryTab('keybinds')}>
+    <button
+      className={`${sideNavStyles.navItem} ${primaryTab === 'keybinds' ? sideNavStyles.active : ''}`}
+      onClick={() => setPrimaryTab('keybinds')}
+    >
       Keybinds
     </button>
-    <button className={`nav-item ${primaryTab === 'touchpad' ? 'active' : ''}`} onClick={() => setPrimaryTab('touchpad')}>
+    <button
+      className={`${sideNavStyles.navItem} ${primaryTab === 'touchpad' ? sideNavStyles.active : ''}`}
+      onClick={() => setPrimaryTab('touchpad')}
+    >
       Touchpad
     </button>
-    <button className={`nav-item ${primaryTab === 'sticks' ? 'active' : ''}`} onClick={() => setPrimaryTab('sticks')}>
+    <button
+      className={`${sideNavStyles.navItem} ${primaryTab === 'sticks' ? sideNavStyles.active : ''}`}
+      onClick={() => setPrimaryTab('sticks')}
+    >
       Sticks
     </button>
   </div>
@@ -67,14 +84,14 @@ const TopBarContent = ({
   renderSticksNav,
 }: TopBarContentProps) => (
   <>
-    <div className="top-bar-left">
+    <div className={topBarStyles.topBarLeft}>
       {primaryTab === 'gyro' && renderGyroNav()}
       {primaryTab === 'keybinds' && renderKeybindsNav()}
       {primaryTab === 'touchpad' && renderTouchpadNav()}
       {primaryTab === 'sticks' && renderSticksNav()}
     </div>
-    <div className="top-bar-right">
-      <label className="inline-select">
+    <div className={topBarStyles.topBarRight}>
+      <label className={topBarStyles.inlineSelect}>
         <span>JSM Version</span>
         <select
           className="app-select"
@@ -682,16 +699,26 @@ function App() {
     <div className="app-shell">
       <ToastHost />
       {/* Desktop sidebar */}
-      <aside className="side-nav">
-        <div className="nav-brand">JSM Custom Curve</div>
+      <aside className={sideNavStyles.sideNav}>
+        <div className={sideNavStyles.navBrand}>JSM Custom Curve</div>
         <PrimaryNav primaryTab={primaryTab} setPrimaryTab={setPrimaryTab} />
+        <div className={sideNavStyles.navFooter}>
+          <ThemeToggle />
+        </div>
       </aside>
       {/* Narrow-width sticky header */}
       <div className="responsive-header">
-        <div className="nav-brand">JSM Custom Curve</div>
-        <PrimaryNav primaryTab={primaryTab} setPrimaryTab={setPrimaryTab} />
+        <div className={sideNavStyles.navHeaderRow}>
+          <div>
+            <div className={sideNavStyles.navBrand}>JSM Custom Curve</div>
+            <PrimaryNav primaryTab={primaryTab} setPrimaryTab={setPrimaryTab} />
+          </div>
+          <div className={sideNavStyles.navToggleFloat}>
+            <ThemeToggle compact />
+          </div>
+        </div>
         <div className="responsive-header-divider" />
-        <div className="top-bar">
+        <div className={`${topBarStyles.topBar} ${topBarStyles.responsiveTopBar}`}>
           <TopBarContent
             primaryTab={primaryTab}
             backendChoice={backendChoice}
@@ -704,7 +731,7 @@ function App() {
         </div>
       </div>
       <div className="shell-main">
-        <div className="top-bar">
+        <div className={`${topBarStyles.topBar} ${topBarStyles.desktopTopBar}`}>
           <TopBarContent
             primaryTab={primaryTab}
             backendChoice={backendChoice}
@@ -739,6 +766,7 @@ function App() {
                 Quick switch
                 <select
                   className="app-select"
+                  disabled={isCalibrating}
                   value={currentLibraryProfile ?? ''}
                   onChange={event => {
                     const name = event.target.value
@@ -849,8 +877,8 @@ function App() {
             </div>
             {calibrationOutput && (
               <>
-                <div className="calibration-output__label">Calculation result</div>
-                <div className="calibration-output" data-capture-ignore="true">
+                <div className={miscStyles.calibrationOutputLabel}>Calculation result</div>
+                <div className={miscStyles.calibrationOutput} data-capture-ignore="true">
                   <pre>{calibrationOutput}</pre>
                 </div>
               </>

@@ -1,0 +1,99 @@
+.controllerList {
+  margin-top: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.controllerCard {
+  background: #0a0a0a;
+  border-radius: 10px;
+  padding: 0.75rem 0.85rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border: 1px solid var(--border-1);
+  width: 100%;
+  gap: 0.75rem;
+}
+
+.controllerEntry {
+  display: flex;
+  align-items: baseline;
+  color: #e0e0e0;
+  font-size: 0.95rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.controllerVidpid {
+  color: #e0e0e0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  margin-left: 0.35rem;
+}
+
+.toggleSwitch {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.4rem;
+  color: var(--text-mid);
+  font-size: 0.9rem;
+  margin-left: auto;
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+:global(.flex-inputs) .toggleSwitch {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.toggleWrapper {
+  display: inline-flex;
+  align-items: center;
+}
+
+.toggleSlider {
+  width: 36px;
+  height: 20px;
+  border-radius: 999px;
+  background: #2a2a2a;
+  position: relative;
+  transition: background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.toggleSlider::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #cfcfcf;
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.toggleSwitch input[type='checkbox'] {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.toggleSwitch input[type='checkbox']:checked + .toggleSlider {
+  background: #6a8bff;
+  box-shadow: 0 0 0 2px rgba(106, 139, 255, 0.2);
+}
+
+.toggleSwitch input[type='checkbox']:checked + .toggleSlider::after {
+  transform: translateX(16px);
+  background: #ffffff;
+}
+
+.toggleLabel {
+  white-space: nowrap;
+}

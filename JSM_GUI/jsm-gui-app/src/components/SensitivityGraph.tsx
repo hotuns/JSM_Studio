@@ -1,4 +1,6 @@
 import { useEffect, useRef } from 'react'
+import graphStyles from './Graph.module.css'
+import { useTheme } from '../hooks/useTheme'
 
 interface SensitivityGraphProps {
   minThreshold?: number
@@ -23,11 +25,9 @@ interface SensitivityGraphProps {
 const MAX_OMEGA = 500
 
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max)
-const LIVE_SENS_COLOR = '#6a8bff'
-const LIVE_OUTPUT_COLOR = '#52c1ff'
-
 export function SensitivityGraph(props: SensitivityGraphProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
+  const { theme } = useTheme()
   const {
     minThreshold,
     maxThreshold,
@@ -65,9 +65,18 @@ export function SensitivityGraph(props: SensitivityGraphProps) {
     ctx.resetTransform()
     ctx.scale(ratio, ratio)
 
-    ctx.fillStyle = '#0f0f0f'
+    const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#6fa7ff'
+    const liveSensColor = accent
+    const liveOutputColor = '#5bc7d7'
+
+    const styles = getComputedStyle(document.documentElement)
+    const bg = styles.getPropertyValue('--bg-input').trim() || '#0f0f0f'
+    const grid = styles.getPropertyValue('--border-1').trim() || '#2d2d2d'
+    const labelColor = styles.getPropertyValue('--text-mid').trim() || '#aaa'
+    const axisColor = styles.getPropertyValue('--text-muted').trim() || '#999'
+    ctx.fillStyle = bg
     ctx.fillRect(0, 0, baseWidth, baseHeight)
-    ctx.strokeStyle = '#2d2d2d'
+    ctx.strokeStyle = grid
     ctx.lineWidth = 2
     ctx.strokeRect(0, 0, baseWidth, baseHeight)
 
@@ -126,7 +135,7 @@ export function SensitivityGraph(props: SensitivityGraphProps) {
     const graphWidth = baseWidth - paddingLeft - paddingRight
     const graphHeight = baseHeight - paddingTop - paddingBottom
 
-    ctx.fillStyle = '#ddd'
+    ctx.fillStyle = labelColor
     ctx.font = '14px sans-serif'
     ctx.textAlign = 'center'
     ctx.fillText('Threshold (°/s)', paddingLeft + graphWidth / 2, baseHeight - 10)
@@ -153,10 +162,10 @@ export function SensitivityGraph(props: SensitivityGraphProps) {
     const toX = (speed: number) => paddingLeft + (graphWidth * (speed / axisMaxX))
     const toY = (sens: number) => paddingTop + graphHeight - (graphHeight * (sens / axisMaxY))
 
-    ctx.strokeStyle = '#3b3b3b'
+    ctx.strokeStyle = grid
     ctx.lineWidth = 1
     ctx.font = '12px sans-serif'
-    ctx.fillStyle = '#aaa'
+    ctx.fillStyle = axisColor
     ctx.textAlign = 'right'
     for (let i = 0; i <= 6; i++) {
       const value = (axisMaxY / 6) * i
@@ -266,7 +275,7 @@ export function SensitivityGraph(props: SensitivityGraphProps) {
     }
 
     const drawSensitivityCurve = () => {
-      ctx.strokeStyle = '#6a8bff'
+      ctx.strokeStyle = accent
       ctx.lineWidth = 2.2
       ctx.beginPath()
       const points = 250
@@ -288,7 +297,7 @@ export function SensitivityGraph(props: SensitivityGraphProps) {
       const speeds = Array.from({ length: points }, (_, i) => (axisMaxX / (points - 1)) * i)
       const outputs = speeds.map(speed => speed * sensitivityAt(speed))
       const maxOutput = Math.max(...outputs, 1)
-      ctx.strokeStyle = '#52c1ff'
+      ctx.strokeStyle = liveOutputColor
       ctx.setLineDash([6, 6])
       ctx.lineWidth = 2
       ctx.beginPath()
@@ -329,12 +338,12 @@ export function SensitivityGraph(props: SensitivityGraphProps) {
         ctx.fillStyle = color
         ctx.fill()
       }
-      drawDot(sensX, LIVE_SENS_COLOR)
-      drawDot(normalizedOutput, LIVE_OUTPUT_COLOR)
+      drawDot(sensX, liveSensColor)
+      drawDot(normalizedOutput, liveOutputColor)
     }
 
     ctx.textAlign = 'center'
-  }, [minThreshold, maxThreshold, minSensX, minSensY, maxSensX, maxSensY, normalized, currentSensX, omega, disableLiveDot, curveType, naturalVHalf, powerVRef, powerExponent, sigmoidMid, sigmoidWidth, jumpTau])
+  }, [minThreshold, maxThreshold, minSensX, minSensY, maxSensX, maxSensY, normalized, currentSensX, omega, disableLiveDot, curveType, naturalVHalf, powerVRef, powerExponent, sigmoidMid, sigmoidWidth, jumpTau, theme])
 
-  return <canvas ref={canvasRef} className="legacy-curve-canvas" />
+  return <canvas ref={canvasRef} className={graphStyles.legacyCurveCanvas} />
 }

@@ -35,10 +35,10 @@ export function SectionActions({
               {cancelLabel}
             </button>
           )}
-          <span className="pending-banner">{pendingMessage}</span>
+          <span className="pill pill--warning">{pendingMessage}</span>
         </>
       ) : statusMessage ? (
-        <span className="pending-banner success">{statusMessage}</span>
+        <span className="pill pill--success">{statusMessage}</span>
       ) : null}
     </div>
   )
