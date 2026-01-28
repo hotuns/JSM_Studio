@@ -30,21 +30,21 @@
 }
 
 .pill--warning {
-  background: rgba(255, 183, 77, 0.15);
-  border-color: rgba(255, 183, 77, 0.4);
-  color: #ffd28a;
+  background: var(--pill-warn-bg);
+  border-color: var(--pill-warn-border);
+  color: var(--pill-warn-text);
 }
 
 .pill--danger {
-  background: rgba(255, 120, 111, 0.12);
-  border-color: rgba(255, 120, 111, 0.6);
-  color: #ffb7af;
+  background: var(--pill-error-bg);
+  border-color: var(--pill-error-border);
+  color: var(--pill-error-text);
 }
 
 .pill--success {
-  background: rgba(111, 213, 179, 0.12);
-  border-color: rgba(111, 213, 179, 0.4);
-  color: #a9ffe2;
+  background: var(--pill-success-bg);
+  border-color: var(--pill-success-border);
+  color: var(--pill-success-text);
 }
 
 .row-split {

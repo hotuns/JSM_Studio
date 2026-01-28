@@ -229,16 +229,16 @@
 .clearBindingBtn {
   padding: 0.6rem 0.95rem;
   border-radius: 999px;
-  border: 1px solid var(--border-1);
-  background: transparent;
-  color: #ffb0b0;
+  border: 1px solid var(--danger-border);
+  background: var(--danger-bg);
+  color: var(--danger-text);
   font-size: 0.85rem;
   cursor: pointer;
   transition: border-color 0.15s ease, color 0.15s ease;
 }
 
 .clearBindingBtn:hover:not(:disabled) {
-  border-color: #ff8f8f;
+  border-color: var(--danger-border);
 }
 
 .globalControls {

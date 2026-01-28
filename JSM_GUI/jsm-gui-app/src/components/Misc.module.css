@@ -11,9 +11,9 @@
   display: none;
   padding: 0.6rem 0.9rem;
   border-radius: 8px;
-  background: rgba(255, 120, 111, 0.12);
-  border: 1px solid rgba(255, 120, 111, 0.6);
-  color: #ffb7af;
+  background: var(--pill-error-bg);
+  border: 1px solid var(--pill-error-border);
+  color: var(--pill-error-text);
   font-size: 0.85rem;
   letter-spacing: 0.02em;
   width: 100%;
@@ -33,7 +33,7 @@
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: rgba(0, 0, 0, 0.35);
+  background: rgba(0, 0, 0, 0.22);
   pointer-events: none;
   z-index: 1;
 }
@@ -118,21 +118,21 @@
 }
 
 .toastSuccess {
-  background: #13382f;
-  border-color: #60d7b5;
-  color: #cafcee;
+  background: var(--toast-success-bg);
+  border-color: var(--toast-success-border);
+  color: var(--toast-success-text);
 }
 
 .toastWarn {
-  background: #3a2b10;
-  border-color: #f1b355;
-  color: #ffe1ae;
+  background: var(--toast-warn-bg);
+  border-color: var(--toast-warn-border);
+  color: var(--toast-warn-text);
 }
 
 .toastError {
-  background: #3a1818;
-  border-color: #f28a8a;
-  color: #ffd6d6;
+  background: var(--toast-error-bg);
+  border-color: var(--toast-error-border);
+  color: var(--toast-error-text);
 }
 
 @keyframes toast-in {

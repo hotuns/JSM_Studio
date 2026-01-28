@@ -29,6 +29,35 @@
   /* Specialty */
   --telemetry-green: #9fe5c2;
 
+  /* Pills / alerts (dark) */
+  --pill-warn-bg: rgba(255, 183, 77, 0.12);
+  --pill-warn-border: rgba(255, 183, 77, 0.4);
+  --pill-warn-text: #ffd28a;
+
+  --pill-error-bg: rgba(255, 120, 111, 0.12);
+  --pill-error-border: rgba(255, 120, 111, 0.6);
+  --pill-error-text: #ffb7af;
+
+  --pill-success-bg: rgba(111, 213, 179, 0.12);
+  --pill-success-border: rgba(111, 213, 179, 0.4);
+  --pill-success-text: #a9ffe2;
+
+  /* Danger buttons/links (dark) */
+  --danger-bg: var(--pill-error-bg);
+  --danger-border: var(--pill-error-border);
+  --danger-text: var(--pill-error-text);
+
+  /* Toasts (dark) */
+  --toast-success-bg: #13382f;
+  --toast-success-border: #60d7b5;
+  --toast-success-text: #cafcee;
+  --toast-warn-bg: #3a2b10;
+  --toast-warn-border: #f1b355;
+  --toast-warn-text: #ffe1ae;
+  --toast-error-bg: #3a1818;
+  --toast-error-border: #f28a8a;
+  --toast-error-text: #ffd6d6;
+
   /* Touchpad grid (dark) */
   --touchpad-grid-bg: #121212;
   --touchpad-grid-border: #2c2c2c;
@@ -65,6 +94,35 @@
 
   /* Specialty */
   --telemetry-green: #3b8f6d;
+
+  /* Pills / alerts (light) */
+  --pill-warn-bg: rgba(229, 140, 49, 0.14);
+  --pill-warn-border: rgba(229, 140, 49, 0.55);
+  --pill-warn-text: #9a4f1f;
+
+  --pill-error-bg: rgba(193, 80, 80, 0.14);
+  --pill-error-border: rgba(193, 80, 80, 0.55);
+  --pill-error-text: #b14545;
+
+  --pill-success-bg: rgba(59, 143, 109, 0.14);
+  --pill-success-border: rgba(59, 143, 109, 0.5);
+  --pill-success-text: #3b8f6d;
+
+  /* Danger buttons/links (light) */
+  --danger-bg: var(--pill-error-bg);
+  --danger-border: var(--pill-error-border);
+  --danger-text: var(--pill-error-text);
+
+  /* Toasts (light) */
+  --toast-success-bg: rgba(59, 143, 109, 0.12);
+  --toast-success-border: rgba(59, 143, 109, 0.6);
+  --toast-success-text: #29664e;
+  --toast-warn-bg: rgba(229, 140, 49, 0.12);
+  --toast-warn-border: rgba(229, 140, 49, 0.6);
+  --toast-warn-text: #a65e1f;
+  --toast-error-bg: rgba(193, 80, 80, 0.12);
+  --toast-error-border: rgba(193, 80, 80, 0.6);
+  --toast-error-text: #9a3a3a;
 
   /* Touchpad grid (light) */
   --touchpad-grid-bg: #eef2f9;

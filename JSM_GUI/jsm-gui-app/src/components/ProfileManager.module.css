@@ -201,8 +201,8 @@
 .profileLibraryActiveBadge {
   padding: 0.5rem 1.2rem;
   border-radius: 999px;
-  border: 1px solid rgba(106, 139, 255, 0.5);
-  color: #cfd6ff;
+  border: 1px solid color-mix(in srgb, var(--accent) 55%, #ffffff 45%);
+  color: color-mix(in srgb, var(--accent) 65%, #0f1116 35%);
   font-size: 0.85rem;
   white-space: nowrap;
   line-height: 1;
