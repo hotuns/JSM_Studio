@@ -804,7 +804,7 @@ ipcMain.handle('load-calibration-preset', async () => {
   await ensureRequiredFiles()
   await fs.mkdir(CALIBRATION_DIR, { recursive: true })
   const active = (await getStartupProfilePath()) ?? DEFAULT_PROFILE_RELATIVE
-  const calibrationRelative = 'GyroConfigs/_3Dcalibrate.txt'
+  const calibrationRelative = path.posix.join('..', 'GyroConfigs', '_3Dcalibrate.txt')
   const calibrationAbsolute = path.join(CALIBRATION_DIR, '_3Dcalibrate.txt')
   try {
     await fs.access(calibrationAbsolute)
@@ -819,7 +819,7 @@ ipcMain.handle('load-calibration-preset', async () => {
 ipcMain.handle('read-calibration-preset', async () => {
   await ensureRequiredFiles()
   await fs.mkdir(CALIBRATION_DIR, { recursive: true })
-  const calibrationRelative = 'GyroConfigs/_3Dcalibrate.txt'
+  const calibrationRelative = path.posix.join('..', 'GyroConfigs', '_3Dcalibrate.txt')
   const calibrationAbsolute = path.join(CALIBRATION_DIR, '_3Dcalibrate.txt')
   try {
     const content = await fs.readFile(calibrationAbsolute, 'utf8')
@@ -833,7 +833,7 @@ ipcMain.handle('read-calibration-preset', async () => {
 ipcMain.handle('save-calibration-preset', async (_event, content: string) => {
   await ensureRequiredFiles()
   await fs.mkdir(CALIBRATION_DIR, { recursive: true })
-  const calibrationRelative = 'GyroConfigs/_3Dcalibrate.txt'
+  const calibrationRelative = path.posix.join('..', 'GyroConfigs', '_3Dcalibrate.txt')
   const calibrationAbsolute = path.join(CALIBRATION_DIR, '_3Dcalibrate.txt')
   try {
     await fs.writeFile(calibrationAbsolute, content ?? '', 'utf8')
