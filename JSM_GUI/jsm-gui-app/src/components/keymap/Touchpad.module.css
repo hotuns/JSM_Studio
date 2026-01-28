@@ -16,8 +16,8 @@
 .touchpadSettings input {
   border-radius: 999px;
   border: 1px solid var(--border-1);
-  background: #111;
-  color: #eee;
+  background: var(--bg-input);
+  color: var(--text-strong);
   padding: 0.45rem 0.8rem;
 }
 
@@ -29,7 +29,7 @@
 
 .gridLimitHint {
   font-size: 0.8rem;
-  color: #bbb;
+  color: var(--touchpad-grid-limit);
 }
 
 .touchpadGridPreview {
@@ -39,16 +39,16 @@
   width: 100%;
   min-height: 220px;
   border-radius: 16px;
-  border: 1px solid #2c2c2c;
+  border: 1px solid var(--touchpad-grid-border);
   padding: 0.4rem;
-  background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.05), rgba(0, 0, 0, 0)) #121212;
+  background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.05), rgba(0, 0, 0, 0)) var(--touchpad-grid-bg);
 }
 
 .touchpadGridCell {
-  border: 1px solid #2f2f2f;
+  border: 1px solid var(--touchpad-grid-cell-border);
   border-radius: 10px;
   padding: 0.6rem;
-  background: #151515;
+  background: var(--touchpad-grid-cell-bg);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -62,12 +62,12 @@
 }
 
 .touchpadGridCell small {
-  color: #b0b0b0;
+  color: var(--touchpad-grid-muted);
   font-size: 0.8rem;
 }
 
 .touchpadGridHint {
-  color: #cfcfcf;
+  color: var(--touchpad-grid-hint);
   font-size: 0.9rem;
   line-height: 1.4;
   margin-bottom: 0.8rem;

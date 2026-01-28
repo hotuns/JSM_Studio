@@ -1,4 +1,5 @@
 .lockable {
+  position: relative;
 }
 
 .locked .lockedOverlay {
@@ -19,15 +20,49 @@
   box-sizing: border-box;
   text-align: center;
   pointer-events: none;
+  position: relative;
+  z-index: 1;
 }
 
 .locked {
   pointer-events: none;
-  opacity: 0.55;
+}
+
+.locked::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: rgba(0, 0, 0, 0.35);
+  pointer-events: none;
+  z-index: 1;
 }
 
 .locked .lockedOverlay {
   pointer-events: auto;
+  position: relative;
+  z-index: 3;
+}
+
+/* Dim regular content while locked (leave status pills and control-actions row bright) */
+.locked > :not(.lockedOverlay):not(.pill):not(.pill--success):not(.pill--warning):not(.pill--danger):not(:global(.control-actions)) {
+  opacity: 0.55;
+}
+
+/* Keep status pills legible when locked */
+.locked .pill,
+.locked .pill--success,
+.locked .pill--warning,
+.locked .pill--danger {
+  opacity: 1;
+  position: relative;
+  z-index: 3;
+}
+
+/* Lift control-actions row (contains inline status pill) above overlay */
+:global(.control-actions) {
+  position: relative;
+  z-index: 3;
 }
 
 .calibrationOutput {

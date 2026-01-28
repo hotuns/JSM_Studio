@@ -29,6 +29,15 @@
   /* Specialty */
   --telemetry-green: #9fe5c2;
 
+  /* Touchpad grid (dark) */
+  --touchpad-grid-bg: #121212;
+  --touchpad-grid-border: #2c2c2c;
+  --touchpad-grid-cell-bg: #151515;
+  --touchpad-grid-cell-border: #2f2f2f;
+  --touchpad-grid-muted: #b0b0b0;
+  --touchpad-grid-hint: #cfcfcf;
+  --touchpad-grid-limit: #bbbbbb;
+
 }
 
 /* Light theme (initial values; tune next) */
@@ -56,4 +65,13 @@
 
   /* Specialty */
   --telemetry-green: #3b8f6d;
+
+  /* Touchpad grid (light) */
+  --touchpad-grid-bg: #eef2f9;
+  --touchpad-grid-border: #d3d8e2;
+  --touchpad-grid-cell-bg: #ffffff;
+  --touchpad-grid-cell-border: #c5ccda;
+  --touchpad-grid-muted: #5f6575;
+  --touchpad-grid-hint: #4a5160;
+  --touchpad-grid-limit: #737a8a;
 }
