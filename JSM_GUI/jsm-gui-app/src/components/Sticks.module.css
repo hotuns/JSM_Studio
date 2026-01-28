@@ -1,8 +1,8 @@
 .stickModeCard {
-  border: 1px solid #2f2f2f;
+  border: 1px solid var(--border-1);
   border-radius: 12px;
   padding: 1rem;
-  background: #111;
+  background: var(--bg-input);
   display: flex;
   flex-direction: column;
   gap: 0.85rem;
@@ -25,15 +25,15 @@
   margin-top: 0.35rem;
   border-radius: 999px;
   border: 1px solid var(--border-1);
-  background: #111;
-  color: #eee;
+  background: var(--bg-input);
+  color: var(--text-strong);
   padding: 0.45rem 0.8rem;
   font-size: 1rem;
 }
 
 .stickModeCard input[type='range'] {
   margin-top: 0.4rem;
-  accent-color: #6a8bff;
+  accent-color: var(--accent);
 }
 
 .stickModeExtras {
