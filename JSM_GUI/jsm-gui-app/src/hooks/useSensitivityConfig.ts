@@ -9,6 +9,7 @@ const SENS_MODE_KEYS = [
   keyName.MIN_GYRO_SENS,
   keyName.MAX_GYRO_SENS,
   keyName.GYRO_SENS,
+  keyName.ROLL_CONTRIBUTION,
   keyName.ACCEL_CURVE,
   keyName.ACCEL_NATURAL_VHALF,
   keyName.ACCEL_POWER_VREF,
@@ -56,6 +57,7 @@ export function useSensitivityConfig({ configText, setConfigText }: SensitivityA
           keyName.MAX_GYRO_SENS,
           keyName.MIN_GYRO_THRESHOLD,
           keyName.MAX_GYRO_THRESHOLD,
+          keyName.ROLL_CONTRIBUTION,
         ].join('|')})\\s*=`,
         'im'
       ),
@@ -373,6 +375,20 @@ export function useSensitivityConfig({ configText, setConfigText }: SensitivityA
       return updateKeymapEntry(prev, resolveSensitivityKey(keyName.GYRO_SENS), current)
     })
   }
+
+  const handleRollContributionChange = useCallback(
+    (value: string) => {
+      if (value === '') {
+        setConfigText(prev => removeKeymapEntry(prev, resolveSensitivityKey(keyName.ROLL_CONTRIBUTION)))
+        return
+      }
+      const parsed = parseFloat(value)
+      if (!Number.isFinite(parsed)) return
+      const clamped = Math.max(-100, Math.min(100, Math.round(parsed)))
+      setConfigText(prev => updateKeymapEntry(prev, resolveSensitivityKey(keyName.ROLL_CONTRIBUTION), [clamped]))
+    },
+    [resolveSensitivityKey, setConfigText]
+  )
 
   const handleInGameSensChange = (value: string) => {
     if (value === '') {
@@ -729,6 +745,7 @@ export function useSensitivityConfig({ configText, setConfigText }: SensitivityA
     if (pending.max?.y !== undefined) clone.maxSensY = pending.max.y === '' ? undefined : parseFloat(pending.max.y)
     if (pending.static?.x !== undefined) clone.gyroSensX = pending.static.x === '' ? undefined : parseFloat(pending.static.x)
     if (pending.static?.y !== undefined) clone.gyroSensY = pending.static.y === '' ? undefined : parseFloat(pending.static.y)
+    if (clone.gyroSpace === undefined) clone.gyroSpace = sensitivity.gyroSpace
     return clone
   }, [activeSensitivityPrefix, configText, modeshiftSensitivity, pendingDual, sensitivity])
 
@@ -897,6 +914,7 @@ export function useSensitivityConfig({ configText, setConfigText }: SensitivityA
     handleGyroAxisYChange,
     handleDualSensChange,
     handleStaticSensChange,
+    handleRollContributionChange,
     handleModeSelection,
     handleInGameSensChange,
     handleRealWorldCalibrationChange,

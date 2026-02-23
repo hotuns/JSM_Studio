@@ -162,6 +162,7 @@ function App() {
     handleGyroAxisYChange,
     handleDualSensChange,
     handleStaticSensChange,
+    handleRollContributionChange,
     handleTouchpadModeChange,
     handleGridSizeChange,
     handleTouchpadSensitivityChange,
@@ -485,6 +486,7 @@ function App() {
               onMaxSensYChange={handleDualSensChange('MAX_GYRO_SENS', 1)}
               onStaticSensXChange={handleStaticSensChange(0)}
               onStaticSensYChange={handleStaticSensChange(1)}
+              onRollContributionChange={handleRollContributionChange}
               modeshiftButton={sensitivityModeshiftButton}
               onModeshiftButtonChange={handleSensitivityModeshiftButtonChange}
               lockMessage={lockMessage}

@@ -51,6 +51,7 @@ type SensitivityControlsProps = {
   onMaxSensYChange: (value: string) => void
   onStaticSensXChange: (value: string) => void
   onStaticSensYChange: (value: string) => void
+  onRollContributionChange: (value: string) => void
   modeshiftButton: string | null
   onModeshiftButtonChange: (value: string) => void
   lockMessage?: string
@@ -87,6 +88,7 @@ export function SensitivityControls({
   onMaxSensYChange,
   onStaticSensXChange,
   onStaticSensYChange,
+  onRollContributionChange,
   modeshiftButton,
   onModeshiftButtonChange,
   lockMessage = LOCK_MESSAGE,
@@ -148,6 +150,7 @@ export function SensitivityControls({
           sensitivity={displaySensitivity}
           onChangeX={onStaticSensXChange}
           onChangeY={onStaticSensYChange}
+          onRollContributionChange={onRollContributionChange}
         />
       ) : (
         <AccelSensForm
@@ -165,6 +168,7 @@ export function SensitivityControls({
           onMinSensYChange={onMinSensYChange}
           onMaxSensXChange={onMaxSensXChange}
           onMaxSensYChange={onMaxSensYChange}
+          onRollContributionChange={onRollContributionChange}
         />
       )}
       <SectionActions
