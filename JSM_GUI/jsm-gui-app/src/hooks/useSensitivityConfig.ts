@@ -122,6 +122,9 @@ export function useSensitivityConfig({ configText, setConfigText }: SensitivityA
         }
         if (nextButton) {
           const base = parseSensitivityValues(next)
+          if (base.rollContribution !== undefined) {
+            next = updateKeymapEntry(next, `${nextButton},${keyName.ROLL_CONTRIBUTION}`, [base.rollContribution])
+          }
           if (base.gyroSensX !== undefined) {
             next = updateKeymapEntry(next, `${nextButton},${keyName.GYRO_SENS}`, [
               base.gyroSensX,
@@ -746,6 +749,7 @@ export function useSensitivityConfig({ configText, setConfigText }: SensitivityA
     if (pending.static?.x !== undefined) clone.gyroSensX = pending.static.x === '' ? undefined : parseFloat(pending.static.x)
     if (pending.static?.y !== undefined) clone.gyroSensY = pending.static.y === '' ? undefined : parseFloat(pending.static.y)
     if (clone.gyroSpace === undefined) clone.gyroSpace = sensitivity.gyroSpace
+    if (clone.rollContribution === undefined) clone.rollContribution = sensitivity.rollContribution
     return clone
   }, [activeSensitivityPrefix, configText, modeshiftSensitivity, pendingDual, sensitivity])
 
