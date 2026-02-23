@@ -14,6 +14,7 @@ const TICK_TIME_OPTIONS = [
 
 const GYRO_SPACE_OPTIONS = [
   { value: 'LOCAL', label: 'Local' },
+  { value: 'YAW_PLUS_ROLL', label: 'Yaw + Roll' },
   { value: 'PLAYER_TURN', label: 'Player Turn' },
   { value: 'WORLD_TURN', label: 'World Turn' },
 ]

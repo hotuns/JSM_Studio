@@ -78,6 +78,7 @@ export function useKeymapConfig() {
     handleGyroAxisYChange: sensitivityConfig.handleGyroAxisYChange,
     handleDualSensChange: sensitivityConfig.handleDualSensChange,
     handleStaticSensChange: sensitivityConfig.handleStaticSensChange,
+    handleRollContributionChange: sensitivityConfig.handleRollContributionChange,
     handleModeSelection: sensitivityConfig.handleModeSelection,
     handleInGameSensChange: sensitivityConfig.handleInGameSensChange,
     handleRealWorldCalibrationChange: sensitivityConfig.handleRealWorldCalibrationChange,

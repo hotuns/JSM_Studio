@@ -16,6 +16,7 @@ export interface SensitivityValues {
   maxThreshold?: number
   gyroSensX?: number
   gyroSensY?: number
+  rollContribution?: number
   cutoffSpeed?: number
   cutoffRecovery?: number
   smoothTime?: number
@@ -69,6 +70,7 @@ export function parseSensitivityValues(text: string, options?: { prefix?: string
   const minSens = get('MIN_GYRO_SENS', 2)
   const maxSens = get('MAX_GYRO_SENS', 2)
   const staticSens = get('GYRO_SENS', 2)
+  const rollContribution = single('ROLL_CONTRIBUTION')
   const angleSnap = single('GYRO_ANGLE_SNAP')
   const angleSnapEaseRaw = raw('GYRO_ANGLE_SNAP_EASE')
   const smoothingDecayRaw = raw('GYRO_SMOOTHING_DECAY')
@@ -86,6 +88,7 @@ export function parseSensitivityValues(text: string, options?: { prefix?: string
     maxThreshold: single('MAX_GYRO_THRESHOLD'),
     gyroSensX: staticSens[0],
     gyroSensY: staticSens[1],
+    rollContribution,
     cutoffSpeed: single('GYRO_CUTOFF_SPEED'),
     cutoffRecovery: single('GYRO_CUTOFF_RECOVERY'),
     smoothTime: single('GYRO_SMOOTH_TIME'),

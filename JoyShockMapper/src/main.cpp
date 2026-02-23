@@ -549,6 +549,13 @@ void joyShockPollCallback(int jcHandle, JOY_SHOCK_STATE state, JOY_SHOCK_STATE l
 			gyroY += inGyroZ;
 		}
 	}
+	else if (gyroSpace == GyroSpace::YAW_PLUS_ROLL)
+	{
+		const float rollContribution = jc->getSetting(SettingID::ROLL_CONTRIBUTION) / 100.0f;
+		gyroX -= inGyroY;
+		gyroX -= inGyroZ * rollContribution;
+		gyroY -= inGyroX;
+	}
 	else
 	{
 		float gravLength = sqrtf(inGravX * inGravX + inGravY * inGravY + inGravZ * inGravZ);
@@ -1953,6 +1960,11 @@ float filterPositive(float current, float next)
 	return max(0.0f, next);
 }
 
+float filterClampPercent(float current, float next)
+{
+	return clamp(next, -100.0f, 100.0f);
+}
+
 float filterSign(float current, float next)
 {
 	return next == -1.0f || next == 0.0f || next == 1.0f ?
@@ -2864,7 +2876,13 @@ void initJsmSettings(CmdRegistry *commandRegistry)
 	gyro_space->setFilter(&filterInvalidValue<GyroSpace, GyroSpace::INVALID>);
 	SettingsManager::add(gyro_space);
 	commandRegistry->add((new JSMAssignment<GyroSpace>(*gyro_space))
-	                       ->setHelp("How gyro input is converted to 2D input. With LOCAL, your MOUSE_X_FROM_GYRO_AXIS and MOUSE_Y_FROM_GYRO_AXIS settings decide which local angular axis maps to which 2D mouse axis.\nYour other options are PLAYER_TURN and PLAYER_LEAN. These both take gravity into account to combine your axes more reliably.\n\tUse PLAYER_TURN if you like to turn your camera or move your cursor by turning your controller side to side.\n\tUse PLAYER_LEAN if you'd rather lean your controller to turn the camera."));
+	                       ->setHelp("How gyro input is converted to 2D input. With LOCAL, your MOUSE_X_FROM_GYRO_AXIS and MOUSE_Y_FROM_GYRO_AXIS settings decide which local angular axis maps to which 2D mouse axis.\nYAW_PLUS_ROLL keeps pitch on Y and combines yaw + roll on X using ROLL_CONTRIBUTION.\nYour other options are PLAYER_TURN and PLAYER_LEAN. These both take gravity into account to combine your axes more reliably.\n\tUse PLAYER_TURN if you like to turn your camera or move your cursor by turning your controller side to side.\n\tUse PLAYER_LEAN if you'd rather lean your controller to turn the camera."));
+
+	auto roll_contribution = new JSMSetting<float>(SettingID::ROLL_CONTRIBUTION, 0.0f);
+	roll_contribution->setFilter(&filterClampPercent);
+	SettingsManager::add(roll_contribution);
+	commandRegistry->add((new JSMAssignment<float>(*roll_contribution))
+	                       ->setHelp("When GYRO_SPACE is YAW_PLUS_ROLL, adds roll to horizontal turn as a percentage of yaw sensitivity. Valid range is -100 to 100."));
 
 	auto trackball_decay = new JSMSetting<float>(SettingID::TRACKBALL_DECAY, 1.0f);
 	trackball_decay->setFilter(&filterPositive);

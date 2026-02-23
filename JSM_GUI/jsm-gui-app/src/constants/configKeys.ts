@@ -23,6 +23,7 @@ export const noiseKeys = [
 
 export const sensitivityKeys = [
   'GYRO_SENS',
+  'ROLL_CONTRIBUTION',
   'MIN_GYRO_SENS',
   'MAX_GYRO_SENS',
   'MIN_GYRO_THRESHOLD',
@@ -115,6 +116,7 @@ export const keyName = {
 
   // Sensitivity
   GYRO_SENS: 'GYRO_SENS',
+  ROLL_CONTRIBUTION: 'ROLL_CONTRIBUTION',
   MIN_GYRO_SENS: 'MIN_GYRO_SENS',
   MAX_GYRO_SENS: 'MAX_GYRO_SENS',
   MIN_GYRO_THRESHOLD: 'MIN_GYRO_THRESHOLD',
