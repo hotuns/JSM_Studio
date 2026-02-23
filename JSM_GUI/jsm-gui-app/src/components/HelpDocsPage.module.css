@@ -9,11 +9,16 @@
   position: sticky;
   top: 0;
   z-index: 2;
-  background: linear-gradient(180deg, rgba(20, 20, 24, 0.98), rgba(20, 20, 24, 0.92));
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--bg-2) 96%, transparent),
+    color-mix(in srgb, var(--bg-2) 90%, transparent)
+  );
   border: 1px solid var(--border-1);
   border-radius: 12px;
   padding: 0.9rem;
   backdrop-filter: blur(4px);
+  box-shadow: 0 6px 18px color-mix(in srgb, var(--bg-0) 24%, transparent);
   min-width: 0;
 }
 
@@ -38,6 +43,34 @@
 .searchField span {
   font-size: 0.9rem;
   color: var(--text-mid);
+}
+
+.searchField input {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-1);
+  background: var(--bg-input);
+  color: var(--text-strong);
+  font-size: 0.95rem;
+  line-height: 1.2;
+  font-weight: 500;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+.searchField input::placeholder {
+  color: var(--text-muted);
+}
+
+.searchField input:hover {
+  border-color: var(--border-strong);
+}
+
+.searchField input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 35%, transparent);
 }
 
 .searchControls {
@@ -90,7 +123,7 @@
 .docsMarkdown {
   border: 1px solid var(--border-1);
   border-radius: 14px;
-  background: rgba(10, 10, 14, 0.45);
+  background: color-mix(in srgb, var(--bg-2) 88%, var(--bg-0));
   padding: 1rem 1.1rem 1.25rem;
   min-width: 0;
   overflow-x: hidden;
@@ -116,7 +149,7 @@
 .docsMarkdown :global(h2) {
   font-size: 1.25rem;
   padding-top: 0.35rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.04);
+  border-top: 1px solid color-mix(in srgb, var(--border-1) 45%, transparent);
 }
 
 .docsMarkdown :global(p),
@@ -142,15 +175,15 @@
 }
 
 .docsMarkdown :global(code) {
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: color-mix(in srgb, var(--bg-1-5) 70%, var(--bg-2));
+  border: 1px solid color-mix(in srgb, var(--border-1) 80%, transparent);
   border-radius: 6px;
   padding: 0.1rem 0.3rem;
   font-size: 0.9em;
 }
 
 .docsMarkdown :global(pre) {
-  background: rgba(0, 0, 0, 0.45);
+  background: color-mix(in srgb, var(--bg-0) 55%, var(--bg-2));
   border: 1px solid var(--border-1);
   border-radius: 10px;
   padding: 0.75rem;
