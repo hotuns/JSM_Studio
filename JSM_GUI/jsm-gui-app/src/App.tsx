@@ -14,13 +14,14 @@ import { KeymapControls } from './components/KeymapControls'
 import { SectionActions } from './components/SectionActions'
 import { LOCK_MESSAGE } from './constants/messages'
 import { DEFAULT_HOLD_PRESS_TIME } from './constants/defaults'
+import { HelpDocsPage } from './components/HelpDocsPage'
 import { useProfileLibrary } from './hooks/useProfileLibrary'
 import { useKeymapConfig } from './hooks/useKeymapConfig'
 import { useCalibration } from './hooks/useCalibration'
 import { ToastHost } from './components/ToastHost'
 import telemetryStyles from './components/Telemetry.module.css'
 
-type PrimaryTab = 'gyro' | 'keybinds' | 'touchpad' | 'sticks'
+type PrimaryTab = 'gyro' | 'keybinds' | 'touchpad' | 'sticks' | 'help'
 type GyroSubTab = 'behavior' | 'sensitivity' | 'noise'
 type KeybindsSubTab = 'face' | 'dpad' | 'bumpers' | 'triggers' | 'center'
 type TouchpadSubTab = 'mode' | 'bind'
@@ -62,6 +63,20 @@ const PrimaryNav = ({ primaryTab, setPrimaryTab }: PrimaryNavProps) => (
       Sticks
     </button>
   </div>
+)
+
+type HelpNavButtonProps = {
+  primaryTab: PrimaryTab
+  setPrimaryTab: (tab: PrimaryTab) => void
+}
+
+const HelpNavButton = ({ primaryTab, setPrimaryTab }: HelpNavButtonProps) => (
+  <button
+    className={`${sideNavStyles.navItem} ${primaryTab === 'help' ? sideNavStyles.active : ''}`}
+    onClick={() => setPrimaryTab('help')}
+  >
+    JSM Documentation
+  </button>
 )
 
 type TopBarContentProps = {
@@ -694,6 +709,10 @@ function App() {
       )
     }
 
+    if (primaryTab === 'help') {
+      return <HelpDocsPage />
+    }
+
     return null
   }
 
@@ -705,6 +724,7 @@ function App() {
         <div className={sideNavStyles.navBrand}>JSM Custom Curve</div>
         <PrimaryNav primaryTab={primaryTab} setPrimaryTab={setPrimaryTab} />
         <div className={sideNavStyles.navFooter}>
+          <HelpNavButton primaryTab={primaryTab} setPrimaryTab={setPrimaryTab} />
           <ThemeToggle />
         </div>
       </aside>
@@ -714,6 +734,9 @@ function App() {
           <div>
             <div className={sideNavStyles.navBrand}>JSM Custom Curve</div>
             <PrimaryNav primaryTab={primaryTab} setPrimaryTab={setPrimaryTab} />
+            <div className={sideNavStyles.navGroup}>
+              <HelpNavButton primaryTab={primaryTab} setPrimaryTab={setPrimaryTab} />
+            </div>
           </div>
           <div className={sideNavStyles.navToggleFloat}>
             <ThemeToggle compact />

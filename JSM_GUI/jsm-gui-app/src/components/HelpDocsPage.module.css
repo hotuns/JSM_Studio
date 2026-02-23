@@ -1,0 +1,202 @@
+.helpCard {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.searchBar {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: linear-gradient(180deg, rgba(20, 20, 24, 0.98), rgba(20, 20, 24, 0.92));
+  border: 1px solid var(--border-1);
+  border-radius: 12px;
+  padding: 0.9rem;
+  backdrop-filter: blur(4px);
+  min-width: 0;
+}
+
+.headerRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.headerRow h2 {
+  margin: 0;
+}
+
+.searchField {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.searchField span {
+  font-size: 0.9rem;
+  color: var(--text-mid);
+}
+
+.searchControls {
+  margin-top: 0.75rem;
+  border-top: 1px solid var(--border-1);
+  padding-top: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.findStatus {
+  font-size: 0.85rem;
+  color: var(--text-dim);
+}
+
+.findButtons {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.findNavButton {
+  border: 1px solid var(--border-1);
+  background: var(--bg-input);
+  color: var(--text-strong);
+  border-radius: 8px;
+  padding: 0.35rem 0.65rem;
+  cursor: pointer;
+  font-size: 0.85rem;
+  line-height: 1.2;
+}
+
+.findNavButton:hover:not(:disabled) {
+  border-color: var(--border-strong);
+  background: var(--bg-btn-hover);
+}
+
+.findNavButton:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.docsViewport {
+  min-height: 0;
+  min-width: 0;
+}
+
+.docsMarkdown {
+  border: 1px solid var(--border-1);
+  border-radius: 14px;
+  background: rgba(10, 10, 14, 0.45);
+  padding: 1rem 1.1rem 1.25rem;
+  min-width: 0;
+  overflow-x: hidden;
+}
+
+.docsMarkdown :global(h1),
+.docsMarkdown :global(h2),
+.docsMarkdown :global(h3),
+.docsMarkdown :global(h4),
+.docsMarkdown :global(h5),
+.docsMarkdown :global(h6) {
+  color: var(--text-strong);
+  line-height: 1.2;
+  margin-top: 1.2rem;
+  margin-bottom: 0.5rem;
+}
+
+.docsMarkdown :global(h1) {
+  margin-top: 0;
+  font-size: 1.6rem;
+}
+
+.docsMarkdown :global(h2) {
+  font-size: 1.25rem;
+  padding-top: 0.35rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.docsMarkdown :global(p),
+.docsMarkdown :global(li) {
+  color: var(--text-mid);
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+
+.docsMarkdown :global(ul),
+.docsMarkdown :global(ol) {
+  padding-left: 1.2rem;
+}
+
+.docsMarkdown :global(a) {
+  overflow-wrap: anywhere;
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.docsMarkdown :global(a:hover) {
+  text-decoration: underline;
+}
+
+.docsMarkdown :global(code) {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  padding: 0.1rem 0.3rem;
+  font-size: 0.9em;
+}
+
+.docsMarkdown :global(pre) {
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid var(--border-1);
+  border-radius: 10px;
+  padding: 0.75rem;
+  overflow-x: auto;
+}
+
+.docsMarkdown :global(pre code) {
+  background: transparent;
+  border: 0;
+  padding: 0;
+}
+
+.findMatch {
+  background: rgba(240, 205, 79, 0.24);
+  color: inherit;
+  border-radius: 3px;
+  padding: 0 0.05rem;
+}
+
+.findMatchActive {
+  background: rgba(76, 125, 255, 0.28);
+  box-shadow: 0 0 0 1px rgba(76, 125, 255, 0.35);
+}
+
+.heading {
+  scroll-margin-top: calc(var(--top-bar-height) + 1.25rem);
+  transition: box-shadow 0.25s ease, background-color 0.25s ease;
+}
+
+.headingActive {
+  background: rgba(76, 125, 255, 0.08);
+  box-shadow: 0 0 0 1px rgba(76, 125, 255, 0.22);
+  border-radius: 6px;
+  padding-left: 0.35rem;
+}
+
+@media (max-width: 1060px) {
+  .heading {
+    scroll-margin-top: 1rem;
+  }
+
+  .docsMarkdown {
+    padding: 0.85rem;
+  }
+
+  .searchControls {
+    align-items: stretch;
+  }
+}
