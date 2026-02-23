@@ -111,6 +111,7 @@ export function HelpDocsPage() {
   const [activeSlug, setActiveSlug] = useState<string | null>(null)
   const [matchCount, setMatchCount] = useState(0)
   const [activeMatchIndex, setActiveMatchIndex] = useState(-1)
+  const [stickyTopOffset, setStickyTopOffset] = useState(0)
   const searchBarRef = useRef<HTMLDivElement | null>(null)
   const searchInputRef = useRef<HTMLInputElement | null>(null)
   const docsMarkdownRef = useRef<HTMLDivElement | null>(null)
@@ -228,6 +229,31 @@ export function HelpDocsPage() {
   }, [search, activeSlug, rebuildFindMatches])
 
   useEffect(() => {
+    const header = document.querySelector<HTMLElement>('.responsive-header')
+    if (!header) {
+      setStickyTopOffset(0)
+      return
+    }
+
+    const updateOffset = () => {
+      const style = window.getComputedStyle(header)
+      const visible = style.display !== 'none' && style.visibility !== 'hidden'
+      setStickyTopOffset(visible ? Math.ceil(header.getBoundingClientRect().height) : 0)
+    }
+
+    updateOffset()
+
+    const resizeObserver = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(updateOffset) : null
+    resizeObserver?.observe(header)
+    window.addEventListener('resize', updateOffset)
+
+    return () => {
+      resizeObserver?.disconnect()
+      window.removeEventListener('resize', updateOffset)
+    }
+  }, [])
+
+  useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       const isFindShortcut = (event.ctrlKey || event.metaKey) && !event.altKey && event.key.toLowerCase() === 'f'
       if (!isFindShortcut) return
@@ -317,7 +343,7 @@ export function HelpDocsPage() {
 
   return (
     <Card className={`control-panel ${styles.helpCard}`}>
-      <div ref={searchBarRef} className={styles.searchBar}>
+      <div ref={searchBarRef} className={styles.searchBar} style={stickyTopOffset > 0 ? { top: `${stickyTopOffset}px` } : undefined}>
         <div className={styles.headerRow}>
           <h2>JSM Documentation</h2>
         </div>

@@ -34,9 +34,10 @@ const formatNumber = (value: number | undefined, digits = 2) =>
 type PrimaryNavProps = {
   primaryTab: PrimaryTab
   setPrimaryTab: (tab: PrimaryTab) => void
+  includeHelp?: boolean
 }
 
-const PrimaryNav = ({ primaryTab, setPrimaryTab }: PrimaryNavProps) => (
+const PrimaryNav = ({ primaryTab, setPrimaryTab, includeHelp = false }: PrimaryNavProps) => (
   <div className={sideNavStyles.navGroup}>
     <button
       className={`${sideNavStyles.navItem} ${primaryTab === 'gyro' ? sideNavStyles.active : ''}`}
@@ -62,6 +63,14 @@ const PrimaryNav = ({ primaryTab, setPrimaryTab }: PrimaryNavProps) => (
     >
       Sticks
     </button>
+    {includeHelp && (
+      <button
+        className={`${sideNavStyles.navItem} ${primaryTab === 'help' ? sideNavStyles.active : ''}`}
+        onClick={() => setPrimaryTab('help')}
+      >
+        JSM Documentation
+      </button>
+    )}
   </div>
 )
 
@@ -733,10 +742,7 @@ function App() {
         <div className={sideNavStyles.navHeaderRow}>
           <div>
             <div className={sideNavStyles.navBrand}>JSM Custom Curve</div>
-            <PrimaryNav primaryTab={primaryTab} setPrimaryTab={setPrimaryTab} />
-            <div className={sideNavStyles.navGroup}>
-              <HelpNavButton primaryTab={primaryTab} setPrimaryTab={setPrimaryTab} />
-            </div>
+            <PrimaryNav primaryTab={primaryTab} setPrimaryTab={setPrimaryTab} includeHelp />
           </div>
           <div className={sideNavStyles.navToggleFloat}>
             <ThemeToggle compact />
