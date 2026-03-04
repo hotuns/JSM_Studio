@@ -12,6 +12,15 @@ const getSystemPref = (): Theme | null => {
 export function useTheme() {
   const [theme, setTheme] = useState<Theme>('dark')
 
+  const apply = useCallback((next: Theme, broadcast = true) => {
+    setTheme(next)
+    localStorage.setItem(STORAGE_KEY, next)
+    document.documentElement.dataset.theme = next
+    if (broadcast && typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent<Theme>('jsm-theme-changed', { detail: next }))
+    }
+  }, [])
+
   useEffect(() => {
     const stored = (localStorage.getItem(STORAGE_KEY) as Theme | null)
     const initial = (document.documentElement.dataset.theme as Theme | undefined) ?? stored ?? getSystemPref() ?? 'dark'
@@ -38,16 +47,7 @@ export function useTheme() {
       window.removeEventListener('storage', onStorage)
       window.removeEventListener('jsm-theme-changed', onCustom as EventListener)
     }
-  }, [])
-
-  const apply = useCallback((next: Theme, broadcast = true) => {
-    setTheme(next)
-    localStorage.setItem(STORAGE_KEY, next)
-    document.documentElement.dataset.theme = next
-    if (broadcast && typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent<Theme>('jsm-theme-changed', { detail: next }))
-    }
-  }, [])
+  }, [apply])
 
   const toggle = useCallback(() => {
     apply(theme === 'dark' ? 'light' : 'dark')

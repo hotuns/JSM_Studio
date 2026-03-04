@@ -14,13 +14,16 @@ import { KeymapControls } from './components/KeymapControls'
 import { SectionActions } from './components/SectionActions'
 import { LOCK_MESSAGE } from './constants/messages'
 import { DEFAULT_HOLD_PRESS_TIME } from './constants/defaults'
+import { HelpDocsPage } from './components/HelpDocsPage'
 import { useProfileLibrary } from './hooks/useProfileLibrary'
 import { useKeymapConfig } from './hooks/useKeymapConfig'
 import { useCalibration } from './hooks/useCalibration'
 import { ToastHost } from './components/ToastHost'
-import telemetryStyles from './components/Telemetry.module.css'
+import { RwcGuideModal } from './components/RwcGuideModal'
+import { updateKeymapEntry } from './utils/keymap'
 
-type PrimaryTab = 'gyro' | 'keybinds' | 'touchpad' | 'sticks'
+
+type PrimaryTab = 'gyro' | 'keybinds' | 'touchpad' | 'sticks' | 'help'
 type GyroSubTab = 'behavior' | 'sensitivity' | 'noise'
 type KeybindsSubTab = 'face' | 'dpad' | 'bumpers' | 'triggers' | 'center'
 type TouchpadSubTab = 'mode' | 'bind'
@@ -33,9 +36,10 @@ const formatNumber = (value: number | undefined, digits = 2) =>
 type PrimaryNavProps = {
   primaryTab: PrimaryTab
   setPrimaryTab: (tab: PrimaryTab) => void
+  includeHelp?: boolean
 }
 
-const PrimaryNav = ({ primaryTab, setPrimaryTab }: PrimaryNavProps) => (
+const PrimaryNav = ({ primaryTab, setPrimaryTab, includeHelp = false }: PrimaryNavProps) => (
   <div className={sideNavStyles.navGroup}>
     <button
       className={`${sideNavStyles.navItem} ${primaryTab === 'gyro' ? sideNavStyles.active : ''}`}
@@ -61,7 +65,29 @@ const PrimaryNav = ({ primaryTab, setPrimaryTab }: PrimaryNavProps) => (
     >
       Sticks
     </button>
+    {includeHelp && (
+      <button
+        className={`${sideNavStyles.navItem} ${primaryTab === 'help' ? sideNavStyles.active : ''}`}
+        onClick={() => setPrimaryTab('help')}
+      >
+        JSM Documentation
+      </button>
+    )}
   </div>
+)
+
+type HelpNavButtonProps = {
+  primaryTab: PrimaryTab
+  setPrimaryTab: (tab: PrimaryTab) => void
+}
+
+const HelpNavButton = ({ primaryTab, setPrimaryTab }: HelpNavButtonProps) => (
+  <button
+    className={`${sideNavStyles.navItem} ${primaryTab === 'help' ? sideNavStyles.active : ''}`}
+    onClick={() => setPrimaryTab('help')}
+  >
+    JSM Documentation
+  </button>
 )
 
 type TopBarContentProps = {
@@ -110,6 +136,7 @@ function App() {
   const [statusMessage, setStatusMessage] = useState<string | null>(null)
   const [recalibrating, setRecalibrating] = useState(false)
   const [isProfileModalOpen, setProfileModalOpen] = useState(false)
+  const [isRwcGuideModalOpen, setIsRwcGuideModalOpen] = useState(false)
   const [primaryTab, setPrimaryTab] = useState<PrimaryTab>('gyro')
   const [gyroSubTab, setGyroSubTab] = useState<GyroSubTab>('behavior')
   const [keybindsSubTab, setKeybindsSubTab] = useState<KeybindsSubTab>('face')
@@ -438,6 +465,7 @@ function App() {
                 counterOsMouseSpeed={counterOsMouseSpeedEnabled}
                 onCounterOsMouseSpeedChange={handleCounterOsMouseSpeedChange}
                 onOpenCalibration={handleOpenCalibration}
+                onOpenRwcGuide={() => setIsRwcGuideModalOpen(true)}
                 hasPendingChanges={hasPendingChanges}
                 onApply={handleApplyWithFinalize}
                 onCancel={handleCancel}
@@ -694,6 +722,10 @@ function App() {
       )
     }
 
+    if (primaryTab === 'help') {
+      return <HelpDocsPage />
+    }
+
     return null
   }
 
@@ -705,6 +737,7 @@ function App() {
         <div className={sideNavStyles.navBrand}>JSM Custom Curve</div>
         <PrimaryNav primaryTab={primaryTab} setPrimaryTab={setPrimaryTab} />
         <div className={sideNavStyles.navFooter}>
+          <HelpNavButton primaryTab={primaryTab} setPrimaryTab={setPrimaryTab} />
           <ThemeToggle />
         </div>
       </aside>
@@ -713,7 +746,7 @@ function App() {
         <div className={sideNavStyles.navHeaderRow}>
           <div>
             <div className={sideNavStyles.navBrand}>JSM Custom Curve</div>
-            <PrimaryNav primaryTab={primaryTab} setPrimaryTab={setPrimaryTab} />
+            <PrimaryNav primaryTab={primaryTab} setPrimaryTab={setPrimaryTab} includeHelp />
           </div>
           <div className={sideNavStyles.navToggleFloat}>
             <ThemeToggle compact />
@@ -888,6 +921,17 @@ function App() {
           </div>
         </div>
       )}
+      <RwcGuideModal
+        isOpen={isRwcGuideModalOpen}
+        inGameSens={sensitivity.inGameSens ?? ''}
+        onClose={() => setIsRwcGuideModalOpen(false)}
+        onApplyRwc={(rwc) => {
+          const baseText = finalizePendingValues ? finalizePendingValues() : configText
+          const rwcNum = parseFloat(rwc)
+          const textWithRwc = updateKeymapEntry(baseText, 'REAL_WORLD_CALIBRATION', [rwcNum])
+          applyConfig({ textOverride: textWithRwc })
+        }}
+      />
       {isProfileModalOpen && (
         <div className="modal-overlay">
           <div className="modal-card profile-modal">

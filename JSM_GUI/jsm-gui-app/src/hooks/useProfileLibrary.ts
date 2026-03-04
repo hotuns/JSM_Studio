@@ -58,7 +58,7 @@ export function useProfileLibrary({
     } catch (err) {
       console.error('Failed to load active profile', err)
     }
-  }, [setAppliedConfig, setConfigText])
+  }, [resetPendingSensitivityChanges, setAppliedConfig, setConfigText])
 
   const refreshLibraryProfiles = useCallback(async (): Promise<string[]> => {
     if (!window.electronAPI?.listLibraryProfiles) {
@@ -162,7 +162,7 @@ export function useProfileLibrary({
       }
       return null
     },
-    [applyConfig, refreshLibraryProfiles, setAppliedConfig, setConfigText, setStatusMessage]
+    [applyConfig, refreshLibraryProfiles, resetPendingSensitivityChanges, setAppliedConfig, setConfigText, setStatusMessage]
   )
 
   const handleLibraryProfileNameChange = useCallback((originalName: string, value: string) => {
@@ -201,7 +201,7 @@ export function useProfileLibrary({
       setStatusMessage(CREATE_PROFILE_FAILED)
       setTimeout(() => setStatusMessage(null), 3000)
     }
-  }, [applyConfig, refreshLibraryProfiles, setAppliedConfig, setConfigText, setStatusMessage])
+  }, [applyConfig, refreshLibraryProfiles, resetPendingSensitivityChanges, setAppliedConfig, setConfigText, setStatusMessage])
 
   const handleRenameProfile = useCallback(
     async (originalName: string) => {
@@ -245,6 +245,7 @@ export function useProfileLibrary({
       currentLibraryProfile,
       editedLibraryNames,
       refreshLibraryProfiles,
+      resetPendingSensitivityChanges,
       setAppliedConfig,
       setConfigText,
       setStatusMessage,
@@ -316,6 +317,7 @@ export function useProfileLibrary({
       currentLibraryProfile,
       handleLoadProfileFromLibrary,
       refreshLibraryProfiles,
+      resetPendingSensitivityChanges,
       setAppliedConfig,
       setConfigText,
       setStatusMessage,
@@ -344,7 +346,7 @@ export function useProfileLibrary({
         setTimeout(() => setStatusMessage(null), 3000)
       }
     },
-    [handleLoadProfileFromLibrary, refreshLibraryProfiles, setStatusMessage]
+    [handleLoadProfileFromLibrary, refreshLibraryProfiles, resetPendingSensitivityChanges, setStatusMessage]
   )
 
   const handleCopyActiveProfile = useCallback(async () => {
@@ -372,7 +374,7 @@ export function useProfileLibrary({
       setTimeout(() => setStatusMessage(null), 3000)
     }
     return null
-  }, [refreshLibraryProfiles, setActiveProfilePath, setAppliedConfig, setConfigText, setStatusMessage])
+  }, [refreshLibraryProfiles, resetPendingSensitivityChanges, setActiveProfilePath, setAppliedConfig, setConfigText, setStatusMessage])
 
   return {
     libraryProfiles,

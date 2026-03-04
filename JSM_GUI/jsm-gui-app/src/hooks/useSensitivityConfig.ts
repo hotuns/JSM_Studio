@@ -840,7 +840,7 @@ export function useSensitivityConfig({ configText, setConfigText }: SensitivityA
       setConfigText(next)
     }
     return next
-  }, [configText, selectedBaseMode, selectedModeshiftMode, setConfigText])
+  }, [configText, selectedBaseMode, selectedModeshiftMode, sensitivityModeshiftButton, setConfigText])
 
   const resetPendingSensitivityChanges = useCallback(() => {
     setPendingDual({})
