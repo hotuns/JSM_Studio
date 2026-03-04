@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain } from 'electron'
+import { app, BrowserWindow, ipcMain, shell } from 'electron'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 import fs from 'node:fs/promises'
@@ -632,6 +632,8 @@ const normalizeRelativeProfilePath = (input?: string | null) => {
   }
   return normalized
 }
+
+ipcMain.handle('open-external', (_event, url: string) => shell.openExternal(url))
 
 ipcMain.handle('get-backend-choice', async () => backendChoice)
 

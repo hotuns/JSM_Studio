@@ -14,6 +14,8 @@
   border-radius: 12px;
   padding: 1.25rem;
   width: min(640px, 90vw);
+  max-height: 85vh;
+  overflow-y: auto;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35), 0 1px 0 rgba(255, 255, 255, 0.02) inset;
 }
 
@@ -37,6 +39,10 @@
   color: var(--text-mid);
   font-size: 0.9rem;
   line-height: 1.5;
+}
+
+.modal-description a {
+  color: var(--accent);
 }
 
 .modal-actions {

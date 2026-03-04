@@ -23,6 +23,7 @@ declare interface Window {
     runCalibrationCommand?: (command: string) => Promise<{ success: boolean; output: string }>
     getBackendChoice?: () => Promise<'SDL' | 'legacy'>
     setBackendChoice?: (choice: 'SDL' | 'legacy') => Promise<{ success: boolean; backend: 'SDL' | 'legacy' }>
+    openExternal?: (url: string) => Promise<void>
   }
   telemetry?: {
     onSample?: (callback: (payload: unknown) => void) => () => void

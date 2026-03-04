@@ -59,7 +59,7 @@ type SensitivityControlsProps = {
 
 export function SensitivityControls({
   sensitivity,
-  modeshiftSensitivity,
+
   isCalibrating,
   statusMessage,
   mode,

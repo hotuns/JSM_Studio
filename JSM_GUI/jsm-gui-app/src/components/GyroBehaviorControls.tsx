@@ -4,7 +4,7 @@ import { SectionActions } from './SectionActions'
 import { LOCK_MESSAGE } from '../constants/messages'
 import { controllerLabel, formatVidPid } from '../utils/controllers'
 import styles from './Gyro.module.css'
-import miscStyles from './Misc.module.css'
+
 
 const TICK_TIME_OPTIONS = [
   { value: '1', label: '1 ms' },
@@ -41,6 +41,7 @@ type GyroBehaviorControlsProps = {
   counterOsMouseSpeed: boolean
   onCounterOsMouseSpeedChange: (enabled: boolean) => void
   onOpenCalibration?: () => void
+  onOpenRwcGuide?: () => void
   hasPendingChanges: boolean
   onApply: () => void
   onCancel: () => void
@@ -65,6 +66,7 @@ export function GyroBehaviorControls({
   counterOsMouseSpeed,
   onCounterOsMouseSpeedChange,
   onOpenCalibration,
+  onOpenRwcGuide,
   hasPendingChanges,
   onApply,
   onCancel,
@@ -75,11 +77,18 @@ export function GyroBehaviorControls({
   return (
     <Card className="control-panel" lockable locked={isCalibrating} lockMessage={lockMessage}>
       <h2>Gyro Behavior</h2>
-      {onOpenCalibration && (
+      {(onOpenCalibration || onOpenRwcGuide) && (
         <div className="flex-inputs">
-          <button type="button" className="secondary-btn full-width-btn" onClick={onOpenCalibration} disabled={isCalibrating}>
-            Calculate real world calibration
-          </button>
+          {onOpenRwcGuide && (
+            <button type="button" className="secondary-btn full-width-btn" onClick={onOpenRwcGuide} disabled={isCalibrating}>
+              Easy real world calibration method
+            </button>
+          )}
+          {onOpenCalibration && (
+            <button type="button" className="secondary-btn full-width-btn" onClick={onOpenCalibration} disabled={isCalibrating}>
+              Calculate real world calibration manually
+            </button>
+          )}
         </div>
       )}
       <div className="flex-inputs">

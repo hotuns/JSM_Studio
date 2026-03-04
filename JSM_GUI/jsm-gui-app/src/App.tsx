@@ -19,7 +19,9 @@ import { useProfileLibrary } from './hooks/useProfileLibrary'
 import { useKeymapConfig } from './hooks/useKeymapConfig'
 import { useCalibration } from './hooks/useCalibration'
 import { ToastHost } from './components/ToastHost'
-import telemetryStyles from './components/Telemetry.module.css'
+import { RwcGuideModal } from './components/RwcGuideModal'
+import { updateKeymapEntry } from './utils/keymap'
+
 
 type PrimaryTab = 'gyro' | 'keybinds' | 'touchpad' | 'sticks' | 'help'
 type GyroSubTab = 'behavior' | 'sensitivity' | 'noise'
@@ -134,6 +136,7 @@ function App() {
   const [statusMessage, setStatusMessage] = useState<string | null>(null)
   const [recalibrating, setRecalibrating] = useState(false)
   const [isProfileModalOpen, setProfileModalOpen] = useState(false)
+  const [isRwcGuideModalOpen, setIsRwcGuideModalOpen] = useState(false)
   const [primaryTab, setPrimaryTab] = useState<PrimaryTab>('gyro')
   const [gyroSubTab, setGyroSubTab] = useState<GyroSubTab>('behavior')
   const [keybindsSubTab, setKeybindsSubTab] = useState<KeybindsSubTab>('face')
@@ -462,6 +465,7 @@ function App() {
                 counterOsMouseSpeed={counterOsMouseSpeedEnabled}
                 onCounterOsMouseSpeedChange={handleCounterOsMouseSpeedChange}
                 onOpenCalibration={handleOpenCalibration}
+                onOpenRwcGuide={() => setIsRwcGuideModalOpen(true)}
                 hasPendingChanges={hasPendingChanges}
                 onApply={handleApplyWithFinalize}
                 onCancel={handleCancel}
@@ -917,6 +921,17 @@ function App() {
           </div>
         </div>
       )}
+      <RwcGuideModal
+        isOpen={isRwcGuideModalOpen}
+        inGameSens={sensitivity.inGameSens ?? ''}
+        onClose={() => setIsRwcGuideModalOpen(false)}
+        onApplyRwc={(rwc) => {
+          const baseText = finalizePendingValues ? finalizePendingValues() : configText
+          const rwcNum = parseFloat(rwc)
+          const textWithRwc = updateKeymapEntry(baseText, 'REAL_WORLD_CALIBRATION', [rwcNum])
+          applyConfig({ textOverride: textWithRwc })
+        }}
+      />
       {isProfileModalOpen && (
         <div className="modal-overlay">
           <div className="modal-card profile-modal">
