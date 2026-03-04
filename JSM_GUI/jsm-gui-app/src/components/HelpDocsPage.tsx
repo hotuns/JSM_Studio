@@ -131,13 +131,13 @@ export function HelpDocsPage() {
       const targetRect = el.getBoundingClientRect()
       const offsetFromShellTop = Math.max(0, searchBarBottom - shellRect.top) + extraGap
       const targetTop = shellMain.scrollTop + (targetRect.top - shellRect.top) - offsetFromShellTop
-      shellMain.scrollTo({ top: Math.max(0, targetTop), behavior: 'smooth' })
+      shellMain.scrollTo({ top: Math.max(0, targetTop), behavior: 'instant' })
       return
     }
 
     const targetRect = el.getBoundingClientRect()
     const targetTop = window.scrollY + targetRect.top - searchBarBottom - extraGap
-    window.scrollTo({ top: Math.max(0, targetTop), behavior: 'smooth' })
+    window.scrollTo({ top: Math.max(0, targetTop), behavior: 'instant' })
   }, [])
 
   const setFindActiveMatch = useCallback(
@@ -215,10 +215,10 @@ export function HelpDocsPage() {
   const scrollToTop = useCallback(() => {
     const shellMain = document.querySelector<HTMLElement>('.shell-main')
     if (shellMain) {
-      shellMain.scrollTo({ top: 0, behavior: 'smooth' })
+      shellMain.scrollTo({ top: 0, behavior: 'instant' })
       return
     }
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+    window.scrollTo({ top: 0, behavior: 'instant' })
   }, [])
 
   useEffect(() => {
