@@ -48,6 +48,39 @@ ipcRenderer.on('calibration-status', (_event, payload) => {
   })
 })
 
+const updateAvailableListeners = new Set<(version: string) => void>()
+ipcRenderer.on('update-available', (_event, version: string) => {
+  updateAvailableListeners.forEach(listener => {
+    try {
+      listener(version)
+    } catch (err) {
+      console.error('[updater] update-available listener failed', err)
+    }
+  })
+})
+
+const updateDownloadedListeners = new Set<() => void>()
+ipcRenderer.on('update-downloaded', () => {
+  updateDownloadedListeners.forEach(listener => {
+    try {
+      listener()
+    } catch (err) {
+      console.error('[updater] update-downloaded listener failed', err)
+    }
+  })
+})
+
+const updateProgressListeners = new Set<(percent: number) => void>()
+ipcRenderer.on('update-download-progress', (_event, percent: number) => {
+  updateProgressListeners.forEach(listener => {
+    try {
+      listener(percent)
+    } catch (err) {
+      console.error('[updater] download-progress listener failed', err)
+    }
+  })
+})
+
 const telemetryAPI = {
   onSample: (callback: (payload: unknown) => void) => {
     if (typeof callback !== 'function') {
@@ -67,5 +100,28 @@ contextBridge.exposeInMainWorld('electronAPI', {
     calibrationListeners.add(callback)
     return () => calibrationListeners.delete(callback)
   },
+  onUpdateAvailable: (callback: (version: string) => void) => {
+    if (typeof callback !== 'function') {
+      return () => {}
+    }
+    updateAvailableListeners.add(callback)
+    return () => updateAvailableListeners.delete(callback)
+  },
+  onUpdateDownloaded: (callback: () => void) => {
+    if (typeof callback !== 'function') {
+      return () => {}
+    }
+    updateDownloadedListeners.add(callback)
+    return () => updateDownloadedListeners.delete(callback)
+  },
+  onUpdateDownloadProgress: (callback: (percent: number) => void) => {
+    if (typeof callback !== 'function') {
+      return () => {}
+    }
+    updateProgressListeners.add(callback)
+    return () => updateProgressListeners.delete(callback)
+  },
+  downloadUpdate: () => ipcRenderer.invoke('download-update'),
+  installUpdate: () => ipcRenderer.invoke('install-update'),
 })
 contextBridge.exposeInMainWorld('telemetry', telemetryAPI)

@@ -45,6 +45,13 @@
   gap: 0.6rem;
 }
 
+.navVersion {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  text-align: center;
+  opacity: 0.6;
+}
+
 .navItem {
   text-align: left;
   border-radius: 10px;

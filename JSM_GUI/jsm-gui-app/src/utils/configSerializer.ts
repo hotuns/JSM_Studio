@@ -390,11 +390,11 @@ export function serializeConfig(parsed: ParsedConfig): string {
       ]
       const rank = (line: string) => {
         const keyPart = line.split('=')[0]?.trim().toUpperCase()
-        const d = defaultsOrder.indexOf(keyPart as typeof keyName[keyof typeof keyName])
+        const d = (defaultsOrder as string[]).indexOf(keyPart ?? '')
         if (d >= 0) return d
-        const l = leftOrder.indexOf(keyPart as typeof keyName[keyof typeof keyName])
+        const l = (leftOrder as string[]).indexOf(keyPart ?? '')
         if (l >= 0) return 100 + l
-        const r = rightOrder.indexOf(keyPart as typeof keyName[keyof typeof keyName])
+        const r = (rightOrder as string[]).indexOf(keyPart ?? '')
         if (r >= 0) return 200 + r
         return 1000
       }

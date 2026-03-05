@@ -1,4 +1,5 @@
 import './App.css'
+import { version as APP_VERSION } from '../package.json'
 import sideNavStyles from './components/SideNav.module.css'
 import topBarStyles from './components/TopBar.module.css'
 import { ThemeToggle } from './components/ThemeToggle'
@@ -19,6 +20,7 @@ import { useProfileLibrary } from './hooks/useProfileLibrary'
 import { useKeymapConfig } from './hooks/useKeymapConfig'
 import { useCalibration } from './hooks/useCalibration'
 import { ToastHost } from './components/ToastHost'
+import { UpdateBanner } from './components/UpdateBanner'
 import { RwcGuideModal } from './components/RwcGuideModal'
 import { updateKeymapEntry } from './utils/keymap'
 
@@ -732,6 +734,7 @@ function App() {
   return (
     <div className="app-shell">
       <ToastHost />
+      <UpdateBanner />
       {/* Desktop sidebar */}
       <aside className={sideNavStyles.sideNav}>
         <div className={sideNavStyles.navBrand}>JSM Custom Curve</div>
@@ -739,6 +742,7 @@ function App() {
         <div className={sideNavStyles.navFooter}>
           <HelpNavButton primaryTab={primaryTab} setPrimaryTab={setPrimaryTab} />
           <ThemeToggle />
+          <div className={sideNavStyles.navVersion}>v{APP_VERSION}</div>
         </div>
       </aside>
       {/* Narrow-width sticky header */}
@@ -923,7 +927,7 @@ function App() {
       )}
       <RwcGuideModal
         isOpen={isRwcGuideModalOpen}
-        inGameSens={sensitivity.inGameSens ?? ''}
+        inGameSens={String(sensitivity.inGameSens ?? '')}
         onClose={() => setIsRwcGuideModalOpen(false)}
         onApplyRwc={(rwc) => {
           const baseText = finalizePendingValues ? finalizePendingValues() : configText
@@ -946,7 +950,6 @@ function App() {
               hasPendingChanges={hasPendingChanges}
               isCalibrating={isCalibrating}
               profileApplied={configText === appliedConfig}
-              statusMessage={statusMessage}
               onImportProfile={handleImportProfile}
               libraryProfiles={libraryProfiles}
               libraryLoading={isLibraryLoading}

@@ -1,4 +1,5 @@
 import { app, BrowserWindow, ipcMain, shell } from 'electron'
+import { autoUpdater } from 'electron-updater'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 import fs from 'node:fs/promises'
@@ -33,6 +34,8 @@ let latestTelemetryPacket: Record<string, unknown> | null = null
 let jsmProcess: ChildProcess | null = null
 let calibrationTimer: NodeJS.Timeout | null = null
 let calibrationSecondsSetting = 5
+let pendingUpdateVersion: string | null = null
+let updateReadyToInstall = false
 
 type BackendChoice = 'SDL' | 'legacy'
 const TELEMETRY_PORT = 8974
@@ -202,6 +205,13 @@ async function setStartupProfilePath(relativePath: string) {
 
 async function ensureStartupCalibrationBlock() {
   let relative = await getStartupProfilePath()
+  if (relative) {
+    try {
+      await fs.access(absoluteProfilePath(relative))
+    } catch {
+      relative = null
+    }
+  }
   if (!relative) {
     relative = DEFAULT_PROFILE_RELATIVE
   }
@@ -564,6 +574,12 @@ async function createWindow() {
     if (latestTelemetryPacket) {
       win?.webContents.send('telemetry-sample', latestTelemetryPacket)
     }
+    if (pendingUpdateVersion) {
+      win?.webContents.send('update-available', pendingUpdateVersion)
+    }
+    if (updateReadyToInstall) {
+      win?.webContents.send('update-downloaded')
+    }
   })
 
   if (VITE_DEV_SERVER_URL) {
@@ -604,6 +620,7 @@ app.on('activate', () => {
 
 app.whenReady().then(async () => {
   await loadBackendChoice()
+  await restoreUserDataAfterUpdate()
   await ensureRequiredFiles()
   await loadCalibrationSecondsFromStartup()
   startTelemetryListener()
@@ -611,6 +628,24 @@ app.whenReady().then(async () => {
   setTimeout(() => {
     launchJoyShockMapper(calibrationSecondsSetting).catch(err => console.error('Auto-launch failed', err))
   }, 500)
+
+  autoUpdater.autoDownload = false
+  autoUpdater.checkForUpdates().catch(err => console.error('Update check failed', err))
+
+  autoUpdater.on('update-available', (info) => {
+    pendingUpdateVersion = info.version
+    win?.webContents.send('update-available', info.version)
+  })
+
+  autoUpdater.on('download-progress', (progress) => {
+    win?.webContents.send('update-download-progress', Math.floor(progress.percent))
+  })
+
+  autoUpdater.on('update-downloaded', () => {
+    pendingUpdateVersion = null
+    updateReadyToInstall = true
+    win?.webContents.send('update-downloaded')
+  })
 })
 
 app.on('will-quit', () => {
@@ -633,7 +668,70 @@ const normalizeRelativeProfilePath = (input?: string | null) => {
   return normalized
 }
 
+async function backupUserDataForUpdate() {
+  const backupDir = path.join(DATA_DIR, 'update-backup')
+  const backupProfilesDir = path.join(backupDir, 'profiles-library')
+  try {
+    await fs.mkdir(backupProfilesDir, { recursive: true })
+    const profiles = await fs.readdir(PROFILE_LIBRARY_DIR).catch(() => [])
+    for (const file of profiles) {
+      if (file.toLowerCase().endsWith('.txt')) {
+        await fs.copyFile(
+          path.join(PROFILE_LIBRARY_DIR, file),
+          path.join(backupProfilesDir, file)
+        )
+      }
+    }
+    try {
+      await fs.copyFile(STARTUP_FILE, path.join(backupDir, 'OnStartUp.txt'))
+    } catch {
+      // OnStartUp.txt may not exist yet — not a fatal error
+    }
+    await writeLog('User data backed up for update')
+  } catch (err) {
+    await writeLog(`Failed to backup user data for update: ${String(err)}`)
+    throw err
+  }
+}
+
+async function restoreUserDataAfterUpdate() {
+  const backupDir = path.join(DATA_DIR, 'update-backup')
+  try {
+    await fs.access(backupDir)
+  } catch {
+    return // No backup present — normal startup
+  }
+  try {
+    const backupProfilesDir = path.join(backupDir, 'profiles-library')
+    await fs.mkdir(PROFILE_LIBRARY_DIR, { recursive: true })
+    const files = await fs.readdir(backupProfilesDir).catch(() => [])
+    for (const file of files) {
+      if (file.toLowerCase().endsWith('.txt')) {
+        await fs.copyFile(
+          path.join(backupProfilesDir, file),
+          path.join(PROFILE_LIBRARY_DIR, file)
+        )
+      }
+    }
+    try {
+      await fs.copyFile(path.join(backupDir, 'OnStartUp.txt'), STARTUP_FILE)
+    } catch {
+      // Backed-up OnStartUp.txt may not exist — ensureStartupCalibrationBlock will recreate it
+    }
+    await fs.rm(backupDir, { recursive: true, force: true })
+    await writeLog('User data restored after update')
+  } catch (err) {
+    await writeLog(`Failed to restore user data after update: ${String(err)}`)
+    // Don't throw — proceed with startup even if restore partially fails
+  }
+}
+
 ipcMain.handle('open-external', (_event, url: string) => shell.openExternal(url))
+ipcMain.handle('download-update', () => autoUpdater.downloadUpdate())
+ipcMain.handle('install-update', async () => {
+  await backupUserDataForUpdate()
+  autoUpdater.quitAndInstall(true, true)
+})
 
 ipcMain.handle('get-backend-choice', async () => backendChoice)
 

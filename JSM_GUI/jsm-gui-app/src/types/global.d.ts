@@ -24,6 +24,11 @@ declare interface Window {
     getBackendChoice?: () => Promise<'SDL' | 'legacy'>
     setBackendChoice?: (choice: 'SDL' | 'legacy') => Promise<{ success: boolean; backend: 'SDL' | 'legacy' }>
     openExternal?: (url: string) => Promise<void>
+    onUpdateAvailable?: (callback: (version: string) => void) => () => void
+    onUpdateDownloaded?: (callback: () => void) => () => void
+    onUpdateDownloadProgress?: (callback: (percent: number) => void) => () => void
+    downloadUpdate?: () => Promise<void>
+    installUpdate?: () => Promise<void>
   }
   telemetry?: {
     onSample?: (callback: (payload: unknown) => void) => () => void
