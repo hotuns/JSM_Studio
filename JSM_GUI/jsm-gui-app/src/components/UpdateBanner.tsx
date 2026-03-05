@@ -22,7 +22,6 @@ export function UpdateBanner() {
     })
     const removeDownloaded = window.electronAPI?.onUpdateDownloaded?.(() => {
       setUpdate({ phase: 'ready' })
-      setDismissed(false)
     })
     return () => {
       removeAvailable?.()
@@ -65,22 +64,13 @@ export function UpdateBanner() {
       {update.phase === 'ready' && (
         <>
           <span>Update ready to install.</span>
-          <div className={styles.updateBannerActions}>
-            <button
-              type="button"
-              className="secondary-btn"
-              onClick={() => window.electronAPI?.installUpdate?.()}
-            >
-              Restart Now
-            </button>
-            <button
-              type="button"
-              className="secondary-btn"
-              onClick={() => setDismissed(true)}
-            >
-              Later
-            </button>
-          </div>
+          <button
+            type="button"
+            className="secondary-btn"
+            onClick={() => window.electronAPI?.installUpdate?.()}
+          >
+            Restart Now
+          </button>
         </>
       )}
     </div>
