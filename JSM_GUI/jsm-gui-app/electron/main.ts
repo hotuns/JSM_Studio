@@ -34,6 +34,8 @@ let latestTelemetryPacket: Record<string, unknown> | null = null
 let jsmProcess: ChildProcess | null = null
 let calibrationTimer: NodeJS.Timeout | null = null
 let calibrationSecondsSetting = 5
+let pendingUpdateVersion: string | null = null
+let updateReadyToInstall = false
 
 type BackendChoice = 'SDL' | 'legacy'
 const TELEMETRY_PORT = 8974
@@ -572,6 +574,12 @@ async function createWindow() {
     if (latestTelemetryPacket) {
       win?.webContents.send('telemetry-sample', latestTelemetryPacket)
     }
+    if (pendingUpdateVersion) {
+      win?.webContents.send('update-available', pendingUpdateVersion)
+    }
+    if (updateReadyToInstall) {
+      win?.webContents.send('update-downloaded')
+    }
   })
 
   if (VITE_DEV_SERVER_URL) {
@@ -626,6 +634,7 @@ app.whenReady().then(async () => {
   autoUpdater.checkForUpdates().catch(err => console.error('Update check failed', err))
 
   autoUpdater.on('update-available', (info) => {
+    pendingUpdateVersion = info.version
     win?.webContents.send('update-available', info.version)
   })
 
@@ -634,6 +643,8 @@ app.whenReady().then(async () => {
   })
 
   autoUpdater.on('update-downloaded', () => {
+    pendingUpdateVersion = null
+    updateReadyToInstall = true
     win?.webContents.send('update-downloaded')
   })
 })
