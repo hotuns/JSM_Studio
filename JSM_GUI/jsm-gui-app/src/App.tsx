@@ -19,6 +19,7 @@ import { useProfileLibrary } from './hooks/useProfileLibrary'
 import { useKeymapConfig } from './hooks/useKeymapConfig'
 import { useCalibration } from './hooks/useCalibration'
 import { ToastHost } from './components/ToastHost'
+import { UpdateBanner } from './components/UpdateBanner'
 import { RwcGuideModal } from './components/RwcGuideModal'
 import { updateKeymapEntry } from './utils/keymap'
 
@@ -732,6 +733,7 @@ function App() {
   return (
     <div className="app-shell">
       <ToastHost />
+      <UpdateBanner />
       {/* Desktop sidebar */}
       <aside className={sideNavStyles.sideNav}>
         <div className={sideNavStyles.navBrand}>JSM Custom Curve</div>
@@ -923,7 +925,7 @@ function App() {
       )}
       <RwcGuideModal
         isOpen={isRwcGuideModalOpen}
-        inGameSens={sensitivity.inGameSens ?? ''}
+        inGameSens={String(sensitivity.inGameSens ?? '')}
         onClose={() => setIsRwcGuideModalOpen(false)}
         onApplyRwc={(rwc) => {
           const baseText = finalizePendingValues ? finalizePendingValues() : configText
@@ -946,7 +948,6 @@ function App() {
               hasPendingChanges={hasPendingChanges}
               isCalibrating={isCalibrating}
               profileApplied={configText === appliedConfig}
-              statusMessage={statusMessage}
               onImportProfile={handleImportProfile}
               libraryProfiles={libraryProfiles}
               libraryLoading={isLibraryLoading}

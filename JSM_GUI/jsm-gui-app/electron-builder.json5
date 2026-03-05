@@ -17,22 +17,27 @@
       "to": "bin"
     }
   ],
+  "publish": {
+    "provider": "github",
+    "owner": "evan1mclean",
+    "repo": "JSM_custom_curve"
+  },
   "win": {
     "icon": "public/gyro-icon.ico",
     "target": [
       {
-        "target": "zip",
+        "target": "nsis",
         "arch": [
           "x64"
         ]
       }
-    ],
-    "artifactName": "${productName}.zip"
+    ]
   },
   "nsis": {
     "oneClick": false,
     "perMachine": false,
     "allowToChangeInstallationDirectory": true,
-    "deleteAppDataOnUninstall": false
+    "deleteAppDataOnUninstall": false,
+    "createDesktopShortcut": true
   }
 }

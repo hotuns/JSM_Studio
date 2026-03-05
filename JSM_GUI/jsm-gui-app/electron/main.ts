@@ -1,4 +1,5 @@
 import { app, BrowserWindow, ipcMain, shell } from 'electron'
+import { autoUpdater } from 'electron-updater'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 import fs from 'node:fs/promises'
@@ -202,6 +203,13 @@ async function setStartupProfilePath(relativePath: string) {
 
 async function ensureStartupCalibrationBlock() {
   let relative = await getStartupProfilePath()
+  if (relative) {
+    try {
+      await fs.access(absoluteProfilePath(relative))
+    } catch {
+      relative = null
+    }
+  }
   if (!relative) {
     relative = DEFAULT_PROFILE_RELATIVE
   }
@@ -611,6 +619,16 @@ app.whenReady().then(async () => {
   setTimeout(() => {
     launchJoyShockMapper(calibrationSecondsSetting).catch(err => console.error('Auto-launch failed', err))
   }, 500)
+
+  autoUpdater.checkForUpdates().catch(err => console.error('Update check failed', err))
+
+  autoUpdater.on('update-available', (info) => {
+    win?.webContents.send('update-available', info.version)
+  })
+
+  autoUpdater.on('update-downloaded', () => {
+    win?.webContents.send('update-downloaded')
+  })
 })
 
 app.on('will-quit', () => {
@@ -634,6 +652,7 @@ const normalizeRelativeProfilePath = (input?: string | null) => {
 }
 
 ipcMain.handle('open-external', (_event, url: string) => shell.openExternal(url))
+ipcMain.handle('install-update', () => autoUpdater.quitAndInstall())
 
 ipcMain.handle('get-backend-choice', async () => backendChoice)
 

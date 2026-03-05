@@ -48,6 +48,28 @@ ipcRenderer.on('calibration-status', (_event, payload) => {
   })
 })
 
+const updateAvailableListeners = new Set<(version: string) => void>()
+ipcRenderer.on('update-available', (_event, version: string) => {
+  updateAvailableListeners.forEach(listener => {
+    try {
+      listener(version)
+    } catch (err) {
+      console.error('[updater] update-available listener failed', err)
+    }
+  })
+})
+
+const updateDownloadedListeners = new Set<() => void>()
+ipcRenderer.on('update-downloaded', () => {
+  updateDownloadedListeners.forEach(listener => {
+    try {
+      listener()
+    } catch (err) {
+      console.error('[updater] update-downloaded listener failed', err)
+    }
+  })
+})
+
 const telemetryAPI = {
   onSample: (callback: (payload: unknown) => void) => {
     if (typeof callback !== 'function') {
@@ -67,5 +89,20 @@ contextBridge.exposeInMainWorld('electronAPI', {
     calibrationListeners.add(callback)
     return () => calibrationListeners.delete(callback)
   },
+  onUpdateAvailable: (callback: (version: string) => void) => {
+    if (typeof callback !== 'function') {
+      return () => {}
+    }
+    updateAvailableListeners.add(callback)
+    return () => updateAvailableListeners.delete(callback)
+  },
+  onUpdateDownloaded: (callback: () => void) => {
+    if (typeof callback !== 'function') {
+      return () => {}
+    }
+    updateDownloadedListeners.add(callback)
+    return () => updateDownloadedListeners.delete(callback)
+  },
+  installUpdate: () => ipcRenderer.invoke('install-update'),
 })
 contextBridge.exposeInMainWorld('telemetry', telemetryAPI)
