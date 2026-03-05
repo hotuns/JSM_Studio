@@ -1,4 +1,5 @@
 import './App.css'
+import { version as APP_VERSION } from '../package.json'
 import sideNavStyles from './components/SideNav.module.css'
 import topBarStyles from './components/TopBar.module.css'
 import { ThemeToggle } from './components/ThemeToggle'
@@ -741,6 +742,7 @@ function App() {
         <div className={sideNavStyles.navFooter}>
           <HelpNavButton primaryTab={primaryTab} setPrimaryTab={setPrimaryTab} />
           <ThemeToggle />
+          <div className={sideNavStyles.navVersion}>v{APP_VERSION}</div>
         </div>
       </aside>
       {/* Narrow-width sticky header */}

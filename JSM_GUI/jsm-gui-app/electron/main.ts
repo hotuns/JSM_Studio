@@ -629,7 +629,6 @@ app.whenReady().then(async () => {
     launchJoyShockMapper(calibrationSecondsSetting).catch(err => console.error('Auto-launch failed', err))
   }, 500)
 
-  autoUpdater.allowPrerelease = true
   autoUpdater.autoDownload = false
   autoUpdater.checkForUpdates().catch(err => console.error('Update check failed', err))
 
