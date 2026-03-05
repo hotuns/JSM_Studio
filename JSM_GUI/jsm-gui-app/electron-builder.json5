@@ -24,6 +24,7 @@
   },
   "win": {
     "icon": "public/gyro-icon.ico",
+    "artifactName": "JoyShockMapper-Custom-Curve-Setup-${version}.${ext}",
     "target": [
       {
         "target": "nsis",

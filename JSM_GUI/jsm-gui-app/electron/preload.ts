@@ -70,6 +70,17 @@ ipcRenderer.on('update-downloaded', () => {
   })
 })
 
+const updateProgressListeners = new Set<(percent: number) => void>()
+ipcRenderer.on('update-download-progress', (_event, percent: number) => {
+  updateProgressListeners.forEach(listener => {
+    try {
+      listener(percent)
+    } catch (err) {
+      console.error('[updater] download-progress listener failed', err)
+    }
+  })
+})
+
 const telemetryAPI = {
   onSample: (callback: (payload: unknown) => void) => {
     if (typeof callback !== 'function') {
@@ -103,6 +114,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
     updateDownloadedListeners.add(callback)
     return () => updateDownloadedListeners.delete(callback)
   },
+  onUpdateDownloadProgress: (callback: (percent: number) => void) => {
+    if (typeof callback !== 'function') {
+      return () => {}
+    }
+    updateProgressListeners.add(callback)
+    return () => updateProgressListeners.delete(callback)
+  },
+  downloadUpdate: () => ipcRenderer.invoke('download-update'),
   installUpdate: () => ipcRenderer.invoke('install-update'),
 })
 contextBridge.exposeInMainWorld('telemetry', telemetryAPI)

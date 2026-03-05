@@ -26,6 +26,8 @@ declare interface Window {
     openExternal?: (url: string) => Promise<void>
     onUpdateAvailable?: (callback: (version: string) => void) => () => void
     onUpdateDownloaded?: (callback: () => void) => () => void
+    onUpdateDownloadProgress?: (callback: (percent: number) => void) => () => void
+    downloadUpdate?: () => Promise<void>
     installUpdate?: () => Promise<void>
   }
   telemetry?: {
