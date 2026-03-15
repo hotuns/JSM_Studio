@@ -45,6 +45,7 @@ vector<JSMButton> mappings;      // array enables use of for each loop and other
 
 float os_mouse_speed = 1.0;
 float last_flick_and_rotation = 0.0;
+bool gyroOneEuroEnabled = false;
 unique_ptr<PollingThread> autoLoadThread;
 unique_ptr<JSM::AutoConnect> autoConnectThread;
 std::atomic<int> g_gyroGlobalOffCount(0);
@@ -702,6 +703,12 @@ void joyShockPollCallback(int jcHandle, JOY_SHOCK_STATE state, JOY_SHOCK_STATE l
 		auto threshold = jc->getSetting(SettingID::GYRO_SMOOTH_THRESHOLD);
 		jc->getSmoothedGyro(gyroX, gyroY, gyroLength, threshold / 2.0f, threshold, int(numGyroSamples), gyroX, gyroY);
 		// COUT << "%d Samples for threshold: %0.4f\n", numGyroSamples, gyro_smooth_threshold * maxSmoothingSamples);
+	}
+
+	// One Euro Filter — adaptive low-pass, smooth at low speed and responsive at high speed
+	if (gyroOneEuroEnabled)
+	{
+		jc->applyOneEuroFilter(gyroX, gyroY, deltaTime, gyroX, gyroY);
 	}
 
 	// Decel brake detection should use IMU-based, post-smoothing gyro before cutoff/recovery and before synthetic additions
@@ -1649,6 +1656,7 @@ bool do_RESET_MAPPINGS(CmdRegistry *registry)
 
 	os_mouse_speed = 1.0f;
 	last_flick_and_rotation = 0.0f;
+	gyroOneEuroEnabled = false;
 	g_gyroGlobalOffCount.store(0);
 	g_gyroGlobalOnCount.store(0);
 	g_hasGyroOnAllBinding.store(false);
@@ -1706,6 +1714,17 @@ bool do_IGNORE_OS_MOUSE_SPEED()
 {
 	COUT << "Ignoring OS mouse speed setting\n";
 	os_mouse_speed = 1.0;
+	return true;
+}
+
+bool do_ONE_EURO_FILTER()
+{
+	COUT << "One Euro Filter enabled for gyro\n";
+	gyroOneEuroEnabled = true;
+	for (auto &[id, jc] : handle_to_joyshock)
+	{
+		jc->resetOneEuroFilter();
+	}
 	return true;
 }
 
@@ -3386,6 +3405,7 @@ int main(int argc, char *argv[])
 		}))->setHelp("Look for newly connected controllers. Specify MERGE (default) or SPLIT whether you want to consider joycons as a single or separate controllers."));
 	commandRegistry.add((new JSMMacro("COUNTER_OS_MOUSE_SPEED"))->SetMacro(bind(do_COUNTER_OS_MOUSE_SPEED))->setHelp("JoyShockMapper will load the user's OS mouse sensitivity value to consider it in its calculations."));
 	commandRegistry.add((new JSMMacro("IGNORE_OS_MOUSE_SPEED"))->SetMacro(bind(do_IGNORE_OS_MOUSE_SPEED))->setHelp("Disable JoyShockMapper's consideration of the the user's OS mouse sensitivity value."));
+	commandRegistry.add((new JSMMacro("ONE_EURO_FILTER"))->SetMacro(bind(do_ONE_EURO_FILTER))->setHelp("Enable the One Euro adaptive filter on gyro input. Reduces jitter at low speeds without adding latency at high speeds."));
 	commandRegistry.add((new JSMMacro("CALCULATE_REAL_WORLD_CALIBRATION"))->SetMacro(bind(&do_CALCULATE_REAL_WORLD_CALIBRATION, placeholders::_2))->setHelp("Get JoyShockMapper to recommend you a REAL_WORLD_CALIBRATION value after performing the calibration sequence. Visit GyroWiki for details:\nhttp://gyrowiki.jibbsmart.com/blog:joyshockmapper-guide#calibrating"));
 	commandRegistry.add((new JSMMacro("SLEEP"))->SetMacro(bind(&do_SLEEP, placeholders::_2))->setHelp("Sleep for the given number of seconds, or one second if no number is given. Can't sleep more than 10 seconds per command."));
 	commandRegistry.add((new JSMMacro("FINISH_GYRO_CALIBRATION"))->SetMacro(bind(&do_FINISH_GYRO_CALIBRATION))->setHelp("Finish calibrating the gyro in all controllers."));

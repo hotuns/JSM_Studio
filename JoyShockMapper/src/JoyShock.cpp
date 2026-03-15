@@ -494,6 +494,28 @@ void JoyShock::disableGyroDecaySmoothing()
 	_gyroDecayInit = false;
 }
 
+float OneEuroFilter::filter(float x, float dt)
+{
+	float dx = initialized ? (x - xPrev) / dt : 0.f;
+	xPrev = x;
+	initialized = true;
+	float edx = dxFilt.filter(dx, alpha(dCutoff, dt));
+	float cutoff = minCutoff + beta * std::abs(edx);
+	return xFilt.filter(x, alpha(cutoff, dt));
+}
+
+void JoyShock::applyOneEuroFilter(float rawX, float rawY, float deltaTime, float &outX, float &outY)
+{
+	outX = _oneEuroX.filter(rawX, deltaTime);
+	outY = _oneEuroY.filter(rawY, deltaTime);
+}
+
+void JoyShock::resetOneEuroFilter()
+{
+	_oneEuroX.reset();
+	_oneEuroY.reset();
+}
+
 void JoyShock::handleButtonChange(ButtonID id, bool pressed, int touchpadID)
 {
 	DigitalButton *button = int(id) <= LAST_ANALOG_TRIGGER ? &_buttons[int(id)] :
