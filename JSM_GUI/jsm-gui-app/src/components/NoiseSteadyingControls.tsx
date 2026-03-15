@@ -18,6 +18,7 @@ type NoiseSteadyingControlsProps = {
   onSmoothTimeChange: (value: string) => void
   onSmoothThresholdChange: (value: string) => void
   onSmoothingDecayChange: (value: string) => void
+  onOneEuroFilterChange: (value: string) => void
   onAngleSnapChange: (value: string) => void
   onAngleSnapSmoothChange: (value: string) => void
   onDecelBrakeStrengthChange: (value: string) => void
@@ -42,6 +43,7 @@ export function NoiseSteadyingControls({
   onSmoothTimeChange,
   onSmoothThresholdChange,
   onSmoothingDecayChange,
+  onOneEuroFilterChange,
   onAngleSnapChange,
   onAngleSnapSmoothChange,
   onDecelBrakeStrengthChange,
@@ -147,6 +149,16 @@ export function NoiseSteadyingControls({
           <select
             value={sensitivity.smoothingDecay ?? 'OFF'}
             onChange={(e) => onSmoothingDecayChange(e.target.value)}
+          >
+            <option value="OFF">Off</option>
+            <option value="ON">On</option>
+          </select>
+        </label>
+        <label>
+          One Euro Filter
+          <select
+            value={sensitivity.oneEuroFilter ? 'ON' : 'OFF'}
+            onChange={(e) => onOneEuroFilterChange(e.target.value)}
           >
             <option value="OFF">Off</option>
             <option value="ON">On</option>
