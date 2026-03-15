@@ -1657,6 +1657,10 @@ bool do_RESET_MAPPINGS(CmdRegistry *registry)
 	os_mouse_speed = 1.0f;
 	last_flick_and_rotation = 0.0f;
 	gyroOneEuroEnabled = false;
+	for (auto &[id, jc] : handle_to_joyshock)
+	{
+		jc->resetOneEuroFilter();
+	}
 	g_gyroGlobalOffCount.store(0);
 	g_gyroGlobalOnCount.store(0);
 	g_hasGyroOnAllBinding.store(false);
