@@ -255,6 +255,10 @@ export function parseConfigText(text: string): ParsedConfig {
         const upper = keyOnly.toUpperCase()
         if (upper === 'CLEAR') {
           trailingCustom.push({ line: normalized })
+        } else if (isKnownKey(upper, gyroBehaviorKeys)) {
+          sections.gyro_behavior.push({ line: normalized })
+        } else if (isKnownKey(upper, noiseKeys)) {
+          sections.noise.push({ line: normalized })
         } else {
           sections.custom.push({ line: normalized })
         }

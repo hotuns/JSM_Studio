@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { getKeymapValue, parseSensitivityValues, removeKeymapEntry, updateKeymapEntry } from '../utils/keymap'
+import { upsertFlagCommand } from '../utils/config'
 import { DEFAULT_HOLD_PRESS_TIME, DEFAULT_WINDOW_SECONDS } from '../constants/defaults'
 import { keyName } from '../constants/configKeys'
 
@@ -223,6 +224,10 @@ export function useSensitivityConfig({ configText, setConfigText }: SensitivityA
       return
     }
     setConfigText(prev => updateKeymapEntry(prev, keyName.GYRO_SMOOTHING_DECAY, [upper]))
+  }
+  const handleOneEuroFilterChange = (value: string) => {
+    const enabled = value.trim().toUpperCase() === 'ON'
+    setConfigText(prev => upsertFlagCommand(prev, keyName.ONE_EURO_FILTER, enabled))
   }
   const handleAngleSnapChange = makeScalarHandler(keyName.GYRO_ANGLE_SNAP)
   const handleAngleSnapSmoothChange = (value: string) => {
@@ -904,6 +909,7 @@ export function useSensitivityConfig({ configText, setConfigText }: SensitivityA
     handleSmoothTimeChange,
     handleSmoothThresholdChange,
     handleSmoothingDecayChange,
+    handleOneEuroFilterChange,
     handleAngleSnapChange,
     handleAngleSnapSmoothChange,
     handleDecelBrakeStrengthChange,
