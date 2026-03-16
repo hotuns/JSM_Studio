@@ -27,7 +27,7 @@ import { updateKeymapEntry } from './utils/keymap'
 
 type PrimaryTab = 'gyro' | 'keybinds' | 'touchpad' | 'sticks' | 'help'
 type GyroSubTab = 'behavior' | 'sensitivity' | 'noise'
-type KeybindsSubTab = 'face' | 'dpad' | 'bumpers' | 'triggers' | 'center'
+type KeybindsSubTab = 'global' | 'face' | 'dpad' | 'bumpers' | 'triggers' | 'center'
 type TouchpadSubTab = 'mode' | 'bind'
 type SticksSubTab = 'bindings' | 'modes'
 
@@ -141,7 +141,7 @@ function App() {
   const [isRwcGuideModalOpen, setIsRwcGuideModalOpen] = useState(false)
   const [primaryTab, setPrimaryTab] = useState<PrimaryTab>('gyro')
   const [gyroSubTab, setGyroSubTab] = useState<GyroSubTab>('behavior')
-  const [keybindsSubTab, setKeybindsSubTab] = useState<KeybindsSubTab>('face')
+  const [keybindsSubTab, setKeybindsSubTab] = useState<KeybindsSubTab>('global')
   const [touchpadSubTab, setTouchpadSubTab] = useState<TouchpadSubTab>('mode')
   const [sticksSubTab, setSticksSubTab] = useState<SticksSubTab>('bindings')
   const {
@@ -412,8 +412,9 @@ function App() {
 
   const renderKeybindsNav = () => (
     <div className="subnav">
-      {(['face', 'dpad', 'bumpers', 'triggers', 'center'] as KeybindsSubTab[]).map(entry => (
+      {(['global', 'face', 'dpad', 'bumpers', 'triggers', 'center'] as KeybindsSubTab[]).map(entry => (
         <button key={entry} className={`pill-tab ${keybindsSubTab === entry ? 'active' : ''}`} onClick={() => setKeybindsSubTab(entry)}>
+          {entry === 'global' && 'Global Settings'}
           {entry === 'face' && 'Face'}
           {entry === 'dpad' && 'D-pad'}
           {entry === 'bumpers' && 'Bumpers'}
@@ -602,7 +603,7 @@ function App() {
             scrollSens={scrollSensValue}
             onScrollSensChange={handleScrollSensChange}
             lockMessage={lockMessage}
-            visibleSections={[keybindsSubTab === 'face' && 'global', keybindsSubTab].filter(Boolean) as string[]}
+            visibleSections={keybindsSubTab === 'global' ? ['global'] : [keybindsSubTab]}
           />
         </>
       )
