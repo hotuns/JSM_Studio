@@ -23,6 +23,7 @@ import { ToastHost } from './components/ToastHost'
 import { UpdateBanner } from './components/UpdateBanner'
 import { RwcGuideModal } from './components/RwcGuideModal'
 import { updateKeymapEntry } from './utils/keymap'
+import { showToast } from './utils/toast'
 
 
 type PrimaryTab = 'gyro' | 'keybinds' | 'touchpad' | 'sticks' | 'help'
@@ -913,7 +914,7 @@ function App() {
               <button type="button" className="secondary-btn" onClick={handleRunCalibration} disabled={isCalibrating}>
                 Run calculation
               </button>
-              <button type="button" className="secondary-btn" onClick={handleCloseCalibration}>
+              <button type="button" className="secondary-btn" onClick={() => { handleCloseCalibration(); showToast(`Active profile: ${profileLabel}`) }}>
                 Close
               </button>
             </div>
