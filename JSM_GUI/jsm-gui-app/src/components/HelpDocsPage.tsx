@@ -271,6 +271,10 @@ export function HelpDocsPage() {
   const jumpToSection = useCallback(
     (slug: string) => {
       const normalized = decodeURIComponent(slug).replace(/^#/, '').trim().toLowerCase()
+      // Clear find highlights before the state change so React reconciles against a clean DOM
+      if (docsMarkdownRef.current) {
+        clearFindHighlights(docsMarkdownRef.current)
+      }
       setActiveSlug(normalized)
       requestAnimationFrame(() => {
         let el = document.getElementById(normalized)
@@ -283,9 +287,6 @@ export function HelpDocsPage() {
             }) ?? null
         }
         if (!el) return
-        if (el.id !== normalized) {
-          el.id = normalized
-        }
         scrollElementIntoView(el)
       })
     },
@@ -332,11 +333,20 @@ export function HelpDocsPage() {
             </a>
           )
         }
-        return (
-          <a href={href} target={isExternal ? '_blank' : undefined} rel={isExternal ? 'noreferrer' : undefined}>
-            {children}
-          </a>
-        )
+        if (isExternal) {
+          return (
+            <a
+              href={href}
+              onClick={(event) => {
+                event.preventDefault()
+                window.electronAPI?.openExternal?.(href)
+              }}
+            >
+              {children}
+            </a>
+          )
+        }
+        return <a href={href}>{children}</a>
       }) as NonNullable<Components['a']>,
     }
   }, [activeSlug, jumpToSection])
