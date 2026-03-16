@@ -29,6 +29,7 @@ import { StickModesSection } from './keymap/StickModesSection'
 import { TouchpadSettingsSection } from './keymap/TouchpadSettingsSection'
 import { TouchpadGridSection } from './keymap/TouchpadGridSection'
 import { ButtonBindingsCard } from './keymap/ButtonBindingsCard'
+import { TriggerControlsSection } from './keymap/TriggerControlsSection'
 import stickStyles from './Sticks.module.css'
 import keymapStyles from './Keymap.module.css'
 
@@ -662,51 +663,27 @@ export function KeymapControls({
             ),
           },
           {
+            key: 'trigger-controls',
+            shouldRender: isVisible('triggers'),
+            node: (
+              <TriggerControlsSection
+                adaptiveTriggerValue={adaptiveTriggerValue}
+                onAdaptiveTriggerChange={onAdaptiveTriggerChange}
+                triggerThreshold={triggerThreshold}
+                onTriggerThresholdChange={onTriggerThresholdChange}
+                {...actionsProps}
+              />
+            ),
+          },
+          {
             key: 'triggers',
             shouldRender: isVisible('triggers'),
             node: (
               <ButtonGridSection
                 title="Triggers"
-                description="Soft/full pulls and threshold toggles for L2/R2."
+                description="Soft/full pulls for L2/R2."
                 buttons={TRIGGER_BUTTONS}
                 renderButton={renderButtonCard}
-                extraContent={
-                  <div className="trigger-settings" data-capture-ignore="true">
-                    <div className={keymapStyles.adaptiveToggle}>
-                      <label>
-                        Adaptive triggers (DualSense)
-                        <select
-                          className="app-select"
-                          value={adaptiveTriggerValue}
-                          onChange={(event) => onAdaptiveTriggerChange?.(event.target.value)}
-                          disabled={isCalibrating}
-                        >
-                          <option value="">Default (ON)</option>
-                          <option value="OFF">Off</option>
-                        </select>
-                      </label>
-                    </div>
-                    <div className={keymapStyles.globalControlRow}>
-                      <div className={keymapStyles.globalControlText}>
-                        <span className={keymapStyles.globalControlTitle}>Trigger threshold</span>
-                        <span className={keymapStyles.globalControlCaption}>
-                          {triggerThreshold > 0 ? `Custom TRIGGER_THRESHOLD = ${triggerThreshold.toFixed(2)}` : 'Default (0.00)'}
-                        </span>
-                      </div>
-                      <div className={keymapStyles.globalControlInputGroup}>
-                        <input
-                          type="number"
-                          min="0"
-                          max="1"
-                          step="0.01"
-                          value={triggerThreshold}
-                          onChange={(event) => onTriggerThresholdChange?.(event.target.value)}
-                        />
-                        <span className={keymapStyles.globalControlUnit}>seconds</span>
-                      </div>
-                    </div>
-                  </div>
-                }
                 {...actionsProps}
               />
             ),
