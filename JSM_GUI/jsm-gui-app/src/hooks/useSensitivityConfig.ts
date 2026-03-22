@@ -705,14 +705,14 @@ export function useSensitivityConfig({ configText, setConfigText }: SensitivityA
     return null
   }, [configText])
 
-  const handleLightBarChange = (hexColor: string | null) => {
+  const handleLightBarChange = useCallback((hexColor: string | null) => {
     if (!hexColor) {
       setConfigText(prev => removeKeymapEntry(prev, keyName.LIGHT_BAR))
       return
     }
     const jsm = `x${hexColor.replace('#', '').toLowerCase()}`
     setConfigText(prev => updateKeymapEntry(prev, keyName.LIGHT_BAR, [jsm]))
-  }
+  }, [setConfigText])
 
   const triggerThresholdValue = useMemo(() => {
     const raw = getKeymapValue(configText, keyName.TRIGGER_THRESHOLD)
