@@ -427,7 +427,7 @@ export const ButtonBindingsCard = ({
           </div>
         )}
         {buttonHasTrackball && (
-          <div className="trackball-inline" data-capture-ignore="true">
+          <div className={keymapStyles.trackballInline} data-capture-ignore="true">
             <label>
               Trackball decay
               <input
