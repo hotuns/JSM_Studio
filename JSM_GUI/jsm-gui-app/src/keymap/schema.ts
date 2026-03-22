@@ -132,8 +132,8 @@ export const SPECIAL_LABELS: Record<string, string> = {
   GYRO_TRACK_Y: 'Trackball mode (Y only)',
 }
 
-export const EXTRA_BINDING_SLOTS: BindingSlot[] = ['hold', 'double', 'chord', 'simultaneous']
-export const MODIFIER_SLOT_TYPES: BindingSlot[] = ['chord', 'simultaneous']
+export const EXTRA_BINDING_SLOTS: BindingSlot[] = ['hold', 'double', 'chord', 'simultaneous', 'diagonal']
+export const MODIFIER_SLOT_TYPES: BindingSlot[] = ['chord', 'simultaneous', 'diagonal']
 
 export const getDefaultModifierForButton = (button: string, modifierOptions: ModifierSelectOption[]) => {
   const upper = button.toUpperCase()

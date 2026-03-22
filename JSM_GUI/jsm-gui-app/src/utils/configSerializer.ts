@@ -210,9 +210,9 @@ const classify = (rawKey: string, value: string): { section: SectionKey; subsect
     return { section: 'keymap', subsection }
   }
 
-  // Keymap bindings: detect by button key or combo (e.g., L3,S or SHIFT+S)
-  if (key.includes(',') || (key.includes('+') && key.length > 1)) {
-    const parts = key.split(/[,+]/).map(p => p.trim()).filter(Boolean)
+  // Keymap bindings: detect by button key or combo (e.g., L3,S or SHIFT+S or UP*RIGHT)
+  if (key.includes(',') || key.includes('*') || (key.includes('+') && key.length > 1)) {
+    const parts = key.split(/[,+*]/).map(p => p.trim()).filter(Boolean)
     const button = parts[parts.length - 1]
     return { section: 'keymap', subsection: classifyButton(button) }
   }
@@ -306,8 +306,8 @@ export function serializeConfig(parsed: ParsedConfig): string {
       })
       const resolveStickRank = (line: string) => {
         const left = line.split('=')[0]?.trim() ?? ''
-        const keyPart = left.includes(',') || left.includes('+')
-          ? left.split(/[,+]/).filter(Boolean).pop() ?? left
+        const keyPart = left.includes(',') || left.includes('+') || left.includes('*')
+          ? left.split(/[,+*]/).filter(Boolean).pop() ?? left
           : left
         return stickOrder[keyPart.toUpperCase()] ?? Number.MAX_SAFE_INTEGER
       }
@@ -320,7 +320,7 @@ export function serializeConfig(parsed: ParsedConfig): string {
       }
       const touchRank = (line: string) => {
         const [lhsRaw, rhsRaw = ''] = line.split('=')
-        const lhsTokens = (lhsRaw ?? '').split(/[,+]/).map(t => t.trim()).filter(Boolean)
+        const lhsTokens = (lhsRaw ?? '').split(/[,+*]/).map(t => t.trim()).filter(Boolean)
         const rhsTokens = (rhsRaw ?? '').split(/\s+/).map(t => t.trim()).filter(Boolean)
         const firstTouchToken = [...lhsTokens, ...rhsTokens].find(tok => /^T\d+$/i.test(tok)) ?? ''
 

@@ -169,7 +169,7 @@ export function getKeymapValue(text: string, key: string) {
   return match?.[1]?.trim()
 }
 
-export type BindingSlot = 'tap' | 'hold' | 'double' | 'chord' | 'simultaneous'
+export type BindingSlot = 'tap' | 'hold' | 'double' | 'chord' | 'simultaneous' | 'diagonal'
 
 export type ButtonBindingSet = {
   tap?: string
@@ -199,6 +199,7 @@ const SLOT_LABELS: Record<BindingSlot, string> = {
   double: 'Double Press',
   chord: 'Chorded Press',
   simultaneous: 'Simultaneous Press',
+  diagonal: 'Diagonal Press',
 }
 
 const FACE_BUTTONS = ['N', 'E', 'S', 'W'] as const
@@ -268,13 +269,14 @@ type ComboBinding = {
   lineIndex: number
 }
 
-const comboSlotSeparator = (slot: Extract<BindingSlot, 'chord' | 'simultaneous'>) => (slot === 'chord' ? ',' : '+')
+const comboSlotSeparator = (slot: Extract<BindingSlot, 'chord' | 'simultaneous' | 'diagonal'>) =>
+  slot === 'chord' ? ',' : slot === 'simultaneous' ? '+' : '*'
 
 function parseComboBindings(
   text: string,
   button: string,
-  separator: '+' | ',',
-  slot: Extract<BindingSlot, 'chord' | 'simultaneous'>
+  separator: '+' | ',' | '*',
+  slot: Extract<BindingSlot, 'chord' | 'simultaneous' | 'diagonal'>
 ): ComboBinding[] {
   const target = button.toUpperCase()
   const lines = text.split(/\r?\n/)
@@ -307,7 +309,7 @@ function parseComboBindings(
 export function setComboBindingLine(
   text: string,
   button: string,
-  slot: Extract<BindingSlot, 'chord' | 'simultaneous'>,
+  slot: Extract<BindingSlot, 'chord' | 'simultaneous' | 'diagonal'>,
   rowId: string,
   modifier: string | undefined,
   value?: string | null
@@ -339,7 +341,7 @@ export function setComboBindingLine(
 export function removeComboBindingLine(
   text: string,
   button: string,
-  slot: Extract<BindingSlot, 'chord' | 'simultaneous'>,
+  slot: Extract<BindingSlot, 'chord' | 'simultaneous' | 'diagonal'>,
   rowId: string
 ) {
   const separator = comboSlotSeparator(slot)
@@ -380,7 +382,7 @@ export function getButtonBindingRows(
       })
     }
   })
-  ;(['chord', 'simultaneous'] as const).forEach(slot => {
+  ;(['chord', 'simultaneous', 'diagonal'] as const).forEach(slot => {
     const separator = comboSlotSeparator(slot)
     const parsedCombos = parseComboBindings(text, button, separator, slot)
     const parsedIds = new Set(parsedCombos.map(entry => entry.id))

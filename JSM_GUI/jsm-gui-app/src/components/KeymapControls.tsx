@@ -386,7 +386,7 @@ export function KeymapControls({
   } = useButtonRowState()
   const { captureLabel, beginCapture, cancelCapture, isCapturing } = useBindingCapture((button, slot, rowId, value, options) => {
     onBindingChange(button, slot, rowId, value, options)
-    const isComboSlot = slot === 'chord' || slot === 'simultaneous'
+    const isComboSlot = slot === 'chord' || slot === 'simultaneous' || slot === 'diagonal'
     if (value && isComboSlot && manualRows[button]?.[slot]?.some(entry => entry.id === rowId)) {
       removeManualRow(button, slot, rowId)
     }

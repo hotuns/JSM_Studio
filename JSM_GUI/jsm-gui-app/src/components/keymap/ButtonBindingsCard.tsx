@@ -179,7 +179,7 @@ export const ButtonBindingsCard = ({
               manualInfo?.modifierCommand ??
               getDefaultModifierForButton(button.command, modifierOptions)
             : undefined
-          const modifierLabel = row.slot === 'simultaneous' ? 'Combine with' : 'Modifier button'
+          const modifierLabel = row.slot === 'simultaneous' ? 'Combine with' : row.slot === 'diagonal' ? 'Diagonal with' : 'Modifier button'
           let rowModifierOptions = modifierOptions
           if (
             needsModifier &&
@@ -288,6 +288,9 @@ export const ButtonBindingsCard = ({
                       selected,
                       needsModifier ? { modifier: modifierValue } : undefined
                     )
+                    if (row.isManual) {
+                      removeManualRow(button.command, row.slot, row.id)
+                    }
                   }
             }
           />
@@ -348,7 +351,9 @@ export const ButtonBindingsCard = ({
                         ? 'Double press'
                         : slot === 'chord'
                           ? 'Chorded press'
-                          : 'Simultaneous press'}
+                          : slot === 'simultaneous'
+                            ? 'Simultaneous press'
+                            : 'Diagonal press'}
                   </option>
                 ))}
                 {onStickModeShiftChange && (
