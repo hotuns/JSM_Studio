@@ -939,6 +939,7 @@ void joyShockPollCallback(int jcHandle, JOY_SHOCK_STATE state, JOY_SHOCK_STATE l
 	{
 		gyroX = 0;
 		gyroY = 0;
+		jc->resetOneEuroFilter();
 	}
 
 	float camSpeedX = 0.0f;
