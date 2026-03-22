@@ -6,7 +6,7 @@
 }
 
 .controllerCard {
-  background: #0a0a0a;
+  background: var(--bg-input);
   border-radius: 10px;
   padding: 0.75rem 0.85rem;
   display: flex;
@@ -20,14 +20,14 @@
 .controllerEntry {
   display: flex;
   align-items: baseline;
-  color: #e0e0e0;
+  color: var(--text-strong);
   font-size: 0.95rem;
   flex: 1;
   min-width: 0;
 }
 
 .controllerVidpid {
-  color: #e0e0e0;
+  color: var(--text-strong);
   font-size: 0.95rem;
   font-weight: 700;
   margin-left: 0.35rem;
@@ -61,7 +61,7 @@
   width: 36px;
   height: 20px;
   border-radius: 999px;
-  background: #2a2a2a;
+  background: var(--border-1);
   position: relative;
   transition: background 0.2s ease, box-shadow 0.2s ease;
 }
@@ -74,7 +74,7 @@
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background: #cfcfcf;
+  background: var(--text-mid);
   transition: transform 0.2s ease, background 0.2s ease;
 }
 
