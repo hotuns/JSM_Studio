@@ -207,13 +207,26 @@ BOOL WriteToConsole(string_view command)
 	inputs.push_back(RET_DOWN);
 	inputs.push_back(RET_UP);
 
-	DWORD written;
-	if (WriteConsoleInput(GetStdHandle(STD_INPUT_HANDLE), inputs.data(), inputs.size(), &written) == FALSE)
+	// Open the console input buffer directly so this works even when stdin has been
+	// redirected to a pipe (e.g. when launched as a child process by the GUI).
+	HANDLE hConIn = CreateFileA("CONIN$", GENERIC_READ | GENERIC_WRITE,
+	    FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, OPEN_EXISTING, 0, nullptr);
+	if (hConIn == INVALID_HANDLE_VALUE)
+	{
+		hConIn = GetStdHandle(STD_INPUT_HANDLE); // fallback for consoleless environments
+	}
+
+	DWORD written = 0;
+	if (WriteConsoleInput(hConIn, inputs.data(), inputs.size(), &written) == FALSE)
 	{
 		auto err = GetLastError();
 		CERR << "Error writing to console input: " << err << '\n';
 	}
-	FlushConsoleInputBuffer(GetStdHandle(STD_INPUT_HANDLE));
+	FlushConsoleInputBuffer(hConIn);
+	if (hConIn != GetStdHandle(STD_INPUT_HANDLE))
+	{
+		CloseHandle(hConIn);
+	}
 	return written == inputs.size();
 }
 
