@@ -74,18 +74,20 @@ export const RIGHT_STICK_BUTTONS: ButtonDefinition[] = [
 
 export const buildStickShiftValue = (target: 'LEFT' | 'RIGHT', mode: string) => `STICK_SHIFT:${target}:${mode}`
 
-export const STICK_SHIFT_SPECIAL_OPTIONS = STICK_MODE_VALUES.flatMap(mode => [
-  {
-    value: buildStickShiftValue('LEFT', mode),
-    label: `Stick shift — Left → ${formatStickModeLabel(mode)}`,
-  },
-  {
+export const STICK_SHIFT_SPECIAL_OPTIONS = [
+  ...STICK_MODE_VALUES.map(mode => ({
     value: buildStickShiftValue('RIGHT', mode),
     label: `Stick shift — Right → ${formatStickModeLabel(mode)}`,
-  },
-])
+  })),
+  ...STICK_MODE_VALUES.map(mode => ({
+    value: buildStickShiftValue('LEFT', mode),
+    label: `Stick shift — Left → ${formatStickModeLabel(mode)}`,
+  })),
+]
 
 export const STICK_SHIFT_HEADER_OPTION = { value: 'STICK_SHIFT_HEADER', label: '── Stick mode shifts ──', disabled: true }
+export const STICK_SHIFT_LEFT_HEADER = { value: 'STICK_SHIFT_LEFT_HEADER', label: '── Left stick ──', disabled: true }
+export const STICK_SHIFT_RIGHT_HEADER = { value: 'STICK_SHIFT_RIGHT_HEADER', label: '── Right stick ──', disabled: true }
 
 export const parseStickShiftSelection = (value: string) => {
   const match = /^STICK_SHIFT:(LEFT|RIGHT):([A-Z_]+)$/i.exec(value)
