@@ -167,6 +167,8 @@ function App() {
     doublePressWindowIsCustom,
     simPressWindowSeconds,
     simPressWindowIsCustom,
+    lightBarColor,
+    handleLightBarChange,
     triggerThresholdValue,
     touchpadModeValue,
     gridSizeValue,
@@ -582,6 +584,8 @@ function App() {
             simPressWindowSeconds={simPressWindowSeconds}
             simPressWindowIsCustom={simPressWindowIsCustom}
             onSimPressWindowChange={handleSimPressWindowChange}
+            lightBarColor={lightBarColor}
+            onLightBarChange={handleLightBarChange}
             triggerThreshold={triggerThresholdValue}
             onTriggerThresholdChange={handleTriggerThresholdChange}
             onModifierChange={handleModifierChange}
@@ -647,6 +651,8 @@ function App() {
             simPressWindowSeconds={simPressWindowSeconds}
             simPressWindowIsCustom={simPressWindowIsCustom}
             onSimPressWindowChange={handleSimPressWindowChange}
+            lightBarColor={lightBarColor}
+            onLightBarChange={handleLightBarChange}
             triggerThreshold={triggerThresholdValue}
             onTriggerThresholdChange={handleTriggerThresholdChange}
             onModifierChange={handleModifierChange}
@@ -709,6 +715,8 @@ function App() {
             simPressWindowSeconds={simPressWindowSeconds}
             simPressWindowIsCustom={simPressWindowIsCustom}
             onSimPressWindowChange={handleSimPressWindowChange}
+            lightBarColor={lightBarColor}
+            onLightBarChange={handleLightBarChange}
             triggerThreshold={triggerThresholdValue}
             onTriggerThresholdChange={handleTriggerThresholdChange}
             onModifierChange={handleModifierChange}

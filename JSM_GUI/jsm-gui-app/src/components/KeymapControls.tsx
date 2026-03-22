@@ -72,6 +72,8 @@ type KeymapControlsProps = {
   simPressWindowSeconds: number
   simPressWindowIsCustom: boolean
   onSimPressWindowChange: (value: string) => void
+  lightBarColor: string | null
+  onLightBarChange: (color: string | null) => void
   triggerThreshold: number
   onTriggerThresholdChange: (value: string) => void
   view?: 'full' | 'touchpad' | 'sticks'
@@ -337,6 +339,8 @@ export function KeymapControls({
   simPressWindowSeconds,
   simPressWindowIsCustom,
   onSimPressWindowChange,
+  lightBarColor,
+  onLightBarChange,
   triggerThreshold,
   onTriggerThresholdChange,
   view = 'full',
@@ -631,6 +635,8 @@ export function KeymapControls({
                 simPressWindowSeconds={simPressInputValue}
                 simPressWindowIsCustom={simPressWindowIsCustom}
                 onSimPressWindowChange={onSimPressWindowChange}
+                lightBarColor={lightBarColor}
+                onLightBarChange={onLightBarChange}
                 {...actionsProps}
               />
             ),

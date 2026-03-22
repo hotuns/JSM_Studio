@@ -56,6 +56,8 @@ export function useKeymapConfig() {
     doublePressWindowIsCustom: sensitivityConfig.doublePressWindowIsCustom,
     simPressWindowSeconds: sensitivityConfig.simPressWindowSeconds,
     simPressWindowIsCustom: sensitivityConfig.simPressWindowIsCustom,
+    lightBarColor: sensitivityConfig.lightBarColor,
+    handleLightBarChange: sensitivityConfig.handleLightBarChange,
     triggerThresholdValue: sensitivityConfig.triggerThresholdValue,
     handleSensitivityModeshiftButtonChange: sensitivityConfig.handleSensitivityModeshiftButtonChange,
     handleThresholdChange: sensitivityConfig.handleThresholdChange,
