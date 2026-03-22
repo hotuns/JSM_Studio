@@ -4,11 +4,6 @@ type Theme = 'dark' | 'light'
 
 const STORAGE_KEY = 'jsm-theme'
 
-const getSystemPref = (): Theme | null => {
-  if (typeof window === 'undefined' || !window.matchMedia) return null
-  return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'
-}
-
 export function useTheme() {
   const [theme, setTheme] = useState<Theme>('dark')
 
@@ -23,7 +18,7 @@ export function useTheme() {
 
   useEffect(() => {
     const stored = (localStorage.getItem(STORAGE_KEY) as Theme | null)
-    const initial = (document.documentElement.dataset.theme as Theme | undefined) ?? stored ?? getSystemPref() ?? 'dark'
+    const initial = stored ?? 'dark'
     apply(initial, false)
 
     const onStorage = (event: StorageEvent) => {
