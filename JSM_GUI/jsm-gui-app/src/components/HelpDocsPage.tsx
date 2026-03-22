@@ -293,6 +293,17 @@ export function HelpDocsPage() {
     [scrollElementIntoView],
   )
 
+  useEffect(() => {
+    const container = docsMarkdownRef.current
+    if (!container) return
+    container.querySelectorAll<HTMLElement>(`.${styles.headingActive}`).forEach(el => {
+      el.classList.remove(styles.headingActive)
+    })
+    if (!activeSlug) return
+    const activeEl = container.querySelector<HTMLElement>(`[id="${CSS.escape(activeSlug)}"]`)
+    activeEl?.classList.add(styles.headingActive)
+  }, [activeSlug])
+
   const markdownComponents = useMemo<Components>(() => {
     const slugger = createSlugger()
     const renderHeading =
@@ -300,9 +311,8 @@ export function HelpDocsPage() {
       (({ children }: { children?: ReactNode }) => {
         const text = flattenText(children).trim()
         const id = slugger(text)
-        const isActive = activeSlug === id
         return (
-          <Tag id={id} className={`${styles.heading} ${isActive ? styles.headingActive : ''}`}>
+          <Tag id={id} className={styles.heading}>
             {children}
           </Tag>
         )
@@ -349,7 +359,7 @@ export function HelpDocsPage() {
         return <a href={href}>{children}</a>
       }) as NonNullable<Components['a']>,
     }
-  }, [activeSlug, jumpToSection])
+  }, [jumpToSection])
 
   return (
     <Card className={`control-panel ${styles.helpCard}`}>
