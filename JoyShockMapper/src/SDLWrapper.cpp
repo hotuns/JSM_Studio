@@ -413,6 +413,14 @@ public:
 	{
 		TOUCH_STATE state;
 		memset(&state, 0, sizeof(TOUCH_STATE));
+
+		if (_controllerMap[deviceId] == nullptr ||
+			_controllerMap[deviceId]->_sdlController == nullptr ||
+			SDL_GetNumGamepadTouchpads(_controllerMap[deviceId]->_sdlController) <= 0)
+		{
+			return state;
+		}
+
 		if (!SDL_GetGamepadTouchpadFinger(_controllerMap[deviceId]->_sdlController, 0, 0, &state.t0Down, &state.t0X, &state.t0Y, nullptr) || 
 			!SDL_GetGamepadTouchpadFinger(_controllerMap[deviceId]->_sdlController, 0, 1, &state.t1Down, &state.t1X, &state.t1Y, nullptr))
 		{
