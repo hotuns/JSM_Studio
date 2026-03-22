@@ -51,11 +51,15 @@
   gap: 1rem;
   font-size: 0.9rem;
   color: var(--text-strong);
+  white-space: nowrap;
 }
 
 .graphLiveReadout span strong {
   font-weight: 600;
   color: var(--text-strong);
+  font-variant-numeric: tabular-nums;
+  display: inline-block;
+  min-width: 7ch;
 }
 
 .legacyCurveCanvas {

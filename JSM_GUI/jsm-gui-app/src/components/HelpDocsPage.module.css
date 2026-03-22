@@ -209,7 +209,7 @@
 }
 
 .heading {
-  scroll-margin-top: calc(var(--top-bar-height) + 1.25rem);
+  scroll-margin-top: 1.25rem;
   transition: box-shadow 0.25s ease, background-color 0.25s ease;
 }
 

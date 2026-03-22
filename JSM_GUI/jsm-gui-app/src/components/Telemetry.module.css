@@ -48,6 +48,7 @@
 .telemetryValue {
   font-weight: 600;
   color: var(--text-strong);
+  font-variant-numeric: tabular-nums;
 }
 
 .telemetryInline {

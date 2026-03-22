@@ -807,7 +807,7 @@ function App() {
             renderSticksNav={renderSticksNav}
           />
         </div>
-        <div className="content-grid">
+        <div className="shell-scroll"><div className="content-grid">
           <main className="main-pane">{renderPrimaryContent()}</main>
           <aside className="right-rail">
             <div className="recalibrate-card">
@@ -880,7 +880,7 @@ function App() {
               onCancel={handleCancel}
             />
           </div>
-        </div>
+        </div></div>
       </div>
       {isCalibrationModalOpen && (
         <div className="modal-overlay">
