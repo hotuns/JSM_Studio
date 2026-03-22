@@ -4,6 +4,7 @@ import {
   DPAD_BUTTONS,
   FACE_BUTTONS,
   LEFT_STICK_BUTTONS,
+  PADDLE_BUTTONS,
   RIGHT_STICK_BUTTONS,
   TOUCH_BUTTONS,
   TRIGGER_BUTTONS,
@@ -35,6 +36,7 @@ type KeymapSubsection =
   | 'bumpers'
   | 'triggers'
   | 'center'
+  | 'paddles'
   | 'touch'
   | 'stick_buttons'
   | 'misc'
@@ -66,6 +68,7 @@ const KEYMAP_SUB_HEADERS: Record<KeymapSubsection, string> = {
   bumpers: '# Bumpers',
   triggers: '# Triggers',
   center: '# Center buttons',
+  paddles: '# Paddles',
   touch: '# Touchpad',
   stick_buttons: '# Stick bindings',
   misc: '# Misc keymap',
@@ -88,6 +91,7 @@ const KEYMAP_SUB_ORDER: KeymapSubsection[] = [
   'bumpers',
   'triggers',
   'center',
+  'paddles',
   'touch',
   'stick_buttons',
   'misc',
@@ -99,6 +103,7 @@ const BUTTON_TO_SUBSECTION: Array<{ commands: string[]; subsection: KeymapSubsec
   { commands: BUMPER_BUTTONS.map(b => b.command.toUpperCase()), subsection: 'bumpers' },
   { commands: TRIGGER_BUTTONS.map(b => b.command.toUpperCase()), subsection: 'triggers' },
   { commands: CENTER_BUTTONS.map(b => b.command.toUpperCase()), subsection: 'center' },
+  { commands: PADDLE_BUTTONS.map(b => b.command.toUpperCase()), subsection: 'paddles' },
   { commands: TOUCH_BUTTONS.map(b => b.command.toUpperCase()), subsection: 'touch' },
   { commands: LEFT_STICK_BUTTONS.map(b => b.command.toUpperCase()).concat(RIGHT_STICK_BUTTONS.map(b => b.command.toUpperCase())), subsection: 'stick_buttons' },
 ]
@@ -151,7 +156,7 @@ const classify = (rawKey: string, value: string): { section: SectionKey; subsect
   if (key === keyName.TRIGGER_THRESHOLD) {
     return { section: 'keymap', subsection: 'triggers' }
   }
-  if (key === keyName.ADAPTIVE_TRIGGER) {
+  if (key === keyName.ADAPTIVE_TRIGGER || key === keyName.ZL_MODE || key === keyName.ZR_MODE) {
     return { section: 'keymap', subsection: 'triggers' }
   }
   // Global timing controls shown under keymap "Global controls"
@@ -205,9 +210,9 @@ const classify = (rawKey: string, value: string): { section: SectionKey; subsect
     return { section: 'keymap', subsection }
   }
 
-  // Keymap bindings: detect by button key or combo (e.g., L3,S or SHIFT+S)
-  if (key.includes(',') || (key.includes('+') && key.length > 1)) {
-    const parts = key.split(/[,+]/).map(p => p.trim()).filter(Boolean)
+  // Keymap bindings: detect by button key or combo (e.g., L3,S or SHIFT+S or UP*RIGHT)
+  if (key.includes(',') || key.includes('*') || (key.includes('+') && key.length > 1)) {
+    const parts = key.split(/[,+*]/).map(p => p.trim()).filter(Boolean)
     const button = parts[parts.length - 1]
     return { section: 'keymap', subsection: classifyButton(button) }
   }
@@ -301,8 +306,8 @@ export function serializeConfig(parsed: ParsedConfig): string {
       })
       const resolveStickRank = (line: string) => {
         const left = line.split('=')[0]?.trim() ?? ''
-        const keyPart = left.includes(',') || left.includes('+')
-          ? left.split(/[,+]/).filter(Boolean).pop() ?? left
+        const keyPart = left.includes(',') || left.includes('+') || left.includes('*')
+          ? left.split(/[,+*]/).filter(Boolean).pop() ?? left
           : left
         return stickOrder[keyPart.toUpperCase()] ?? Number.MAX_SAFE_INTEGER
       }
@@ -315,7 +320,7 @@ export function serializeConfig(parsed: ParsedConfig): string {
       }
       const touchRank = (line: string) => {
         const [lhsRaw, rhsRaw = ''] = line.split('=')
-        const lhsTokens = (lhsRaw ?? '').split(/[,+]/).map(t => t.trim()).filter(Boolean)
+        const lhsTokens = (lhsRaw ?? '').split(/[,+*]/).map(t => t.trim()).filter(Boolean)
         const rhsTokens = (rhsRaw ?? '').split(/\s+/).map(t => t.trim()).filter(Boolean)
         const firstTouchToken = [...lhsTokens, ...rhsTokens].find(tok => /^T\d+$/i.test(tok)) ?? ''
 

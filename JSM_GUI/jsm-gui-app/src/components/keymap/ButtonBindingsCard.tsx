@@ -13,6 +13,8 @@ import {
   SPECIAL_OPTION_LIST,
   SPECIAL_OPTION_MANUAL_LIST,
   STICK_SHIFT_HEADER_OPTION,
+  STICK_SHIFT_LEFT_HEADER,
+  STICK_SHIFT_RIGHT_HEADER,
   STICK_SHIFT_SPECIAL_OPTIONS,
   buildStickShiftValue,
   getDefaultModifierForButton,
@@ -137,7 +139,10 @@ export const ButtonBindingsCard = ({
             rowSpecialOptions = [
               ...rowSpecialOptions,
               STICK_SHIFT_HEADER_OPTION,
-              ...STICK_SHIFT_SPECIAL_OPTIONS,
+              STICK_SHIFT_RIGHT_HEADER,
+              ...STICK_SHIFT_SPECIAL_OPTIONS.filter(o => o.value.includes(':RIGHT:')),
+              STICK_SHIFT_LEFT_HEADER,
+              ...STICK_SHIFT_SPECIAL_OPTIONS.filter(o => o.value.includes(':LEFT:')),
             ]
           }
           const specialValue = (() => {
@@ -174,7 +179,7 @@ export const ButtonBindingsCard = ({
               manualInfo?.modifierCommand ??
               getDefaultModifierForButton(button.command, modifierOptions)
             : undefined
-          const modifierLabel = row.slot === 'simultaneous' ? 'Combine with' : 'Modifier button'
+          const modifierLabel = row.slot === 'simultaneous' ? 'Combine with' : row.slot === 'diagonal' ? 'Diagonal with' : 'Modifier button'
           let rowModifierOptions = modifierOptions
           if (
             needsModifier &&
@@ -283,6 +288,9 @@ export const ButtonBindingsCard = ({
                       selected,
                       needsModifier ? { modifier: modifierValue } : undefined
                     )
+                    if (row.isManual) {
+                      removeManualRow(button.command, row.slot, row.id)
+                    }
                   }
             }
           />
@@ -343,7 +351,9 @@ export const ButtonBindingsCard = ({
                         ? 'Double press'
                         : slot === 'chord'
                           ? 'Chorded press'
-                          : 'Simultaneous press'}
+                          : slot === 'simultaneous'
+                            ? 'Simultaneous press'
+                            : 'Diagonal press'}
                   </option>
                 ))}
                 {onStickModeShiftChange && (
@@ -351,7 +361,18 @@ export const ButtonBindingsCard = ({
                     <option value={STICK_SHIFT_HEADER_OPTION.value} disabled>
                       Stick mode shifts
                     </option>
-                    {STICK_SHIFT_SPECIAL_OPTIONS.map(option => (
+                    <option value={STICK_SHIFT_RIGHT_HEADER.value} disabled>
+                      {STICK_SHIFT_RIGHT_HEADER.label}
+                    </option>
+                    {STICK_SHIFT_SPECIAL_OPTIONS.filter(o => o.value.includes(':RIGHT:')).map(option => (
+                      <option key={`${button.command}-${option.value}`} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                    <option value={STICK_SHIFT_LEFT_HEADER.value} disabled>
+                      {STICK_SHIFT_LEFT_HEADER.label}
+                    </option>
+                    {STICK_SHIFT_SPECIAL_OPTIONS.filter(o => o.value.includes(':LEFT:')).map(option => (
                       <option key={`${button.command}-${option.value}`} value={option.value}>
                         {option.label}
                       </option>
@@ -406,7 +427,7 @@ export const ButtonBindingsCard = ({
           </div>
         )}
         {buttonHasTrackball && (
-          <div className="trackball-inline" data-capture-ignore="true">
+          <div className={keymapStyles.trackballInline} data-capture-ignore="true">
             <label>
               Trackball decay
               <input

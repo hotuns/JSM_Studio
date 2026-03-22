@@ -23,11 +23,12 @@ import { ToastHost } from './components/ToastHost'
 import { UpdateBanner } from './components/UpdateBanner'
 import { RwcGuideModal } from './components/RwcGuideModal'
 import { updateKeymapEntry } from './utils/keymap'
+import { showToast } from './utils/toast'
 
 
 type PrimaryTab = 'gyro' | 'keybinds' | 'touchpad' | 'sticks' | 'help'
 type GyroSubTab = 'behavior' | 'sensitivity' | 'noise'
-type KeybindsSubTab = 'face' | 'dpad' | 'bumpers' | 'triggers' | 'center'
+type KeybindsSubTab = 'global' | 'face' | 'dpad' | 'bumpers' | 'triggers' | 'center' | 'paddles'
 type TouchpadSubTab = 'mode' | 'bind'
 type SticksSubTab = 'bindings' | 'modes'
 
@@ -139,9 +140,10 @@ function App() {
   const [recalibrating, setRecalibrating] = useState(false)
   const [isProfileModalOpen, setProfileModalOpen] = useState(false)
   const [isRwcGuideModalOpen, setIsRwcGuideModalOpen] = useState(false)
+  const [calibrationTurns, setCalibrationTurns] = useState('1')
   const [primaryTab, setPrimaryTab] = useState<PrimaryTab>('gyro')
   const [gyroSubTab, setGyroSubTab] = useState<GyroSubTab>('behavior')
-  const [keybindsSubTab, setKeybindsSubTab] = useState<KeybindsSubTab>('face')
+  const [keybindsSubTab, setKeybindsSubTab] = useState<KeybindsSubTab>('global')
   const [touchpadSubTab, setTouchpadSubTab] = useState<TouchpadSubTab>('mode')
   const [sticksSubTab, setSticksSubTab] = useState<SticksSubTab>('bindings')
   const {
@@ -165,6 +167,8 @@ function App() {
     doublePressWindowIsCustom,
     simPressWindowSeconds,
     simPressWindowIsCustom,
+    lightBarColor,
+    handleLightBarChange,
     triggerThresholdValue,
     touchpadModeValue,
     gridSizeValue,
@@ -232,6 +236,10 @@ function App() {
     stickModeShiftAssignments,
     stickAimSettings,
     adaptiveTriggerValue,
+    zlModeValue,
+    zrModeValue,
+    handleZlModeChange,
+    handleZrModeChange,
     handleToggleIgnoreGyroDevice,
     scrollSensValue,
     handleScrollSensChange,
@@ -412,13 +420,15 @@ function App() {
 
   const renderKeybindsNav = () => (
     <div className="subnav">
-      {(['face', 'dpad', 'bumpers', 'triggers', 'center'] as KeybindsSubTab[]).map(entry => (
+      {(['global', 'face', 'dpad', 'bumpers', 'triggers', 'center', 'paddles'] as KeybindsSubTab[]).map(entry => (
         <button key={entry} className={`pill-tab ${keybindsSubTab === entry ? 'active' : ''}`} onClick={() => setKeybindsSubTab(entry)}>
+          {entry === 'global' && 'Global Settings'}
           {entry === 'face' && 'Face'}
           {entry === 'dpad' && 'D-pad'}
           {entry === 'bumpers' && 'Bumpers'}
           {entry === 'triggers' && 'Triggers'}
           {entry === 'center' && 'Center'}
+          {entry === 'paddles' && 'Paddles'}
         </button>
       ))}
     </div>
@@ -574,6 +584,8 @@ function App() {
             simPressWindowSeconds={simPressWindowSeconds}
             simPressWindowIsCustom={simPressWindowIsCustom}
             onSimPressWindowChange={handleSimPressWindowChange}
+            lightBarColor={lightBarColor}
+            onLightBarChange={handleLightBarChange}
             triggerThreshold={triggerThresholdValue}
             onTriggerThresholdChange={handleTriggerThresholdChange}
             onModifierChange={handleModifierChange}
@@ -593,6 +605,10 @@ function App() {
             onStickModeShiftChange={handleStickModeShiftChange}
             adaptiveTriggerValue={adaptiveTriggerValue}
             onAdaptiveTriggerChange={handleAdaptiveTriggerChange}
+            zlModeValue={zlModeValue}
+            zrModeValue={zrModeValue}
+            onZlModeChange={handleZlModeChange}
+            onZrModeChange={handleZrModeChange}
             stickAimSettings={stickAimSettings}
             stickAimHandlers={stickAimHandlers}
             stickFlickSettings={stickFlickSettings}
@@ -602,7 +618,7 @@ function App() {
             scrollSens={scrollSensValue}
             onScrollSensChange={handleScrollSensChange}
             lockMessage={lockMessage}
-            visibleSections={[keybindsSubTab === 'face' && 'global', keybindsSubTab].filter(Boolean) as string[]}
+            visibleSections={keybindsSubTab === 'global' ? ['global'] : [keybindsSubTab]}
           />
         </>
       )
@@ -635,6 +651,8 @@ function App() {
             simPressWindowSeconds={simPressWindowSeconds}
             simPressWindowIsCustom={simPressWindowIsCustom}
             onSimPressWindowChange={handleSimPressWindowChange}
+            lightBarColor={lightBarColor}
+            onLightBarChange={handleLightBarChange}
             triggerThreshold={triggerThresholdValue}
             onTriggerThresholdChange={handleTriggerThresholdChange}
             onModifierChange={handleModifierChange}
@@ -658,6 +676,10 @@ function App() {
             onStickModeShiftChange={handleStickModeShiftChange}
             adaptiveTriggerValue={adaptiveTriggerValue}
             onAdaptiveTriggerChange={handleAdaptiveTriggerChange}
+            zlModeValue={zlModeValue}
+            zrModeValue={zrModeValue}
+            onZlModeChange={handleZlModeChange}
+            onZrModeChange={handleZrModeChange}
             stickAimSettings={stickAimSettings}
             stickAimHandlers={stickAimHandlers}
             lockMessage={lockMessage}
@@ -693,6 +715,8 @@ function App() {
             simPressWindowSeconds={simPressWindowSeconds}
             simPressWindowIsCustom={simPressWindowIsCustom}
             onSimPressWindowChange={handleSimPressWindowChange}
+            lightBarColor={lightBarColor}
+            onLightBarChange={handleLightBarChange}
             triggerThreshold={triggerThresholdValue}
             onTriggerThresholdChange={handleTriggerThresholdChange}
             onModifierChange={handleModifierChange}
@@ -866,7 +890,7 @@ function App() {
               {calibrationLoadMessage && <span className="profile-status inline-flag">{calibrationLoadMessage}</span>}
             </div>
             <p className="modal-description">
-              Set your in-game sensitivity and whether to counter OS mouse speed, apply the preset to JSM, then in-game rotate the stick for an exact 360°. Come back here to run the calculation.
+              Set your in-game sensitivity and number of turns below, then apply the preset to JSM. In-game, rotate the stick to complete exactly that many full rotations in game. More turns gives a more accurate calculation. Come back here and hit Run Calculation.
             </p>
             <div className="flex-inputs">
               <label>
@@ -899,6 +923,18 @@ function App() {
                 </select>
               </label>
             </div>
+            <div className="flex-inputs">
+              <label>
+                Number of turns
+                <input
+                  type="number"
+                  step="0.5"
+                  min="0.5"
+                  value={calibrationTurns}
+                  onChange={(e) => setCalibrationTurns(e.target.value)}
+                />
+              </label>
+            </div>
             <SectionActions
               hasPendingChanges={calibrationDirty}
               statusMessage={statusMessage}
@@ -909,10 +945,15 @@ function App() {
               applyDisabled={isCalibrating}
             />
             <div className="modal-actions">
-              <button type="button" className="secondary-btn" onClick={handleRunCalibration} disabled={isCalibrating}>
+              <button
+                type="button"
+                className="secondary-btn"
+                onClick={() => handleRunCalibration(parseFloat(calibrationTurns) || 1)}
+                disabled={isCalibrating}
+              >
                 Run calculation
               </button>
-              <button type="button" className="secondary-btn" onClick={handleCloseCalibration}>
+              <button type="button" className="secondary-btn" onClick={() => { handleCloseCalibration(); showToast(`Active profile: ${profileLabel}`) }}>
                 Close
               </button>
             </div>

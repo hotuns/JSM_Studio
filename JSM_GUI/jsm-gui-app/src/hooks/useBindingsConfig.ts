@@ -88,6 +88,9 @@ export function useBindingsConfig({ configText, setConfigText }: BindingArgs) {
         case 'simultaneous':
           next = setComboBindingLine(next, button, 'simultaneous', rowId, options?.modifier, binding)
           break
+        case 'diagonal':
+          next = setComboBindingLine(next, button, 'diagonal', rowId, options?.modifier, binding)
+          break
         default:
           break
       }
@@ -115,6 +118,11 @@ export function useBindingsConfig({ configText, setConfigText }: BindingArgs) {
         next = removeComboBindingLine(next, button, 'simultaneous', rowId)
         if (binding) {
           next = setComboBindingLine(next, button, 'simultaneous', rowId, nextModifier, binding)
+        }
+      } else if (slot === 'diagonal') {
+        next = removeComboBindingLine(next, button, 'diagonal', rowId)
+        if (binding) {
+          next = setComboBindingLine(next, button, 'diagonal', rowId, nextModifier, binding)
         }
       }
       return next

@@ -49,7 +49,11 @@ export function TouchpadGridSection({
           })}
         </div>
         <div className={styles.touchpadBindingList} data-touchpad-binding-list>
-          <div className={keymapStyles.keymapGrid}>{touchpadButtons.map(renderButton)}</div>
+          <div className={keymapStyles.keymapGrid}>
+            {touchpadButtons.map(button => (
+              <div key={button.command}>{renderButton(button)}</div>
+            ))}
+          </div>
         </div>
       </KeymapSection>
       <SectionActions

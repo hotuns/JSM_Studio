@@ -42,6 +42,13 @@ export const CENTER_BUTTONS: ButtonDefinition[] = [
   { command: 'HOME', description: 'Home / Guide', playstation: 'PS', xbox: 'Guide' },
 ]
 
+export const PADDLE_BUTTONS: ButtonDefinition[] = [
+  { command: 'LSL', description: 'Left Joy-Con SL / Xbox Elite left paddle / DS Edge left paddle',  playstation: 'SL (Left)',  xbox: 'L Paddle 1' },
+  { command: 'LSR', description: 'Left Joy-Con SR / Xbox Elite right paddle',                       playstation: 'SR (Left)',  xbox: 'R Paddle 1' },
+  { command: 'RSL', description: 'Right Joy-Con SL / Xbox Elite left paddle',                       playstation: 'SL (Right)', xbox: 'L Paddle 2' },
+  { command: 'RSR', description: 'Right Joy-Con SR / Xbox Elite right paddle / DS Edge right paddle',playstation: 'SR (Right)', xbox: 'R Paddle 2' },
+]
+
 export const TOUCH_BUTTONS: ButtonDefinition[] = [
   { command: 'TOUCH', description: 'Touch contact', playstation: 'Touch', xbox: 'Touch' },
   { command: 'CAPTURE', description: 'Touchpad click', playstation: 'Click', xbox: 'Click' },
@@ -67,18 +74,20 @@ export const RIGHT_STICK_BUTTONS: ButtonDefinition[] = [
 
 export const buildStickShiftValue = (target: 'LEFT' | 'RIGHT', mode: string) => `STICK_SHIFT:${target}:${mode}`
 
-export const STICK_SHIFT_SPECIAL_OPTIONS = STICK_MODE_VALUES.flatMap(mode => [
-  {
-    value: buildStickShiftValue('LEFT', mode),
-    label: `Stick shift — Left → ${formatStickModeLabel(mode)}`,
-  },
-  {
+export const STICK_SHIFT_SPECIAL_OPTIONS = [
+  ...STICK_MODE_VALUES.map(mode => ({
     value: buildStickShiftValue('RIGHT', mode),
     label: `Stick shift — Right → ${formatStickModeLabel(mode)}`,
-  },
-])
+  })),
+  ...STICK_MODE_VALUES.map(mode => ({
+    value: buildStickShiftValue('LEFT', mode),
+    label: `Stick shift — Left → ${formatStickModeLabel(mode)}`,
+  })),
+]
 
 export const STICK_SHIFT_HEADER_OPTION = { value: 'STICK_SHIFT_HEADER', label: '── Stick mode shifts ──', disabled: true }
+export const STICK_SHIFT_LEFT_HEADER = { value: 'STICK_SHIFT_LEFT_HEADER', label: '── Left stick ──', disabled: true }
+export const STICK_SHIFT_RIGHT_HEADER = { value: 'STICK_SHIFT_RIGHT_HEADER', label: '── Right stick ──', disabled: true }
 
 export const parseStickShiftSelection = (value: string) => {
   const match = /^STICK_SHIFT:(LEFT|RIGHT):([A-Z_]+)$/i.exec(value)
@@ -123,8 +132,8 @@ export const SPECIAL_LABELS: Record<string, string> = {
   GYRO_TRACK_Y: 'Trackball mode (Y only)',
 }
 
-export const EXTRA_BINDING_SLOTS: BindingSlot[] = ['hold', 'double', 'chord', 'simultaneous']
-export const MODIFIER_SLOT_TYPES: BindingSlot[] = ['chord', 'simultaneous']
+export const EXTRA_BINDING_SLOTS: BindingSlot[] = ['hold', 'double', 'chord', 'simultaneous', 'diagonal']
+export const MODIFIER_SLOT_TYPES: BindingSlot[] = ['chord', 'simultaneous', 'diagonal']
 
 export const getDefaultModifierForButton = (button: string, modifierOptions: ModifierSelectOption[]) => {
   const upper = button.toUpperCase()

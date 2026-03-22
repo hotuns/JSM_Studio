@@ -871,7 +871,8 @@ void joyShockPollCallback(int jcHandle, JOY_SHOCK_STATE state, JOY_SHOCK_STATE l
 	const int globalOffCount = g_gyroGlobalOffCount.load();
 	if (globalOnCount > 0)
 	{
-		blockGyro = false;
+		if (!jc->_ignoreGyro)
+			blockGyro = false;
 	}
 	else if (globalOffCount > 0)
 	{

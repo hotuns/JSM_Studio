@@ -65,3 +65,13 @@
   border-radius: 12px;
   background: var(--bg-btn);
 }
+
+.hoverOverlayCanvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 12px;
+  pointer-events: none;
+}

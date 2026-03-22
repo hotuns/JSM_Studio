@@ -45,6 +45,7 @@ export const timingKeys = [
   'DBL_PRESS_WINDOW',
   'SIM_PRESS_WINDOW',
   'TRIGGER_THRESHOLD',
+  'LIGHT_BAR',
 ] as const
 
 export const touchpadKeys = ['TOUCHPAD_MODE', 'GRID_SIZE', 'TOUCHPAD_SENS'] as const
@@ -133,11 +134,16 @@ export const keyName = {
   IN_GAME_SENS: 'IN_GAME_SENS',
   REAL_WORLD_CALIBRATION: 'REAL_WORLD_CALIBRATION',
 
+  // Controller
+  LIGHT_BAR: 'LIGHT_BAR',
+
   // Timing / thresholds
   HOLD_PRESS_TIME: 'HOLD_PRESS_TIME',
   DBL_PRESS_WINDOW: 'DBL_PRESS_WINDOW',
   SIM_PRESS_WINDOW: 'SIM_PRESS_WINDOW',
   TRIGGER_THRESHOLD: 'TRIGGER_THRESHOLD',
+  ZL_MODE: 'ZL_MODE',
+  ZR_MODE: 'ZR_MODE',
 
   // Touchpad
   TOUCHPAD_MODE: 'TOUCHPAD_MODE',

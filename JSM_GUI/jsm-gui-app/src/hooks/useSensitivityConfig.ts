@@ -696,6 +696,24 @@ export function useSensitivityConfig({ configText, setConfigText }: SensitivityA
   }, [configText])
   const simPressWindowSeconds = simPressWindowState.value
   const simPressWindowIsCustom = simPressWindowState.isCustom
+
+  const lightBarColor = useMemo(() => {
+    const raw = getKeymapValue(configText, keyName.LIGHT_BAR)
+    if (raw && /^x[0-9a-f]{6}$/i.test(raw.trim())) {
+      return `#${raw.trim().slice(1)}`
+    }
+    return null
+  }, [configText])
+
+  const handleLightBarChange = useCallback((hexColor: string | null) => {
+    if (!hexColor) {
+      setConfigText(prev => removeKeymapEntry(prev, keyName.LIGHT_BAR))
+      return
+    }
+    const jsm = `x${hexColor.replace('#', '').toLowerCase()}`
+    setConfigText(prev => updateKeymapEntry(prev, keyName.LIGHT_BAR, [jsm]))
+  }, [setConfigText])
+
   const triggerThresholdValue = useMemo(() => {
     const raw = getKeymapValue(configText, keyName.TRIGGER_THRESHOLD)
     if (raw) {
@@ -901,6 +919,8 @@ export function useSensitivityConfig({ configText, setConfigText }: SensitivityA
     doublePressWindowIsCustom,
     simPressWindowSeconds,
     simPressWindowIsCustom,
+    lightBarColor,
+    handleLightBarChange,
     triggerThresholdValue,
     handleSensitivityModeshiftButtonChange,
     handleThresholdChange,

@@ -1,4 +1,4 @@
-import { ReactNode } from 'react'
+import { ReactNode, useEffect, useRef, useState } from 'react'
 import { STICK_MODE_VALUES, formatStickModeLabel } from '../constants/sticks'
 import styles from './Sticks.module.css'
 
@@ -23,6 +23,52 @@ const clamp = (value: number) => {
   return Math.min(1, Math.max(0, value))
 }
 
+function useDeadzoneDraft(propValue: string, onChange: (value: string) => void, min = 0, max = 1) {
+  const [draft, setDraft] = useState(propValue)
+  const focused = useRef(false)
+
+  useEffect(() => {
+    if (!focused.current) setDraft(propValue)
+  }, [propValue])
+
+  const handleChange = (raw: string) => {
+    const trimmed = raw.trim()
+    if (!trimmed) {
+      setDraft('')
+      onChange('')
+      return
+    }
+    // Allow partial decimals while typing without flushing to config
+    if (trimmed.endsWith('.') || trimmed.endsWith('-')) {
+      setDraft(raw)
+      return
+    }
+    const numeric = Number(trimmed)
+    if (!Number.isNaN(numeric)) {
+      // Clamp here so the draft always matches what gets written to config
+      const clamped = String(Math.max(min, Math.min(max, numeric)))
+      setDraft(clamped)
+      onChange(clamped)
+    }
+  }
+
+  const handleBlur = () => {
+    focused.current = false
+    const trimmed = draft.trim()
+    if (!trimmed) {
+      onChange('')
+      setDraft('')
+    } else if (trimmed.endsWith('.') || Number.isNaN(Number(trimmed))) {
+      // Revert incomplete/invalid input to the last known prop value
+      setDraft(propValue)
+    } else {
+      onChange(draft)
+    }
+  }
+
+  return { draft, handleChange, handleFocus: () => { focused.current = true }, handleBlur }
+}
+
 export function StickSettingsCard({
   title,
   innerValue,
@@ -38,6 +84,9 @@ export function StickSettingsCard({
   onOuterChange,
   modeExtras,
 }: StickSettingsCardProps) {
+  const inner = useDeadzoneDraft(innerValue, onInnerChange)
+  const outer = useDeadzoneDraft(outerValue, onOuterChange)
+
   const resolvedInner = clamp(parseFloat(innerValue || defaultInner))
   const resolvedOuter = clamp(parseFloat(outerValue || defaultOuter))
 
@@ -82,9 +131,11 @@ export function StickSettingsCard({
           step="0.01"
           min="0"
           max="1"
-          value={innerValue}
+          value={inner.draft}
           placeholder={defaultInner}
-          onChange={(event) => onInnerChange(event.target.value)}
+          onChange={(event) => inner.handleChange(event.target.value)}
+          onFocus={inner.handleFocus}
+          onBlur={inner.handleBlur}
           disabled={disabled}
         />
         <input
@@ -104,9 +155,11 @@ export function StickSettingsCard({
           step="0.01"
           min="0"
           max="1"
-          value={outerValue}
+          value={outer.draft}
           placeholder={defaultOuter}
-          onChange={(event) => onOuterChange(event.target.value)}
+          onChange={(event) => outer.handleChange(event.target.value)}
+          onFocus={outer.handleFocus}
+          onBlur={outer.handleBlur}
           disabled={disabled}
         />
         <input

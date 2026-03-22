@@ -195,6 +195,12 @@
   color: var(--text-muted);
 }
 
+.paddleNote {
+  display: block;
+  margin-top: 0.75rem;
+  color: var(--text-muted);
+}
+
 .trackballInline {
   margin-top: 0.5rem;
   padding: 0.5rem 0.75rem;
@@ -302,6 +308,31 @@
 .globalControlUnit {
   font-size: 0.85rem;
   color: var(--text-mid);
+}
+
+.lightBarColorPicker {
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0.15rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-1);
+  background: var(--bg-input);
+  cursor: pointer;
+}
+
+.lightBarClearBtn {
+  padding: 0.45rem 0.85rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-1);
+  background: transparent;
+  color: var(--text-mid);
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.lightBarClearBtn:hover {
+  border-color: var(--danger-border);
+  color: var(--danger-text, var(--text-strong));
 }
 
 .adaptiveToggle {

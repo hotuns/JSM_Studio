@@ -14,6 +14,7 @@ import {
   DPAD_BUTTONS,
   FACE_BUTTONS,
   LEFT_STICK_BUTTONS,
+  PADDLE_BUTTONS,
   RIGHT_STICK_BUTTONS,
   SPECIAL_BINDINGS,
   STICK_AIM_DEFAULTS,
@@ -23,12 +24,15 @@ import {
 } from '../keymap/schema'
 import { useBindingCapture } from '../keymap/useBindingCapture'
 import { useButtonRowState } from '../keymap/useButtonRowState'
+import { KeymapSection } from './KeymapSection'
+import { SectionActions } from './SectionActions'
 import { GlobalControlsSection } from './keymap/GlobalControlsSection'
 import { ButtonGridSection } from './keymap/ButtonGridSection'
 import { StickModesSection } from './keymap/StickModesSection'
 import { TouchpadSettingsSection } from './keymap/TouchpadSettingsSection'
 import { TouchpadGridSection } from './keymap/TouchpadGridSection'
 import { ButtonBindingsCard } from './keymap/ButtonBindingsCard'
+import { TriggerControlsSection } from './keymap/TriggerControlsSection'
 import stickStyles from './Sticks.module.css'
 import keymapStyles from './Keymap.module.css'
 
@@ -68,6 +72,8 @@ type KeymapControlsProps = {
   simPressWindowSeconds: number
   simPressWindowIsCustom: boolean
   onSimPressWindowChange: (value: string) => void
+  lightBarColor: string | null
+  onLightBarChange: (color: string | null) => void
   triggerThreshold: number
   onTriggerThresholdChange: (value: string) => void
   view?: 'full' | 'touchpad' | 'sticks'
@@ -130,6 +136,10 @@ type KeymapControlsProps = {
   onStickModeShiftChange?: (button: string, target: 'LEFT' | 'RIGHT', mode?: string) => void
   adaptiveTriggerValue?: string
   onAdaptiveTriggerChange?: (value: string) => void
+  zlModeValue?: string
+  zrModeValue?: string
+  onZlModeChange?: (value: string) => void
+  onZrModeChange?: (value: string) => void
 }
 
 type StickAimSettingsProps = {
@@ -329,6 +339,8 @@ export function KeymapControls({
   simPressWindowSeconds,
   simPressWindowIsCustom,
   onSimPressWindowChange,
+  lightBarColor,
+  onLightBarChange,
   triggerThreshold,
   onTriggerThresholdChange,
   view = 'full',
@@ -360,6 +372,10 @@ export function KeymapControls({
   onScrollSensChange,
   adaptiveTriggerValue = '',
   onAdaptiveTriggerChange = () => {},
+  zlModeValue = '',
+  zrModeValue = '',
+  onZlModeChange = () => {},
+  onZrModeChange = () => {},
 }: KeymapControlsProps) {
   const [layout, setLayout] = useState<ControllerLayout>('playstation')
   const [stickView, setStickView] = useState<'bindings' | 'modes'>('bindings')
@@ -374,7 +390,7 @@ export function KeymapControls({
   } = useButtonRowState()
   const { captureLabel, beginCapture, cancelCapture, isCapturing } = useBindingCapture((button, slot, rowId, value, options) => {
     onBindingChange(button, slot, rowId, value, options)
-    const isComboSlot = slot === 'chord' || slot === 'simultaneous'
+    const isComboSlot = slot === 'chord' || slot === 'simultaneous' || slot === 'diagonal'
     if (value && isComboSlot && manualRows[button]?.[slot]?.some(entry => entry.id === rowId)) {
       removeManualRow(button, slot, rowId)
     }
@@ -426,6 +442,7 @@ export function KeymapControls({
       ...BUMPER_BUTTONS,
       ...TRIGGER_BUTTONS,
       ...CENTER_BUTTONS,
+      ...PADDLE_BUTTONS,
       ...LEFT_STICK_BUTTONS,
       ...RIGHT_STICK_BUTTONS,
       ...TOUCH_BUTTONS,
@@ -618,6 +635,8 @@ export function KeymapControls({
                 simPressWindowSeconds={simPressInputValue}
                 simPressWindowIsCustom={simPressWindowIsCustom}
                 onSimPressWindowChange={onSimPressWindowChange}
+                lightBarColor={lightBarColor}
+                onLightBarChange={onLightBarChange}
                 {...actionsProps}
               />
             ),
@@ -662,54 +681,51 @@ export function KeymapControls({
             ),
           },
           {
-            key: 'triggers',
+            key: 'trigger-controls',
             shouldRender: isVisible('triggers'),
             node: (
-              <ButtonGridSection
-                title="Triggers"
-                description="Soft/full pulls and threshold toggles for L2/R2."
-                buttons={TRIGGER_BUTTONS}
-                renderButton={renderButtonCard}
-                extraContent={
-                  <div className="trigger-settings" data-capture-ignore="true">
-                    <div className={keymapStyles.adaptiveToggle}>
-                      <label>
-                        Adaptive triggers (DualSense)
-                        <select
-                          className="app-select"
-                          value={adaptiveTriggerValue}
-                          onChange={(event) => onAdaptiveTriggerChange?.(event.target.value)}
-                          disabled={isCalibrating}
-                        >
-                          <option value="">Default (ON)</option>
-                          <option value="OFF">Off</option>
-                        </select>
-                      </label>
-                    </div>
-                    <div className={keymapStyles.globalControlRow}>
-                      <div className={keymapStyles.globalControlText}>
-                        <span className={keymapStyles.globalControlTitle}>Trigger threshold</span>
-                        <span className={keymapStyles.globalControlCaption}>
-                          {triggerThreshold > 0 ? `Custom TRIGGER_THRESHOLD = ${triggerThreshold.toFixed(2)}` : 'Default (0.00)'}
-                        </span>
-                      </div>
-                      <div className={keymapStyles.globalControlInputGroup}>
-                        <input
-                          type="number"
-                          min="0"
-                          max="1"
-                          step="0.01"
-                          value={triggerThreshold}
-                          onChange={(event) => onTriggerThresholdChange?.(event.target.value)}
-                        />
-                        <span className={keymapStyles.globalControlUnit}>seconds</span>
-                      </div>
-                    </div>
-                  </div>
-                }
+              <TriggerControlsSection
+                adaptiveTriggerValue={adaptiveTriggerValue}
+                onAdaptiveTriggerChange={onAdaptiveTriggerChange}
+                triggerThreshold={triggerThreshold}
+                onTriggerThresholdChange={onTriggerThresholdChange}
                 {...actionsProps}
               />
             ),
+          },
+          {
+            key: 'triggers',
+            shouldRender: isVisible('triggers'),
+            node: (() => {
+              const zlActive = !!zlModeValue && zlModeValue !== 'NO_FULL'
+              const zrActive = !!zrModeValue && zrModeValue !== 'NO_FULL'
+              const modeOptions = ['NO_FULL', 'NO_SKIP', 'NO_SKIP_EXCLUSIVE', 'MUST_SKIP', 'MAY_SKIP', 'MUST_SKIP_R', 'MAY_SKIP_R']
+              return (
+                <>
+                  <KeymapSection title="Triggers" description="Soft/full pulls for L2/R2.">
+                    <div className={keymapStyles.keymapGrid} data-capture-ignore="true">
+                      {TRIGGER_BUTTONS.filter(b => b.command === 'ZL').map(b => <div key={b.command}>{renderButtonCard(b)}</div>)}
+                      <div className={keymapStyles.globalControlRow}>
+                        <span className={keymapStyles.globalControlTitle}>L2 full pull mode</span>
+                        <select className="app-select" value={zlModeValue || 'NO_FULL'} onChange={e => onZlModeChange(e.target.value)} disabled={actionsProps.applyDisabled}>
+                          {modeOptions.map(m => <option key={m} value={m}>{m}{m === 'NO_FULL' ? ' (default)' : ''}</option>)}
+                        </select>
+                      </div>
+                      {zlActive && TRIGGER_BUTTONS.filter(b => b.command === 'ZLF').map(b => <div key={b.command}>{renderButtonCard(b)}</div>)}
+                      {TRIGGER_BUTTONS.filter(b => b.command === 'ZR').map(b => <div key={b.command}>{renderButtonCard(b)}</div>)}
+                      <div className={keymapStyles.globalControlRow}>
+                        <span className={keymapStyles.globalControlTitle}>R2 full pull mode</span>
+                        <select className="app-select" value={zrModeValue || 'NO_FULL'} onChange={e => onZrModeChange(e.target.value)} disabled={actionsProps.applyDisabled}>
+                          {modeOptions.map(m => <option key={m} value={m}>{m}{m === 'NO_FULL' ? ' (default)' : ''}</option>)}
+                        </select>
+                      </div>
+                      {zrActive && TRIGGER_BUTTONS.filter(b => b.command === 'ZRF').map(b => <div key={b.command}>{renderButtonCard(b)}</div>)}
+                    </div>
+                  </KeymapSection>
+                  <SectionActions className={keymapStyles.keymapSectionActions} {...actionsProps} />
+                </>
+              )
+            })(),
           },
           {
             key: 'center',
@@ -720,6 +736,25 @@ export function KeymapControls({
                 description="Options, Share, and Mic bindings."
                 buttons={CENTER_BUTTONS}
                 renderButton={renderButtonCard}
+                {...actionsProps}
+              />
+            ),
+          },
+          {
+            key: 'paddles',
+            shouldRender: isVisible('paddles'),
+            node: (
+              <ButtonGridSection
+                title="Paddles"
+                description="Back paddle and SL/SR button bindings."
+                buttons={PADDLE_BUTTONS}
+                renderButton={renderButtonCard}
+                extraContent={
+                  <small className={keymapStyles.paddleNote}>
+                    DualSense Edge uses <strong>LSL</strong> (left paddle) and <strong>RSR</strong> (right paddle) only.
+                    Xbox Elite and Joy-Con support all four.
+                  </small>
+                }
                 {...actionsProps}
               />
             ),

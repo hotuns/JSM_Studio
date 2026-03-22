@@ -271,6 +271,10 @@ export function HelpDocsPage() {
   const jumpToSection = useCallback(
     (slug: string) => {
       const normalized = decodeURIComponent(slug).replace(/^#/, '').trim().toLowerCase()
+      // Clear find highlights before the state change so React reconciles against a clean DOM
+      if (docsMarkdownRef.current) {
+        clearFindHighlights(docsMarkdownRef.current)
+      }
       setActiveSlug(normalized)
       requestAnimationFrame(() => {
         let el = document.getElementById(normalized)
@@ -283,14 +287,22 @@ export function HelpDocsPage() {
             }) ?? null
         }
         if (!el) return
-        if (el.id !== normalized) {
-          el.id = normalized
-        }
         scrollElementIntoView(el)
       })
     },
     [scrollElementIntoView],
   )
+
+  useEffect(() => {
+    const container = docsMarkdownRef.current
+    if (!container) return
+    container.querySelectorAll<HTMLElement>(`.${styles.headingActive}`).forEach(el => {
+      el.classList.remove(styles.headingActive)
+    })
+    if (!activeSlug) return
+    const activeEl = container.querySelector<HTMLElement>(`[id="${CSS.escape(activeSlug)}"]`)
+    activeEl?.classList.add(styles.headingActive)
+  }, [activeSlug])
 
   const markdownComponents = useMemo<Components>(() => {
     const slugger = createSlugger()
@@ -299,9 +311,8 @@ export function HelpDocsPage() {
       (({ children }: { children?: ReactNode }) => {
         const text = flattenText(children).trim()
         const id = slugger(text)
-        const isActive = activeSlug === id
         return (
-          <Tag id={id} className={`${styles.heading} ${isActive ? styles.headingActive : ''}`}>
+          <Tag id={id} className={styles.heading}>
             {children}
           </Tag>
         )
@@ -332,14 +343,23 @@ export function HelpDocsPage() {
             </a>
           )
         }
-        return (
-          <a href={href} target={isExternal ? '_blank' : undefined} rel={isExternal ? 'noreferrer' : undefined}>
-            {children}
-          </a>
-        )
+        if (isExternal) {
+          return (
+            <a
+              href={href}
+              onClick={(event) => {
+                event.preventDefault()
+                window.electronAPI?.openExternal?.(href)
+              }}
+            >
+              {children}
+            </a>
+          )
+        }
+        return <a href={href}>{children}</a>
       }) as NonNullable<Components['a']>,
     }
-  }, [activeSlug, jumpToSection])
+  }, [jumpToSection])
 
   return (
     <Card className={`control-panel ${styles.helpCard}`}>

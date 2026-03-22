@@ -13,6 +13,8 @@ type GlobalControlsSectionProps = {
   simPressWindowSeconds: number
   simPressWindowIsCustom: boolean
   onSimPressWindowChange: (value: string) => void
+  lightBarColor: string | null
+  onLightBarChange: (color: string | null) => void
   hasPendingChanges: boolean
   statusMessage?: string | null
   onApply: () => void
@@ -31,6 +33,8 @@ export function GlobalControlsSection({
   simPressWindowSeconds,
   simPressWindowIsCustom,
   onSimPressWindowChange,
+  lightBarColor,
+  onLightBarChange,
   hasPendingChanges,
   statusMessage,
   onApply,
@@ -77,6 +81,31 @@ export function GlobalControlsSection({
             simPressWindowSeconds,
             onSimPressWindowChange
           )}
+          <div className={keymapStyles.globalControlRow} data-capture-ignore="true">
+            <div className={keymapStyles.globalControlText}>
+              <span className={keymapStyles.globalControlTitle}>Light bar color</span>
+              <span className={keymapStyles.globalControlCaption}>
+                {lightBarColor ? `LIGHT_BAR = x${lightBarColor.slice(1).toLowerCase()}` : 'Not set (using default)'}
+              </span>
+            </div>
+            <div className={keymapStyles.globalControlInputGroup}>
+              <input
+                type="color"
+                value={lightBarColor ?? '#ffffff'}
+                onChange={(e) => onLightBarChange(e.target.value)}
+                className={keymapStyles.lightBarColorPicker}
+              />
+              {lightBarColor && (
+                <button
+                  type="button"
+                  className={keymapStyles.lightBarClearBtn}
+                  onClick={() => onLightBarChange(null)}
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+          </div>
         </div>
       </KeymapSection>
       <SectionActions
