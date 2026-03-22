@@ -396,7 +396,7 @@ public:
 		{
 			array<float, 3> accel;
 			SDL_GetGamepadSensorData(_controllerMap[deviceId]->_sdlController, SDL_SENSOR_ACCEL, &accel[0], 3);
-			static constexpr float toGs = 1.f / 9.8f;
+			static constexpr float toGs = 1.f / SDL_STANDARD_GRAVITY;
 			imuState.accelX = accel[0] * toGs;
 			imuState.accelY = accel[1] * toGs;
 			imuState.accelZ = accel[2] * toGs;
