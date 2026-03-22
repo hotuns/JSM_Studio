@@ -42,6 +42,13 @@ export const CENTER_BUTTONS: ButtonDefinition[] = [
   { command: 'HOME', description: 'Home / Guide', playstation: 'PS', xbox: 'Guide' },
 ]
 
+export const PADDLE_BUTTONS: ButtonDefinition[] = [
+  { command: 'LSL', description: 'Left Joy-Con SL / Xbox Elite left paddle / DS Edge left paddle',  playstation: 'SL (Left)',  xbox: 'L Paddle 1' },
+  { command: 'LSR', description: 'Left Joy-Con SR / Xbox Elite right paddle',                       playstation: 'SR (Left)',  xbox: 'R Paddle 1' },
+  { command: 'RSL', description: 'Right Joy-Con SL / Xbox Elite left paddle',                       playstation: 'SL (Right)', xbox: 'L Paddle 2' },
+  { command: 'RSR', description: 'Right Joy-Con SR / Xbox Elite right paddle / DS Edge right paddle',playstation: 'SR (Right)', xbox: 'R Paddle 2' },
+]
+
 export const TOUCH_BUTTONS: ButtonDefinition[] = [
   { command: 'TOUCH', description: 'Touch contact', playstation: 'Touch', xbox: 'Touch' },
   { command: 'CAPTURE', description: 'Touchpad click', playstation: 'Click', xbox: 'Click' },

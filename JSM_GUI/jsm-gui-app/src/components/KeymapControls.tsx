@@ -14,6 +14,7 @@ import {
   DPAD_BUTTONS,
   FACE_BUTTONS,
   LEFT_STICK_BUTTONS,
+  PADDLE_BUTTONS,
   RIGHT_STICK_BUTTONS,
   SPECIAL_BINDINGS,
   STICK_AIM_DEFAULTS,
@@ -427,6 +428,7 @@ export function KeymapControls({
       ...BUMPER_BUTTONS,
       ...TRIGGER_BUTTONS,
       ...CENTER_BUTTONS,
+      ...PADDLE_BUTTONS,
       ...LEFT_STICK_BUTTONS,
       ...RIGHT_STICK_BUTTONS,
       ...TOUCH_BUTTONS,
@@ -697,6 +699,25 @@ export function KeymapControls({
                 description="Options, Share, and Mic bindings."
                 buttons={CENTER_BUTTONS}
                 renderButton={renderButtonCard}
+                {...actionsProps}
+              />
+            ),
+          },
+          {
+            key: 'paddles',
+            shouldRender: isVisible('paddles'),
+            node: (
+              <ButtonGridSection
+                title="Paddles"
+                description="Back paddle and SL/SR button bindings."
+                buttons={PADDLE_BUTTONS}
+                renderButton={renderButtonCard}
+                extraContent={
+                  <small className={keymapStyles.paddleNote}>
+                    DualSense Edge uses <strong>LSL</strong> (left paddle) and <strong>RSR</strong> (right paddle) only.
+                    Xbox Elite and Joy-Con support all four.
+                  </small>
+                }
                 {...actionsProps}
               />
             ),

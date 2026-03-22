@@ -195,6 +195,12 @@
   color: var(--text-muted);
 }
 
+.paddleNote {
+  display: block;
+  margin-top: 0.75rem;
+  color: var(--text-muted);
+}
+
 .trackballInline {
   margin-top: 0.5rem;
   padding: 0.5rem 0.75rem;
