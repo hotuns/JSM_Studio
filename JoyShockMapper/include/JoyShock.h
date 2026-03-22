@@ -26,8 +26,6 @@ struct OneEuroFilter
 	LowPassFilter1E xFilt, dxFilt;
 	float xPrev = 0.f;
 	bool initialized = false;
-	static constexpr float minCutoff = 6.0f;
-	static constexpr float beta      = 0.3f;
 	static constexpr float dCutoff   = 1.0f;
 
 	static float alpha(float cutoff, float dt)
