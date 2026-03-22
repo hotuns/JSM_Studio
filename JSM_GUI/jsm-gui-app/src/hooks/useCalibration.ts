@@ -18,7 +18,7 @@ type UseCalibrationParams = {
 export function useCalibration({ configText, counterOsMouseSpeedEnabled, sensitivityInGame }: UseCalibrationParams) {
   const [isCalibrationModalOpen, setCalibrationModalOpen] = useState(false)
   const [calibrationRestorePath, setCalibrationRestorePath] = useState<string | null>(null)
-  const [calibrationCounterOs, setCalibrationCounterOs] = useState<boolean>(counterOsMouseSpeedEnabled)
+  const [calibrationCounterOs, setCalibrationCounterOs] = useState<boolean>(false)
   const [calibrationInGameSens, setCalibrationInGameSens] = useState<string>(sensitivityInGame?.toString() ?? '')
   const [calibrationText, setCalibrationText] = useState<string>('')
   const [calibrationDirty, setCalibrationDirty] = useState(false)
@@ -33,7 +33,8 @@ export function useCalibration({ configText, counterOsMouseSpeedEnabled, sensiti
 
   const resetCalibrationInputs = useCallback(() => {
     const sens = getKeymapValue(calibrationText, keyName.IN_GAME_SENS) ?? ''
-    const counter = Boolean(calibrationText && new RegExp(`(^|\\s)${keyName.COUNTER_OS_MOUSE_SPEED}\\b`, 'i').test(calibrationText))
+    const nonCommentText = calibrationText.split('\n').filter(l => !/^\s*#/.test(l)).join('\n')
+    const counter = Boolean(nonCommentText && new RegExp(`(^|\\s)${keyName.COUNTER_OS_MOUSE_SPEED}\\b`, 'i').test(nonCommentText))
     setCalibrationInGameSens(sens)
     setCalibrationCounterOs(counter)
     setCalibrationDirty(false)
@@ -41,7 +42,7 @@ export function useCalibration({ configText, counterOsMouseSpeedEnabled, sensiti
 
   const handleOpenCalibration = useCallback(async () => {
     setCalibrationOutput('')
-    setCalibrationCounterOs(counterOsMouseSpeedEnabled)
+    setCalibrationCounterOs(false)
     setCalibrationInGameSens(sensitivityInGame?.toString() ?? '')
     setCalibrationModalOpen(true)
     try {
@@ -54,7 +55,8 @@ export function useCalibration({ configText, counterOsMouseSpeedEnabled, sensiti
       if (preset?.success && preset.content !== undefined) {
         setCalibrationText(preset.content)
         const presetSens = getKeymapValue(preset.content, keyName.IN_GAME_SENS) ?? sensitivityInGame?.toString() ?? ''
-        const presetCounter = new RegExp(`(^|\\s)${keyName.COUNTER_OS_MOUSE_SPEED}\\b`, 'i').test(preset.content)
+        const nonCommentPreset = preset.content.split('\n').filter(l => !/^\s*#/.test(l)).join('\n')
+        const presetCounter = new RegExp(`(^|\\s)${keyName.COUNTER_OS_MOUSE_SPEED}\\b`, 'i').test(nonCommentPreset)
         setCalibrationInGameSens(presetSens)
         setCalibrationCounterOs(presetCounter)
         setCalibrationDirty(false)
@@ -103,9 +105,10 @@ export function useCalibration({ configText, counterOsMouseSpeedEnabled, sensiti
     await window.electronAPI?.saveCalibrationPreset?.(nextText)
   }, [buildCalibrationPreset])
 
-  const handleRunCalibration = useCallback(async () => {
+  const handleRunCalibration = useCallback(async (turns: number) => {
     try {
-      const result = await window.electronAPI?.runCalibrationCommand?.('CALCULATE_REAL_WORLD_CALIBRATION')
+      const command = turns !== 1 ? `CALCULATE_REAL_WORLD_CALIBRATION ${turns}` : 'CALCULATE_REAL_WORLD_CALIBRATION'
+      const result = await window.electronAPI?.runCalibrationCommand?.(command)
       const output = result && typeof result.output === 'string' ? result.output : ''
       if (output.length > 0) {
         setCalibrationOutput(output)

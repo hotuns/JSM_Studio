@@ -140,6 +140,7 @@ function App() {
   const [recalibrating, setRecalibrating] = useState(false)
   const [isProfileModalOpen, setProfileModalOpen] = useState(false)
   const [isRwcGuideModalOpen, setIsRwcGuideModalOpen] = useState(false)
+  const [calibrationTurns, setCalibrationTurns] = useState('1')
   const [primaryTab, setPrimaryTab] = useState<PrimaryTab>('gyro')
   const [gyroSubTab, setGyroSubTab] = useState<GyroSubTab>('behavior')
   const [keybindsSubTab, setKeybindsSubTab] = useState<KeybindsSubTab>('global')
@@ -881,7 +882,7 @@ function App() {
               {calibrationLoadMessage && <span className="profile-status inline-flag">{calibrationLoadMessage}</span>}
             </div>
             <p className="modal-description">
-              Set your in-game sensitivity and whether to counter OS mouse speed, apply the preset to JSM, then in-game rotate the stick for an exact 360°. Come back here to run the calculation.
+              Set your in-game sensitivity and number of turns below, then apply the preset to JSM. In-game, rotate the stick to complete exactly that many full rotations in game. More turns gives a more accurate calculation. Come back here and hit Run Calculation.
             </p>
             <div className="flex-inputs">
               <label>
@@ -914,6 +915,18 @@ function App() {
                 </select>
               </label>
             </div>
+            <div className="flex-inputs">
+              <label>
+                Number of turns
+                <input
+                  type="number"
+                  step="0.5"
+                  min="0.5"
+                  value={calibrationTurns}
+                  onChange={(e) => setCalibrationTurns(e.target.value)}
+                />
+              </label>
+            </div>
             <SectionActions
               hasPendingChanges={calibrationDirty}
               statusMessage={statusMessage}
@@ -924,7 +937,12 @@ function App() {
               applyDisabled={isCalibrating}
             />
             <div className="modal-actions">
-              <button type="button" className="secondary-btn" onClick={handleRunCalibration} disabled={isCalibrating}>
+              <button
+                type="button"
+                className="secondary-btn"
+                onClick={() => handleRunCalibration(parseFloat(calibrationTurns) || 1)}
+                disabled={isCalibrating}
+              >
                 Run calculation
               </button>
               <button type="button" className="secondary-btn" onClick={() => { handleCloseCalibration(); showToast(`Active profile: ${profileLabel}`) }}>

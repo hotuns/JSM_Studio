@@ -71,6 +71,13 @@
   border-radius: 10px;
   background: #0a0a0a;
   padding: 0.9rem 1rem;
+  overflow: hidden;
+}
+
+.calibrationOutput pre {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 .calibrationOutputLabel {
