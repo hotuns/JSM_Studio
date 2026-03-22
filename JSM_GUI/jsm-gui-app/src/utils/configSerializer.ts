@@ -156,7 +156,7 @@ const classify = (rawKey: string, value: string): { section: SectionKey; subsect
   if (key === keyName.TRIGGER_THRESHOLD) {
     return { section: 'keymap', subsection: 'triggers' }
   }
-  if (key === keyName.ADAPTIVE_TRIGGER) {
+  if (key === keyName.ADAPTIVE_TRIGGER || key === keyName.ZL_MODE || key === keyName.ZR_MODE) {
     return { section: 'keymap', subsection: 'triggers' }
   }
   // Global timing controls shown under keymap "Global controls"

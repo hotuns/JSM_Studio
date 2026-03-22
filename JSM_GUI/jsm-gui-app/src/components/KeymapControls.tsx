@@ -24,6 +24,8 @@ import {
 } from '../keymap/schema'
 import { useBindingCapture } from '../keymap/useBindingCapture'
 import { useButtonRowState } from '../keymap/useButtonRowState'
+import { KeymapSection } from './KeymapSection'
+import { SectionActions } from './SectionActions'
 import { GlobalControlsSection } from './keymap/GlobalControlsSection'
 import { ButtonGridSection } from './keymap/ButtonGridSection'
 import { StickModesSection } from './keymap/StickModesSection'
@@ -132,6 +134,10 @@ type KeymapControlsProps = {
   onStickModeShiftChange?: (button: string, target: 'LEFT' | 'RIGHT', mode?: string) => void
   adaptiveTriggerValue?: string
   onAdaptiveTriggerChange?: (value: string) => void
+  zlModeValue?: string
+  zrModeValue?: string
+  onZlModeChange?: (value: string) => void
+  onZrModeChange?: (value: string) => void
 }
 
 type StickAimSettingsProps = {
@@ -362,6 +368,10 @@ export function KeymapControls({
   onScrollSensChange,
   adaptiveTriggerValue = '',
   onAdaptiveTriggerChange = () => {},
+  zlModeValue = '',
+  zrModeValue = '',
+  onZlModeChange = () => {},
+  onZrModeChange = () => {},
 }: KeymapControlsProps) {
   const [layout, setLayout] = useState<ControllerLayout>('playstation')
   const [stickView, setStickView] = useState<'bindings' | 'modes'>('bindings')
@@ -680,15 +690,36 @@ export function KeymapControls({
           {
             key: 'triggers',
             shouldRender: isVisible('triggers'),
-            node: (
-              <ButtonGridSection
-                title="Triggers"
-                description="Soft/full pulls for L2/R2."
-                buttons={TRIGGER_BUTTONS}
-                renderButton={renderButtonCard}
-                {...actionsProps}
-              />
-            ),
+            node: (() => {
+              const zlActive = !!zlModeValue && zlModeValue !== 'NO_FULL'
+              const zrActive = !!zrModeValue && zrModeValue !== 'NO_FULL'
+              const modeOptions = ['NO_FULL', 'NO_SKIP', 'NO_SKIP_EXCLUSIVE', 'MUST_SKIP', 'MAY_SKIP', 'MUST_SKIP_R', 'MAY_SKIP_R']
+              return (
+                <>
+                  <KeymapSection title="Triggers" description="Soft/full pulls for L2/R2.">
+                    <div className={keymapStyles.keymapGrid} data-capture-ignore="true">
+                      {TRIGGER_BUTTONS.filter(b => b.command === 'ZL').map(b => <div key={b.command}>{renderButtonCard(b)}</div>)}
+                      <div className={keymapStyles.globalControlRow}>
+                        <span className={keymapStyles.globalControlTitle}>L2 full pull mode</span>
+                        <select className="app-select" value={zlModeValue || 'NO_FULL'} onChange={e => onZlModeChange(e.target.value)} disabled={actionsProps.applyDisabled}>
+                          {modeOptions.map(m => <option key={m} value={m}>{m}{m === 'NO_FULL' ? ' (default)' : ''}</option>)}
+                        </select>
+                      </div>
+                      {zlActive && TRIGGER_BUTTONS.filter(b => b.command === 'ZLF').map(b => <div key={b.command}>{renderButtonCard(b)}</div>)}
+                      {TRIGGER_BUTTONS.filter(b => b.command === 'ZR').map(b => <div key={b.command}>{renderButtonCard(b)}</div>)}
+                      <div className={keymapStyles.globalControlRow}>
+                        <span className={keymapStyles.globalControlTitle}>R2 full pull mode</span>
+                        <select className="app-select" value={zrModeValue || 'NO_FULL'} onChange={e => onZrModeChange(e.target.value)} disabled={actionsProps.applyDisabled}>
+                          {modeOptions.map(m => <option key={m} value={m}>{m}{m === 'NO_FULL' ? ' (default)' : ''}</option>)}
+                        </select>
+                      </div>
+                      {zrActive && TRIGGER_BUTTONS.filter(b => b.command === 'ZRF').map(b => <div key={b.command}>{renderButtonCard(b)}</div>)}
+                    </div>
+                  </KeymapSection>
+                  <SectionActions className={keymapStyles.keymapSectionActions} {...actionsProps} />
+                </>
+              )
+            })(),
           },
           {
             key: 'center',

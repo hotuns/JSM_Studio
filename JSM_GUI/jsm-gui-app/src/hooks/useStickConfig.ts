@@ -322,6 +322,32 @@ export function useStickConfig({ configText, setConfigText }: StickArgs) {
     }
   }, [configText])
 
+  const zlModeValue = useMemo(() => {
+    return getKeymapValue(configText, keyName.ZL_MODE)?.trim().toUpperCase() ?? ''
+  }, [configText])
+
+  const zrModeValue = useMemo(() => {
+    return getKeymapValue(configText, keyName.ZR_MODE)?.trim().toUpperCase() ?? ''
+  }, [configText])
+
+  const handleZlModeChange = useCallback((value: string) => {
+    const trimmed = value.trim().toUpperCase()
+    setConfigText(prev =>
+      !trimmed || trimmed === 'NO_FULL'
+        ? removeKeymapEntry(prev, keyName.ZL_MODE)
+        : updateKeymapEntry(prev, keyName.ZL_MODE, [trimmed])
+    )
+  }, [setConfigText])
+
+  const handleZrModeChange = useCallback((value: string) => {
+    const trimmed = value.trim().toUpperCase()
+    setConfigText(prev =>
+      !trimmed || trimmed === 'NO_FULL'
+        ? removeKeymapEntry(prev, keyName.ZR_MODE)
+        : updateKeymapEntry(prev, keyName.ZR_MODE, [trimmed])
+    )
+  }, [setConfigText])
+
   const adaptiveTriggerValue = useMemo(() => {
     const value = getKeymapValue(configText, keyName.ADAPTIVE_TRIGGER)
     if (!value) return ''
@@ -395,6 +421,10 @@ export function useStickConfig({ configText, setConfigText }: StickArgs) {
     stickModeShiftAssignments,
     stickAimSettings,
     adaptiveTriggerValue,
+    zlModeValue,
+    zrModeValue,
+    handleZlModeChange,
+    handleZrModeChange,
     handleToggleIgnoreGyroDevice,
     scrollSensValue,
     handleScrollSensChange,

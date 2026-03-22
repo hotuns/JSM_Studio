@@ -233,6 +233,10 @@ function App() {
     stickModeShiftAssignments,
     stickAimSettings,
     adaptiveTriggerValue,
+    zlModeValue,
+    zrModeValue,
+    handleZlModeChange,
+    handleZrModeChange,
     handleToggleIgnoreGyroDevice,
     scrollSensValue,
     handleScrollSensChange,
@@ -596,6 +600,10 @@ function App() {
             onStickModeShiftChange={handleStickModeShiftChange}
             adaptiveTriggerValue={adaptiveTriggerValue}
             onAdaptiveTriggerChange={handleAdaptiveTriggerChange}
+            zlModeValue={zlModeValue}
+            zrModeValue={zrModeValue}
+            onZlModeChange={handleZlModeChange}
+            onZrModeChange={handleZrModeChange}
             stickAimSettings={stickAimSettings}
             stickAimHandlers={stickAimHandlers}
             stickFlickSettings={stickFlickSettings}
@@ -661,6 +669,10 @@ function App() {
             onStickModeShiftChange={handleStickModeShiftChange}
             adaptiveTriggerValue={adaptiveTriggerValue}
             onAdaptiveTriggerChange={handleAdaptiveTriggerChange}
+            zlModeValue={zlModeValue}
+            zrModeValue={zrModeValue}
+            onZlModeChange={handleZlModeChange}
+            onZrModeChange={handleZrModeChange}
             stickAimSettings={stickAimSettings}
             stickAimHandlers={stickAimHandlers}
             lockMessage={lockMessage}
