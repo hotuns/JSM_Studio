@@ -122,7 +122,7 @@ export function HelpDocsPage() {
   const normalizedQuery = search.trim()
 
   const scrollElementIntoView = useCallback((el: HTMLElement) => {
-    const shellMain = document.querySelector<HTMLElement>('.shell-main')
+    const shellMain = document.querySelector<HTMLElement>('.shell-scroll')
     const searchBarBottom = searchBarRef.current?.getBoundingClientRect().bottom ?? 0
     const extraGap = 10
 
@@ -213,7 +213,7 @@ export function HelpDocsPage() {
   )
 
   const scrollToTop = useCallback(() => {
-    const shellMain = document.querySelector<HTMLElement>('.shell-main')
+    const shellMain = document.querySelector<HTMLElement>('.shell-scroll')
     if (shellMain) {
       shellMain.scrollTo({ top: 0, behavior: 'instant' })
       return

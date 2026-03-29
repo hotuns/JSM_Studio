@@ -67,6 +67,8 @@ export function useKeymapConfig() {
     handleSmoothThresholdChange: sensitivityConfig.handleSmoothThresholdChange,
     handleSmoothingDecayChange: sensitivityConfig.handleSmoothingDecayChange,
     handleOneEuroFilterChange: sensitivityConfig.handleOneEuroFilterChange,
+    handleOneEuroMinCutoffChange: sensitivityConfig.handleOneEuroMinCutoffChange,
+    handleOneEuroSpeedCoeffChange: sensitivityConfig.handleOneEuroSpeedCoeffChange,
     handleAngleSnapChange: sensitivityConfig.handleAngleSnapChange,
     handleAngleSnapSmoothChange: sensitivityConfig.handleAngleSnapSmoothChange,
     handleDecelBrakeStrengthChange: sensitivityConfig.handleDecelBrakeStrengthChange,
