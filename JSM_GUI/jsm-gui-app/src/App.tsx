@@ -182,6 +182,8 @@ function App() {
     handleSmoothThresholdChange,
     handleSmoothingDecayChange,
     handleOneEuroFilterChange,
+    handleOneEuroMinCutoffChange,
+    handleOneEuroSpeedCoeffChange,
     handleAngleSnapChange,
     handleAngleSnapSmoothChange,
     handleDecelBrakeStrengthChange,
@@ -548,6 +550,8 @@ function App() {
             onSmoothThresholdChange={handleSmoothThresholdChange}
             onSmoothingDecayChange={handleSmoothingDecayChange}
             onOneEuroFilterChange={handleOneEuroFilterChange}
+            onOneEuroMinCutoffChange={handleOneEuroMinCutoffChange}
+            onOneEuroSpeedCoeffChange={handleOneEuroSpeedCoeffChange}
             onAngleSnapChange={handleAngleSnapChange}
             onAngleSnapSmoothChange={handleAngleSnapSmoothChange}
             onDecelBrakeStrengthChange={handleDecelBrakeStrengthChange}

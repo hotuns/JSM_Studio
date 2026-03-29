@@ -23,6 +23,8 @@ export interface SensitivityValues {
   smoothThreshold?: number
   smoothingDecay?: string
   oneEuroFilter?: boolean
+  oneEuroMinCutoff?: number
+  oneEuroSpeedCoeff?: number
   angleSnap?: number
   angleSnapEase?: string
   decelBrakeStrength?: number
@@ -97,6 +99,8 @@ export function parseSensitivityValues(text: string, options?: { prefix?: string
     smoothThreshold: single('GYRO_SMOOTH_THRESHOLD'),
     smoothingDecay: smoothingDecayRaw ? smoothingDecayRaw.toUpperCase() : undefined,
     oneEuroFilter: oneEuroFilter || undefined,
+    oneEuroMinCutoff: single('ONE_EURO_MIN_CUTOFF'),
+    oneEuroSpeedCoeff: single('ONE_EURO_SPEED_COEFF'),
     angleSnap,
     angleSnapEase: angleSnapEaseRaw ? angleSnapEaseRaw.toUpperCase() : undefined,
     decelBrakeStrength,

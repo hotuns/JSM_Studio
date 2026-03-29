@@ -19,6 +19,8 @@ type NoiseSteadyingControlsProps = {
   onSmoothThresholdChange: (value: string) => void
   onSmoothingDecayChange: (value: string) => void
   onOneEuroFilterChange: (value: string) => void
+  onOneEuroMinCutoffChange: (value: string) => void
+  onOneEuroSpeedCoeffChange: (value: string) => void
   onAngleSnapChange: (value: string) => void
   onAngleSnapSmoothChange: (value: string) => void
   onDecelBrakeStrengthChange: (value: string) => void
@@ -44,6 +46,8 @@ export function NoiseSteadyingControls({
   onSmoothThresholdChange,
   onSmoothingDecayChange,
   onOneEuroFilterChange,
+  onOneEuroMinCutoffChange,
+  onOneEuroSpeedCoeffChange,
   onAngleSnapChange,
   onAngleSnapSmoothChange,
   onDecelBrakeStrengthChange,
@@ -165,6 +169,46 @@ export function NoiseSteadyingControls({
           </select>
         </label>
       </div>
+      {sensitivity.oneEuroFilter && (
+      <div className="flex-inputs">
+        <label>
+          Min Cutoff (default 6.0)
+          <input
+            type="number"
+            step="0.1"
+            min="0"
+            value={sensitivity.oneEuroMinCutoff ?? ''}
+            onChange={(e) => onOneEuroMinCutoffChange(e.target.value)}
+          />
+          <input
+            type="range"
+            min="0"
+            max="20"
+            step="0.1"
+            value={sensitivity.oneEuroMinCutoff ?? 6}
+            onChange={(e) => onOneEuroMinCutoffChange(e.target.value)}
+          />
+        </label>
+        <label>
+          Speed Coefficient (default 0.3)
+          <input
+            type="number"
+            step="0.01"
+            min="0"
+            value={sensitivity.oneEuroSpeedCoeff ?? ''}
+            onChange={(e) => onOneEuroSpeedCoeffChange(e.target.value)}
+          />
+          <input
+            type="range"
+            min="0"
+            max="2"
+            step="0.01"
+            value={sensitivity.oneEuroSpeedCoeff ?? 0.3}
+            onChange={(e) => onOneEuroSpeedCoeffChange(e.target.value)}
+          />
+        </label>
+      </div>
+      )}
       <div className="flex-inputs">
         <label>
           Angle Snapping (degrees)

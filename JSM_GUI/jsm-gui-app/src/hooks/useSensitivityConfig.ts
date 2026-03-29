@@ -229,6 +229,8 @@ export function useSensitivityConfig({ configText, setConfigText }: SensitivityA
     const enabled = value.trim().toUpperCase() === 'ON'
     setConfigText(prev => upsertFlagCommand(prev, keyName.ONE_EURO_FILTER, enabled))
   }
+  const handleOneEuroMinCutoffChange = makeScalarHandler(keyName.ONE_EURO_MIN_CUTOFF)
+  const handleOneEuroSpeedCoeffChange = makeScalarHandler(keyName.ONE_EURO_SPEED_COEFF)
   const handleAngleSnapChange = makeScalarHandler(keyName.GYRO_ANGLE_SNAP)
   const handleAngleSnapSmoothChange = (value: string) => {
     const upper = value.trim().toUpperCase()
@@ -930,6 +932,8 @@ export function useSensitivityConfig({ configText, setConfigText }: SensitivityA
     handleSmoothThresholdChange,
     handleSmoothingDecayChange,
     handleOneEuroFilterChange,
+    handleOneEuroMinCutoffChange,
+    handleOneEuroSpeedCoeffChange,
     handleAngleSnapChange,
     handleAngleSnapSmoothChange,
     handleDecelBrakeStrengthChange,
