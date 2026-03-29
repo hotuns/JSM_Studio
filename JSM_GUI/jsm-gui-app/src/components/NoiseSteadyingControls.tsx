@@ -172,7 +172,7 @@ export function NoiseSteadyingControls({
       {sensitivity.oneEuroFilter && (
       <div className="flex-inputs">
         <label>
-          Min Cutoff (default 6.0)
+          One Euro Min Cutoff (default 6.0)
           <input
             type="number"
             step="0.1"
@@ -190,7 +190,7 @@ export function NoiseSteadyingControls({
           />
         </label>
         <label>
-          Speed Coefficient (default 0.3)
+          One Euro Speed Coeff (default 0.3)
           <input
             type="number"
             step="0.01"
