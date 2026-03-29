@@ -500,6 +500,8 @@ float OneEuroFilter::filter(float x, float dt)
 	xPrev = x;
 	initialized = true;
 	float edx = dxFilt.filter(dx, alpha(dCutoff, dt));
+	float minCutoff = SettingsManager::get<float>(SettingID::ONE_EURO_MIN_CUTOFF)->value();
+	float beta = SettingsManager::get<float>(SettingID::ONE_EURO_SPEED_COEFF)->value();
 	float cutoff = minCutoff + beta * std::abs(edx);
 	return xFilt.filter(x, alpha(cutoff, dt));
 }

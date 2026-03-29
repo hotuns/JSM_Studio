@@ -396,7 +396,7 @@ public:
 		{
 			array<float, 3> accel;
 			SDL_GetGamepadSensorData(_controllerMap[deviceId]->_sdlController, SDL_SENSOR_ACCEL, &accel[0], 3);
-			static constexpr float toGs = 1.f / 9.8f;
+			static constexpr float toGs = 1.f / SDL_STANDARD_GRAVITY;
 			imuState.accelX = accel[0] * toGs;
 			imuState.accelY = accel[1] * toGs;
 			imuState.accelZ = accel[2] * toGs;
@@ -413,6 +413,14 @@ public:
 	{
 		TOUCH_STATE state;
 		memset(&state, 0, sizeof(TOUCH_STATE));
+
+		if (_controllerMap[deviceId] == nullptr ||
+			_controllerMap[deviceId]->_sdlController == nullptr ||
+			SDL_GetNumGamepadTouchpads(_controllerMap[deviceId]->_sdlController) <= 0)
+		{
+			return state;
+		}
+
 		if (!SDL_GetGamepadTouchpadFinger(_controllerMap[deviceId]->_sdlController, 0, 0, &state.t0Down, &state.t0X, &state.t0Y, nullptr) || 
 			!SDL_GetGamepadTouchpadFinger(_controllerMap[deviceId]->_sdlController, 0, 1, &state.t1Down, &state.t1X, &state.t1Y, nullptr))
 		{

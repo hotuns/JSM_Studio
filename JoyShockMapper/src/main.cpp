@@ -940,6 +940,7 @@ void joyShockPollCallback(int jcHandle, JOY_SHOCK_STATE state, JOY_SHOCK_STATE l
 	{
 		gyroX = 0;
 		gyroY = 0;
+		jc->resetOneEuroFilter();
 	}
 
 	float camSpeedX = 0.0f;
@@ -2784,6 +2785,18 @@ void initJsmSettings(CmdRegistry *commandRegistry)
 	SettingsManager::add(gyro_cutoff_recovery);
 	commandRegistry->add((new JSMAssignment<float>(*gyro_cutoff_recovery))
 	                       ->setHelp("Below this threshold (in degrees per second), gyro sensitivity is pushed down towards zero. This can tighten and steady aim without a deadzone."));
+
+	auto one_euro_min_cutoff = new JSMSetting<float>(SettingID::ONE_EURO_MIN_CUTOFF, 6.0f);
+	one_euro_min_cutoff->setFilter(&filterPositive);
+	SettingsManager::add(one_euro_min_cutoff);
+	commandRegistry->add((new JSMAssignment<float>(*one_euro_min_cutoff))
+	                       ->setHelp("Minimum cutoff frequency for One Euro filter. Lower this value to reduce slow speed jitter."));
+
+	auto one_euro_speed_coeff = new JSMSetting<float>(SettingID::ONE_EURO_SPEED_COEFF, 0.3f);
+	one_euro_speed_coeff->setFilter(&filterPositive);
+	SettingsManager::add(one_euro_speed_coeff);
+	commandRegistry->add((new JSMAssignment<float>(*one_euro_speed_coeff))
+	                       ->setHelp("Speed coefficient for One Euro filter. Raise this value to reduce speed lag."));
 
 	auto gyro_angle_snap_ease = new JSMSetting<Switch>(SettingID::GYRO_ANGLE_SNAP_EASE, Switch::OFF);
 	gyro_angle_snap_ease->setFilter(&filterInvalidValue<Switch, Switch::INVALID>);
