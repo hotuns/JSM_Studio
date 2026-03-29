@@ -6,6 +6,7 @@ import { Card } from './Card'
 import { TelemetrySample } from '../hooks/useTelemetry'
 import { CurvePreview } from './CurvePreview'
 import { SectionActions } from './SectionActions'
+import { LOCK_MESSAGE } from '../constants/messages'
 
 type SensitivityControlsProps = {
   sensitivity: SensitivityValues
@@ -50,13 +51,15 @@ type SensitivityControlsProps = {
   onMaxSensYChange: (value: string) => void
   onStaticSensXChange: (value: string) => void
   onStaticSensYChange: (value: string) => void
+  onRollContributionChange: (value: string) => void
   modeshiftButton: string | null
   onModeshiftButtonChange: (value: string) => void
+  lockMessage?: string
 }
 
 export function SensitivityControls({
   sensitivity,
-  modeshiftSensitivity,
+
   isCalibrating,
   statusMessage,
   mode,
@@ -85,11 +88,12 @@ export function SensitivityControls({
   onMaxSensYChange,
   onStaticSensXChange,
   onStaticSensYChange,
+  onRollContributionChange,
   modeshiftButton,
   onModeshiftButtonChange,
+  lockMessage = LOCK_MESSAGE,
 }: SensitivityControlsProps) {
-  const displaySensitivity =
-    sensitivityView === 'base' || !modeshiftButton ? sensitivity : modeshiftSensitivity ?? sensitivity
+  const displaySensitivity = sensitivity
 
   const isTouchpadGridActive = touchpadMode === 'GRID_AND_STICK'
   const modifierOptions = buildModifierOptions('playstation', isTouchpadGridActive, isTouchpadGridActive ? touchpadGridCells : 0)
@@ -100,7 +104,7 @@ export function SensitivityControls({
       className="control-panel"
       lockable
       locked={isCalibrating}
-      lockMessage="Controls locked while JSM calibrates"
+      lockMessage={lockMessage}
     >
       <h2>Gyro Sensitivity Controls</h2>
       <div className="mode-toggle">
@@ -146,6 +150,7 @@ export function SensitivityControls({
           sensitivity={displaySensitivity}
           onChangeX={onStaticSensXChange}
           onChangeY={onStaticSensYChange}
+          onRollContributionChange={onRollContributionChange}
         />
       ) : (
         <AccelSensForm
@@ -163,6 +168,7 @@ export function SensitivityControls({
           onMinSensYChange={onMinSensYChange}
           onMaxSensXChange={onMaxSensXChange}
           onMaxSensYChange={onMaxSensYChange}
+          onRollContributionChange={onRollContributionChange}
         />
       )}
       <SectionActions

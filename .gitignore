@@ -5,6 +5,10 @@
 
 build-jsm-*
 build/
+.alias
+.bashrc.project
+.vscode/
+.claude/
 
 # custom:
 *.tlog

@@ -436,6 +436,88 @@ void JoyShock::getSmoothedGyro(float x, float y, float length, float bottomThres
 	outY = yResult + y * immediateFactor;
 }
 
+void JoyShock::applyGyroDecaySmoothing(float rawX, float rawY, float deltaTime, float smoothingTime, float threshold, float &outX, float &outY)
+{
+	if (!_gyroDecayEnabledLast)
+	{
+		_gyroDecayInit = false;
+	}
+	_gyroDecayEnabledLast = true;
+
+	if (smoothingTime <= 0.0f || threshold <= 0.0f)
+	{
+		_gyroDecayInit = false;
+		outX = rawX;
+		outY = rawY;
+		return;
+	}
+
+	const float speed = sqrtf(rawX * rawX + rawY * rawY);
+	const float x = clamp(speed / threshold, 0.0f, 1.0f);
+	const float g = (1.0f - x) * (1.0f - x); // smoothed portion
+	const float immediateFactor = 1.0f - g;
+	const float targetX = rawX * g;
+	const float targetY = rawY * g;
+	const float effectiveTime = smoothingTime * g;
+
+	if (deltaTime <= 0.0f)
+	{
+		if (!_gyroDecayInit)
+		{
+			_gyroDecayX = targetX;
+			_gyroDecayY = targetY;
+			_gyroDecayInit = true;
+		}
+		outX = _gyroDecayX + rawX * immediateFactor;
+		outY = _gyroDecayY + rawY * immediateFactor;
+		return;
+	}
+
+	const float alpha = effectiveTime <= 1e-6f ? 1.0f : (1.0f - expf(-deltaTime / effectiveTime));
+
+	if (!_gyroDecayInit)
+	{
+		_gyroDecayX = targetX;
+		_gyroDecayY = targetY;
+		_gyroDecayInit = true;
+	}
+
+	_gyroDecayX += alpha * (targetX - _gyroDecayX);
+	_gyroDecayY += alpha * (targetY - _gyroDecayY);
+	outX = _gyroDecayX + rawX * immediateFactor;
+	outY = _gyroDecayY + rawY * immediateFactor;
+}
+
+void JoyShock::disableGyroDecaySmoothing()
+{
+	_gyroDecayEnabledLast = false;
+	_gyroDecayInit = false;
+}
+
+float OneEuroFilter::filter(float x, float dt)
+{
+	float dx = initialized ? (x - xPrev) / dt : 0.f;
+	xPrev = x;
+	initialized = true;
+	float edx = dxFilt.filter(dx, alpha(dCutoff, dt));
+	float minCutoff = SettingsManager::get<float>(SettingID::ONE_EURO_MIN_CUTOFF)->value();
+	float beta = SettingsManager::get<float>(SettingID::ONE_EURO_SPEED_COEFF)->value();
+	float cutoff = minCutoff + beta * std::abs(edx);
+	return xFilt.filter(x, alpha(cutoff, dt));
+}
+
+void JoyShock::applyOneEuroFilter(float rawX, float rawY, float deltaTime, float &outX, float &outY)
+{
+	outX = _oneEuroX.filter(rawX, deltaTime);
+	outY = _oneEuroY.filter(rawY, deltaTime);
+}
+
+void JoyShock::resetOneEuroFilter()
+{
+	_oneEuroX.reset();
+	_oneEuroY.reset();
+}
+
 void JoyShock::handleButtonChange(ButtonID id, bool pressed, int touchpadID)
 {
 	DigitalButton *button = int(id) <= LAST_ANALOG_TRIGGER ? &_buttons[int(id)] :

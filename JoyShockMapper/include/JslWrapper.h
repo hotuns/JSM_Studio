@@ -216,6 +216,8 @@ public:
 	virtual float GetStickStep(int deviceId) = 0;
 	virtual float GetTriggerStep(int deviceId) = 0;
 	virtual float GetPollRate(int deviceId) = 0;
+	virtual float GetTimeSinceLastUpdate(int deviceId) = 0;
+	virtual float GetSampleRateHz(int deviceId) = 0;
 	virtual void ResetContinuousCalibration(int deviceId) = 0;
 	virtual void StartContinuousCalibration(int deviceId) = 0;
 	virtual void PauseContinuousCalibration(int deviceId) = 0;

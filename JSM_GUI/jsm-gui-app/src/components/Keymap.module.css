@@ -1,0 +1,355 @@
+.keymapCardHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.keymapSection {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.keymapSectionHeader h3 {
+  margin: 0;
+}
+
+.keymapSectionHeader p {
+  margin: 0.25rem 0 0;
+  color: var(--text-mid);
+  font-size: 0.9rem;
+}
+
+.keymapGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.keymapRow {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border-1);
+  border-radius: 12px;
+  background: var(--bg-input);
+  flex-wrap: wrap;
+}
+
+.keymapRowCapturing {
+  border-color: #6a8bff;
+  box-shadow: 0 0 0 1px rgba(106, 139, 255, 0.25);
+}
+
+.keymapLabel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 180px;
+}
+
+.buttonName {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--text-strong);
+}
+
+.buttonMeta {
+  font-size: 0.85rem;
+  color: var(--text-mid);
+}
+
+.keymapBindingControls {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.keymapSectionActions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0.25rem 0 1.2rem;
+  flex-wrap: wrap;
+}
+
+.keymapSectionActions :global(.secondary-btn) {
+  min-width: 140px;
+}
+
+.bindingRow {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.bindingRow + .bindingRow {
+  margin-top: 0;
+}
+
+.bindingRowHeader {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-mid);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.rowSpecialSelectWrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.rowSpecialSelect {
+  width: 100%;
+}
+
+.rowModifierSelect {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  width: 100%;
+}
+
+.rowModifierSelect label {
+  font-size: 0.85rem;
+  color: var(--text-mid);
+}
+
+.rowModifierSelect select {
+  width: 100%;
+  padding: 0.45rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-1);
+  background: var(--bg-input);
+  color: var(--text-strong);
+  box-sizing: border-box;
+}
+
+.bindingInput {
+  width: 100%;
+  text-align: left;
+  padding: 0.6rem 0.95rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-1);
+  background: var(--bg-input);
+  color: var(--text-strong);
+  cursor: pointer;
+  font-size: 0.95rem;
+  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+
+.bindingInput:hover {
+  border-color: var(--border-strong);
+}
+
+.bindingInputRecording {
+  border-color: #6a8bff;
+  color: #cfd6ff;
+  background: rgba(106, 139, 255, 0.12);
+}
+
+.primaryBindingRow {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: nowrap;
+}
+
+.addBindingRow {
+  padding-top: 0.2rem;
+  align-self: flex-end;
+  margin-left: auto;
+}
+
+.addBindingRow select {
+  padding: 0.45rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-1);
+  background: var(--bg-input);
+  color: var(--text-strong);
+}
+
+.rowSpecialSelectWrapper + .primaryBindingRow,
+.rowModifierSelect + .rowSpecialSelectWrapper,
+.rowModifierSelect + .primaryBindingRow {
+  margin-top: -0.25rem;
+}
+
+.primaryBindingRow .clearBindingBtn {
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.manualStickShift :global(.binding-input),
+.manualStickShift .bindingInput {
+  pointer-events: none;
+}
+
+.manualStickShift .bindingRowHeader span {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.paddleNote {
+  display: block;
+  margin-top: 0.75rem;
+  color: var(--text-muted);
+}
+
+.trackballInline {
+  margin-top: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-1);
+  background: var(--bg-input);
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.trackballInline label {
+  font-weight: 600;
+  color: var(--text-strong);
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.trackballInline input[type='number'] {
+  padding: 0.45rem 0.6rem;
+  border-radius: 6px;
+  border: 1px solid var(--border-1);
+  background: var(--bg-input);
+  color: var(--text-strong);
+}
+
+.trackballInline input[type='range'] {
+  width: 100%;
+}
+
+.clearBindingBtn {
+  padding: 0.6rem 0.95rem;
+  border-radius: 999px;
+  border: 1px solid var(--danger-border);
+  background: var(--danger-bg);
+  color: var(--danger-text);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.clearBindingBtn:hover:not(:disabled) {
+  border-color: var(--danger-border);
+}
+
+.globalControls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.globalControlRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.6rem 1rem;
+  border: 1px solid var(--border-1);
+  border-radius: 12px;
+  background: var(--bg-input);
+}
+
+.globalControlText {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.globalControlTitle {
+  font-weight: 600;
+  color: var(--text-strong);
+}
+
+.globalControlCaption {
+  font-size: 0.85rem;
+  color: var(--text-mid);
+}
+
+.globalControlInputGroup {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.globalControlInputGroup input[type='number'] {
+  width: 5rem;
+  padding: 0.45rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-1);
+  background: var(--bg-input);
+  color: var(--text-strong);
+  font-size: 1rem;
+  font-weight: 600;
+  box-sizing: border-box;
+}
+
+.globalControlInputGroup input[type='number']:focus {
+  border-color: #6a8bff;
+  box-shadow: 0 0 0 1px rgba(106, 139, 255, 0.35);
+  outline: none;
+}
+
+.globalControlUnit {
+  font-size: 0.85rem;
+  color: var(--text-mid);
+}
+
+.lightBarColorPicker {
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0.15rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-1);
+  background: var(--bg-input);
+  cursor: pointer;
+}
+
+.lightBarClearBtn {
+  padding: 0.45rem 0.85rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-1);
+  background: transparent;
+  color: var(--text-mid);
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.lightBarClearBtn:hover {
+  border-color: var(--danger-border);
+  color: var(--danger-text, var(--text-strong));
+}
+
+.adaptiveToggle {
+  margin-top: 0;
+  padding: 0.85rem 0.95rem;
+  border-radius: 10px;
+  border: 1px solid var(--border-1);
+  background: var(--bg-2);
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.adaptiveToggle label {
+  font-weight: 600;
+  color: var(--text-strong);
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}

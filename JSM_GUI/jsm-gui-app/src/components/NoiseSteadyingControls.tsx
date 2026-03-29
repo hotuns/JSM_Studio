@@ -1,7 +1,9 @@
 import { Card } from './Card'
 import { SensitivityValues } from '../utils/keymap'
 import { TelemetryBanner } from './TelemetryBanner'
+import telemetryStyles from './Telemetry.module.css'
 import { SectionActions } from './SectionActions'
+import { LOCK_MESSAGE } from '../constants/messages'
 
 type NoiseSteadyingControlsProps = {
   sensitivity: SensitivityValues
@@ -10,13 +12,23 @@ type NoiseSteadyingControlsProps = {
   statusMessage?: string | null
   onApply: () => void
   onCancel: () => void
+  lockMessage?: string
   onCutoffSpeedChange: (value: string) => void
   onCutoffRecoveryChange: (value: string) => void
   onSmoothTimeChange: (value: string) => void
   onSmoothThresholdChange: (value: string) => void
+  onSmoothingDecayChange: (value: string) => void
+  onOneEuroFilterChange: (value: string) => void
+  onOneEuroMinCutoffChange: (value: string) => void
+  onOneEuroSpeedCoeffChange: (value: string) => void
+  onAngleSnapChange: (value: string) => void
+  onAngleSnapSmoothChange: (value: string) => void
+  onDecelBrakeStrengthChange: (value: string) => void
+  onDecelBrakeThresholdChange: (value: string) => void
   telemetry: {
     omega: string
     timestamp: string
+    sampleHz?: string
   }
 }
 
@@ -27,10 +39,19 @@ export function NoiseSteadyingControls({
   statusMessage,
   onApply,
   onCancel,
+  lockMessage = LOCK_MESSAGE,
   onCutoffSpeedChange,
   onCutoffRecoveryChange,
   onSmoothTimeChange,
   onSmoothThresholdChange,
+  onSmoothingDecayChange,
+  onOneEuroFilterChange,
+  onOneEuroMinCutoffChange,
+  onOneEuroSpeedCoeffChange,
+  onAngleSnapChange,
+  onAngleSnapSmoothChange,
+  onDecelBrakeStrengthChange,
+  onDecelBrakeThresholdChange,
   telemetry,
 }: NoiseSteadyingControlsProps) {
   return (
@@ -38,7 +59,7 @@ export function NoiseSteadyingControls({
       className="control-panel"
       lockable
       locked={isCalibrating}
-      lockMessage="Controls locked while JSM calibrates"
+      lockMessage={lockMessage}
     >
       <div className="section-header">
         <h2 className="section-title">Noise & Steadying</h2>
@@ -47,7 +68,7 @@ export function NoiseSteadyingControls({
           controller is at rest.
         </p>
       </div>
-      <div className="telemetry-inline">
+      <div className={telemetryStyles.telemetryInline}>
         <TelemetryBanner {...telemetry} />
       </div>
       <div className="flex-inputs">
@@ -123,6 +144,139 @@ export function NoiseSteadyingControls({
             step="1"
             value={sensitivity.smoothThreshold ?? 0}
             onChange={(e) => onSmoothThresholdChange(e.target.value)}
+          />
+        </label>
+      </div>
+      <div className="flex-inputs">
+        <label>
+          Gyro Smoothing Decay
+          <select
+            value={sensitivity.smoothingDecay ?? 'OFF'}
+            onChange={(e) => onSmoothingDecayChange(e.target.value)}
+          >
+            <option value="OFF">Off</option>
+            <option value="ON">On</option>
+          </select>
+        </label>
+        <label>
+          One Euro Filter
+          <select
+            value={sensitivity.oneEuroFilter ? 'ON' : 'OFF'}
+            onChange={(e) => onOneEuroFilterChange(e.target.value)}
+          >
+            <option value="OFF">Off</option>
+            <option value="ON">On</option>
+          </select>
+        </label>
+      </div>
+      {sensitivity.oneEuroFilter && (
+      <div className="flex-inputs">
+        <label>
+          One Euro Min Cutoff (default 6.0)
+          <input
+            type="number"
+            step="0.1"
+            min="0"
+            value={sensitivity.oneEuroMinCutoff ?? ''}
+            onChange={(e) => onOneEuroMinCutoffChange(e.target.value)}
+          />
+          <input
+            type="range"
+            min="0"
+            max="20"
+            step="0.1"
+            value={sensitivity.oneEuroMinCutoff ?? 6}
+            onChange={(e) => onOneEuroMinCutoffChange(e.target.value)}
+          />
+        </label>
+        <label>
+          One Euro Speed Coeff (default 0.3)
+          <input
+            type="number"
+            step="0.01"
+            min="0"
+            value={sensitivity.oneEuroSpeedCoeff ?? ''}
+            onChange={(e) => onOneEuroSpeedCoeffChange(e.target.value)}
+          />
+          <input
+            type="range"
+            min="0"
+            max="2"
+            step="0.01"
+            value={sensitivity.oneEuroSpeedCoeff ?? 0.3}
+            onChange={(e) => onOneEuroSpeedCoeffChange(e.target.value)}
+          />
+        </label>
+      </div>
+      )}
+      <div className="flex-inputs">
+        <label>
+          Angle Snapping (degrees)
+          <input
+            type="number"
+            step="0.1"
+            min="0"
+            max="45"
+            value={sensitivity.angleSnap ?? ''}
+            onChange={(e) => onAngleSnapChange(e.target.value)}
+          />
+          <input
+            type="range"
+            min="0"
+            max="45"
+            step="0.1"
+            value={sensitivity.angleSnap ?? 0}
+            onChange={(e) => onAngleSnapChange(e.target.value)}
+          />
+        </label>
+        <label>
+          Ease Angle Snapping
+          <select
+            value={sensitivity.angleSnapEase ?? 'OFF'}
+            onChange={(e) => onAngleSnapSmoothChange(e.target.value)}
+          >
+            <option value="OFF">Off</option>
+            <option value="ON">On</option>
+          </select>
+        </label>
+      </div>
+      <div className="flex-inputs">
+        <label>
+          Decel Brake Strength
+          <input
+            type="number"
+            step="0.01"
+            min="0"
+            max="1"
+            value={sensitivity.decelBrakeStrength ?? ''}
+            onChange={(e) => onDecelBrakeStrengthChange(e.target.value)}
+          />
+          <input
+            type="range"
+            min="0"
+            max="1"
+            step="0.01"
+            value={sensitivity.decelBrakeStrength ?? 0}
+            onChange={(e) => onDecelBrakeStrengthChange(e.target.value)}
+          />
+        </label>
+        <label>
+          Decel Brake Threshold (°/s)
+          <input
+            type="number"
+            step="0.1"
+            min="1"
+            max="60"
+            value={sensitivity.decelBrakeThreshold ?? ''}
+            onChange={(e) => onDecelBrakeThresholdChange(e.target.value)}
+          />
+          <input
+            type="range"
+            min="1"
+            max="60"
+            step="0.5"
+            value={sensitivity.decelBrakeThreshold ?? 25}
+            onChange={(e) => onDecelBrakeThresholdChange(e.target.value)}
           />
         </label>
       </div>

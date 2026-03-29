@@ -1,4 +1,6 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import graphStyles from './Graph.module.css'
+import { useTheme } from '../hooks/useTheme'
 
 interface SensitivityGraphProps {
   minThreshold?: number
@@ -23,32 +25,106 @@ interface SensitivityGraphProps {
 const MAX_OMEGA = 500
 
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max)
-const LIVE_SENS_COLOR = '#6a8bff'
-const LIVE_OUTPUT_COLOR = '#52c1ff'
+
+interface CurveComputeParams {
+  curveType: string
+  minSensX: number
+  maxSensX: number
+  minThreshold: number
+  maxThreshold: number
+  naturalVHalf: number
+  powerVRef: number
+  powerExponent: number
+  sigmoidMid: number
+  sigmoidWidth: number
+  jumpTau: number
+}
+
+function computeSensitivityAt(speed: number, p: CurveComputeParams): number {
+  if (p.curveType === 'NATURAL') {
+    const omegaAdjusted = Math.max(0, speed - p.minThreshold)
+    const delta = p.maxSensX - p.minSensX
+    const k = Math.log(2) / p.naturalVHalf
+    return p.maxSensX - delta * Math.exp(-k * omegaAdjusted)
+  }
+  if (p.curveType === 'POWER') {
+    const omegaAdjusted = Math.max(0, speed - p.minThreshold)
+    if (p.powerVRef <= 0 || p.powerExponent <= 0 || omegaAdjusted <= 0) return p.minSensX
+    const x = omegaAdjusted / p.powerVRef
+    const u = Math.pow(x, p.powerExponent)
+    return p.minSensX + (p.maxSensX - p.minSensX) * clamp(1 - Math.exp(-u), 0, 1)
+  }
+  if (p.curveType === 'QUADRATIC') {
+    const omegaAdjusted = Math.max(0, speed - p.minThreshold)
+    if (p.maxThreshold <= 0) return p.maxSensX
+    const t = clamp(omegaAdjusted / p.maxThreshold, 0, 1)
+    return p.minSensX + (p.maxSensX - p.minSensX) * t * t
+  }
+  if (p.curveType === 'SIGMOID') {
+    const omegaAdjusted = Math.max(0, speed - p.minThreshold)
+    const w = p.sigmoidWidth > 0 ? p.sigmoidWidth : 1e-6
+    const raw = (x: number) => 1 / (1 + Math.exp(-(x - p.sigmoidMid) / w))
+    const sigma = raw(omegaAdjusted)
+    const sigma0 = raw(0)
+    const denom = 1 - sigma0
+    const t = clamp(denom > 0 ? (sigma - sigma0) / denom : 0, 0, 1)
+    return p.minSensX + (p.maxSensX - p.minSensX) * t
+  }
+  if (p.curveType === 'JUMP') {
+    const omegaAdjusted = Math.max(0, speed - p.minThreshold)
+    const vJump = p.maxThreshold
+    const tau = p.jumpTau
+    if (tau <= 0) return omegaAdjusted < vJump ? p.minSensX : p.maxSensX
+    const raw = (x: number) => x >= vJump ? 1 : Math.exp((x - vJump) / tau)
+    const raw0 = raw(0)
+    const denom = 1 - raw0
+    const r = raw(omegaAdjusted)
+    const t = denom > 0 ? clamp((r - raw0) / denom, 0, 1) : 0
+    return p.minSensX + (p.maxSensX - p.minSensX) * t
+  }
+  // LINEAR
+  const denom = p.maxThreshold - p.minThreshold
+  if (denom <= 0) return speed > p.minThreshold ? p.maxSensX : p.minSensX
+  return p.minSensX + clamp((speed - p.minThreshold) / denom, 0, 1) * (p.maxSensX - p.minSensX)
+}
+
+interface AxisLayout {
+  axisMaxX: number
+  axisMaxY: number
+  graphWidth: number
+  graphHeight: number
+  paddingLeft: number
+  paddingTop: number
+}
 
 export function SensitivityGraph(props: SensitivityGraphProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
+  const hoverCanvasRef = useRef<HTMLCanvasElement | null>(null)
+  const axisRef = useRef<AxisLayout | null>(null)
+  const [hoverSpeed, setHoverSpeed] = useState<number | null>(null)
+  const { theme } = useTheme()
   const {
     minThreshold,
     maxThreshold,
     minSensX,
-  maxSensX,
-  minSensY,
-  maxSensY,
-  curveType = 'LINEAR',
-  naturalVHalf,
-  powerVRef,
-  powerExponent,
-  sigmoidMid,
-  sigmoidWidth,
-  jumpTau,
-  normalized,
-  currentSensX,
-  omega,
-  disableLiveDot,
-} = props
+    maxSensX,
+    minSensY,
+    maxSensY,
+    curveType = 'LINEAR',
+    naturalVHalf,
+    powerVRef,
+    powerExponent,
+    sigmoidMid,
+    sigmoidWidth,
+    jumpTau,
+    normalized,
+    currentSensX,
+    omega,
+    disableLiveDot,
+  } = props
 
   useEffect(() => {
+    axisRef.current = null
 
     const canvas = canvasRef.current
     if (!canvas) return
@@ -65,9 +141,18 @@ export function SensitivityGraph(props: SensitivityGraphProps) {
     ctx.resetTransform()
     ctx.scale(ratio, ratio)
 
-    ctx.fillStyle = '#0f0f0f'
+    const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#6fa7ff'
+    const liveSensColor = accent
+    const liveOutputColor = '#5bc7d7'
+
+    const styles = getComputedStyle(document.documentElement)
+    const bg = styles.getPropertyValue('--bg-input').trim() || '#0f0f0f'
+    const grid = styles.getPropertyValue('--border-1').trim() || '#2d2d2d'
+    const labelColor = styles.getPropertyValue('--text-mid').trim() || '#aaa'
+    const axisColor = styles.getPropertyValue('--text-muted').trim() || '#999'
+    ctx.fillStyle = bg
     ctx.fillRect(0, 0, baseWidth, baseHeight)
-    ctx.strokeStyle = '#2d2d2d'
+    ctx.strokeStyle = grid
     ctx.lineWidth = 2
     ctx.strokeRect(0, 0, baseWidth, baseHeight)
 
@@ -126,7 +211,7 @@ export function SensitivityGraph(props: SensitivityGraphProps) {
     const graphWidth = baseWidth - paddingLeft - paddingRight
     const graphHeight = baseHeight - paddingTop - paddingBottom
 
-    ctx.fillStyle = '#ddd'
+    ctx.fillStyle = labelColor
     ctx.font = '14px sans-serif'
     ctx.textAlign = 'center'
     ctx.fillText('Threshold (°/s)', paddingLeft + graphWidth / 2, baseHeight - 10)
@@ -150,13 +235,15 @@ export function SensitivityGraph(props: SensitivityGraphProps) {
     const axisMaxX = Math.max(MAX_OMEGA, safeMaxThreshold, safePowerVRef, safeSigmoidMid + safeSigmoidWidth)
     const axisMaxY = Math.max(safeMinSensX, safeMaxSensX, 2)
 
+    axisRef.current = { axisMaxX, axisMaxY, graphWidth, graphHeight, paddingLeft, paddingTop }
+
     const toX = (speed: number) => paddingLeft + (graphWidth * (speed / axisMaxX))
     const toY = (sens: number) => paddingTop + graphHeight - (graphHeight * (sens / axisMaxY))
 
-    ctx.strokeStyle = '#3b3b3b'
+    ctx.strokeStyle = grid
     ctx.lineWidth = 1
     ctx.font = '12px sans-serif'
-    ctx.fillStyle = '#aaa'
+    ctx.fillStyle = axisColor
     ctx.textAlign = 'right'
     for (let i = 0; i <= 6; i++) {
       const value = (axisMaxY / 6) * i
@@ -178,101 +265,28 @@ export function SensitivityGraph(props: SensitivityGraphProps) {
       ctx.fillText(value.toFixed(0), x, paddingTop + graphHeight + 30)
     }
 
-    const naturalSensitivityAt = (speed: number) => {
-      const vHalf = safeNaturalVHalf
-      const omegaAdjusted = Math.max(0, speed - safeMinThreshold)
-      const delta = safeMaxSensX - safeMinSensX
-      const k = Math.log(2) / vHalf
-      return safeMaxSensX - delta * Math.exp(-k * omegaAdjusted)
-    }
-
-    const quadraticSensitivityAt = (speed: number) => {
-      const omegaAdjusted = Math.max(0, speed - safeMinThreshold)
-      const vCap = safeMaxThreshold
-      if (vCap <= 0) return safeMaxSensX
-      const t = clamp(omegaAdjusted / vCap, 0, 1)
-      return safeMinSensX + (safeMaxSensX - safeMinSensX) * t * t
-    }
-
-    const powerSensitivityAt = (speed: number) => {
-      const vRef = safePowerVRef
-      const exponent = safePowerExponent
-      const omegaAdjusted = Math.max(0, speed - safeMinThreshold)
-      if (vRef <= 0 || exponent <= 0 || omegaAdjusted <= 0) return safeMinSensX
-      const x = omegaAdjusted / vRef
-      const u = Math.pow(x, exponent)
-      const t = clamp(1 - Math.exp(-u), 0, 1)
-      return safeMinSensX + (safeMaxSensX - safeMinSensX) * t
-    }
-
-    const sigmoidSensitivityAt = (speed: number) => {
-      const omegaAdjusted = Math.max(0, speed - safeMinThreshold)
-      const vMid = safeSigmoidMid
-      const width = safeSigmoidWidth
-      const w = width > 0 ? width : 1e-6
-      const raw = (x: number) => {
-        const z = (x - vMid) / w
-        return 1 / (1 + Math.exp(-z))
-      }
-      const sigma = raw(omegaAdjusted)
-      const sigma0 = raw(0)
-      const denom = 1 - sigma0
-      let t = denom > 0 ? (sigma - sigma0) / denom : 0
-      t = clamp(t, 0, 1)
-      return safeMinSensX + (safeMaxSensX - safeMinSensX) * t
-    }
-
-    const jumpSensitivityAt = (speed: number) => {
-      const omegaAdjusted = Math.max(0, speed - safeMinThreshold)
-      const vJump = safeMaxThreshold
-      const tau = safeJumpTau
-      if (tau <= 0) {
-        return omegaAdjusted < vJump ? safeMinSensX : safeMaxSensX
-      }
-      const raw = (x: number) => {
-        if (x >= vJump) return 1
-        const z = (x - vJump) / tau
-        return Math.exp(z)
-      }
-      const raw0 = raw(0)
-      const denom = 1 - raw0
-      const r = raw(omegaAdjusted)
-      const t = denom > 0 ? clamp((r - raw0) / denom, 0, 1) : 0
-      return safeMinSensX + (safeMaxSensX - safeMinSensX) * t
-    }
-
-    const sensitivityAt = (speed: number) => {
-      if (isNatural) {
-        return naturalSensitivityAt(speed)
-      }
-      if (isPower) {
-        return powerSensitivityAt(speed)
-      }
-      if (isQuadratic) {
-        return quadraticSensitivityAt(speed)
-      }
-      if (isSigmoid) {
-        return sigmoidSensitivityAt(speed)
-      }
-      if (isJump) {
-        return jumpSensitivityAt(speed)
-      }
-      const denom = safeMaxThreshold - safeMinThreshold
-      if (denom <= 0) {
-        return speed > safeMinThreshold ? safeMaxSensX : safeMinSensX
-      }
-      const progress = clamp((speed - safeMinThreshold) / denom, 0, 1)
-      return safeMinSensX + progress * (safeMaxSensX - safeMinSensX)
+    const curveParams: CurveComputeParams = {
+      curveType,
+      minSensX: safeMinSensX,
+      maxSensX: safeMaxSensX,
+      minThreshold: safeMinThreshold,
+      maxThreshold: safeMaxThreshold,
+      naturalVHalf: safeNaturalVHalf,
+      powerVRef: safePowerVRef,
+      powerExponent: safePowerExponent,
+      sigmoidMid: safeSigmoidMid,
+      sigmoidWidth: safeSigmoidWidth,
+      jumpTau: safeJumpTau,
     }
 
     const drawSensitivityCurve = () => {
-      ctx.strokeStyle = '#6a8bff'
+      ctx.strokeStyle = accent
       ctx.lineWidth = 2.2
       ctx.beginPath()
       const points = 250
       const speeds = Array.from({ length: points }, (_, i) => (axisMaxX / (points - 1)) * i)
       speeds.forEach((speed, idx) => {
-        const sens = sensitivityAt(speed)
+        const sens = computeSensitivityAt(speed, curveParams)
         const x = toX(speed)
         const y = toY(sens)
         if (idx === 0) ctx.moveTo(x, y)
@@ -286,9 +300,9 @@ export function SensitivityGraph(props: SensitivityGraphProps) {
     const drawVelocityCurve = () => {
       const points = 250
       const speeds = Array.from({ length: points }, (_, i) => (axisMaxX / (points - 1)) * i)
-      const outputs = speeds.map(speed => speed * sensitivityAt(speed))
+      const outputs = speeds.map(speed => speed * computeSensitivityAt(speed, curveParams))
       const maxOutput = Math.max(...outputs, 1)
-      ctx.strokeStyle = '#52c1ff'
+      ctx.strokeStyle = liveOutputColor
       ctx.setLineDash([6, 6])
       ctx.lineWidth = 2
       ctx.beginPath()
@@ -309,7 +323,7 @@ export function SensitivityGraph(props: SensitivityGraphProps) {
       if (typeof omega === 'number' && Number.isFinite(omega)) {
         return {
           speed: clamp(omega, 0, axisMaxX),
-          sensX: typeof currentSensX === 'number' ? currentSensX : sensitivityAt(omega),
+          sensX: typeof currentSensX === 'number' ? currentSensX : computeSensitivityAt(omega, curveParams),
         }
       }
       return null
@@ -318,7 +332,7 @@ export function SensitivityGraph(props: SensitivityGraphProps) {
     const live = resolveLive()
     if (live && !disableLiveDot) {
       const speed = clamp(live.speed, 0, axisMaxX)
-      const sensX = live.sensX ?? sensitivityAt(speed)
+      const sensX = live.sensX ?? computeSensitivityAt(speed, curveParams)
       const output = speed * sensX
       const maxOutput = axisMaxX * safeMaxSensX
       const normalizedOutput = (output / maxOutput) * axisMaxY
@@ -329,12 +343,136 @@ export function SensitivityGraph(props: SensitivityGraphProps) {
         ctx.fillStyle = color
         ctx.fill()
       }
-      drawDot(sensX, LIVE_SENS_COLOR)
-      drawDot(normalizedOutput, LIVE_OUTPUT_COLOR)
+      drawDot(sensX, liveSensColor)
+      drawDot(normalizedOutput, liveOutputColor)
     }
 
     ctx.textAlign = 'center'
-  }, [minThreshold, maxThreshold, minSensX, minSensY, maxSensX, maxSensY, normalized, currentSensX, omega, disableLiveDot, curveType, naturalVHalf, powerVRef, powerExponent, sigmoidMid, sigmoidWidth, jumpTau])
+  }, [minThreshold, maxThreshold, minSensX, minSensY, maxSensX, maxSensY, normalized, currentSensX, omega, disableLiveDot, curveType, naturalVHalf, powerVRef, powerExponent, sigmoidMid, sigmoidWidth, jumpTau, theme])
 
-  return <canvas ref={canvasRef} className="legacy-curve-canvas" />
+  // Hover overlay
+  useEffect(() => {
+    const hoverCanvas = hoverCanvasRef.current
+    if (!hoverCanvas) return
+    const ctx = hoverCanvas.getContext('2d')
+    if (!ctx) return
+
+    const ratio = window.devicePixelRatio || 1
+    const baseWidth = 800
+    const baseHeight = 420
+    hoverCanvas.width = baseWidth * ratio
+    hoverCanvas.height = baseHeight * ratio
+    ctx.resetTransform()
+    ctx.scale(ratio, ratio)
+    ctx.clearRect(0, 0, baseWidth, baseHeight)
+
+    if (hoverSpeed === null) return
+    const axis = axisRef.current
+    if (!axis) return
+
+    const { axisMaxX, axisMaxY, graphWidth, graphHeight, paddingLeft, paddingTop } = axis
+    const toX = (speed: number) => paddingLeft + (graphWidth * (speed / axisMaxX))
+    const toY = (sens: number) => paddingTop + graphHeight - (graphHeight * (sens / axisMaxY))
+
+    const cssStyles = getComputedStyle(document.documentElement)
+    const accent = cssStyles.getPropertyValue('--accent').trim() || '#6fa7ff'
+    const textMid = cssStyles.getPropertyValue('--text-mid').trim() || '#aaa'
+    const bgInput = cssStyles.getPropertyValue('--bg-input').trim() || '#0f0f0f'
+    const border1 = cssStyles.getPropertyValue('--border-1').trim() || '#2d2d2d'
+
+    const safeMinSensX = minSensX ?? 0
+    const safeMaxSensX = maxSensX ?? safeMinSensX
+    const curveParams: CurveComputeParams = {
+      curveType,
+      minSensX: safeMinSensX,
+      maxSensX: safeMaxSensX,
+      minThreshold: minThreshold ?? 0,
+      maxThreshold: maxThreshold ?? 0,
+      naturalVHalf: naturalVHalf ?? 0,
+      powerVRef: powerVRef ?? 0,
+      powerExponent: powerExponent ?? 0,
+      sigmoidMid: sigmoidMid ?? 0,
+      sigmoidWidth: sigmoidWidth ?? 0,
+      jumpTau: jumpTau ?? 0,
+    }
+
+    const sens = computeSensitivityAt(hoverSpeed, curveParams)
+    const x = toX(hoverSpeed)
+    const y = toY(sens)
+
+    // Vertical dashed line
+    ctx.save()
+    ctx.strokeStyle = textMid
+    ctx.globalAlpha = 0.35
+    ctx.lineWidth = 1
+    ctx.setLineDash([6, 4])
+    ctx.beginPath()
+    ctx.moveTo(x, paddingTop)
+    ctx.lineTo(x, paddingTop + graphHeight)
+    ctx.stroke()
+    ctx.restore()
+
+    // Dot on curve
+    ctx.beginPath()
+    ctx.arc(x, y, 5, 0, Math.PI * 2)
+    ctx.fillStyle = accent
+    ctx.fill()
+
+    // Tooltip box
+    ctx.font = '12px sans-serif'
+    const line1 = `Sensitivity: ${sens.toFixed(2)}`
+    const line2 = `${hoverSpeed.toFixed(0)} \u00b0/s`
+    const pad = 8
+    const lineHeight = 16
+    const tooltipWidth = Math.max(ctx.measureText(line1).width, ctx.measureText(line2).width) + pad * 2
+    const tooltipHeight = lineHeight * 2 + pad * 2
+    const graphRight = paddingLeft + graphWidth
+    const tooltipOffset = 12
+    let tooltipX = x + tooltipOffset
+    if (tooltipX + tooltipWidth > graphRight - 4) {
+      tooltipX = x - tooltipOffset - tooltipWidth
+    }
+    const tooltipY = paddingTop + 8
+
+    ctx.beginPath()
+    ctx.roundRect(tooltipX, tooltipY, tooltipWidth, tooltipHeight, 4)
+    ctx.fillStyle = bgInput
+    ctx.fill()
+    ctx.strokeStyle = border1
+    ctx.lineWidth = 1
+    ctx.stroke()
+
+    ctx.fillStyle = textMid
+    ctx.textAlign = 'left'
+    ctx.fillText(line1, tooltipX + pad, tooltipY + pad + 11)
+    ctx.fillText(line2, tooltipX + pad, tooltipY + pad + 11 + lineHeight)
+  }, [hoverSpeed, theme, curveType, minSensX, maxSensX, minThreshold, maxThreshold, naturalVHalf, powerVRef, powerExponent, sigmoidMid, sigmoidWidth, jumpTau])
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    const axis = axisRef.current
+    const canvas = canvasRef.current
+    if (!axis || !canvas) return
+    const rect = canvas.getBoundingClientRect()
+    const relX = e.clientX - rect.left
+    const canvasX = (relX / rect.width) * 800
+    const speed = Math.max(0, Math.min(axis.axisMaxX,
+      (canvasX - axis.paddingLeft) / axis.graphWidth * axis.axisMaxX))
+    setHoverSpeed(speed)
+  }
+
+  const handleMouseLeave = () => {
+    setHoverSpeed(null)
+  }
+
+  return (
+    <div style={{ position: 'relative' }}>
+      <canvas
+        ref={canvasRef}
+        className={graphStyles.legacyCurveCanvas}
+        onMouseMove={handleMouseMove}
+        onMouseLeave={handleMouseLeave}
+      />
+      <canvas ref={hoverCanvasRef} className={graphStyles.hoverOverlayCanvas} />
+    </div>
+  )
 }

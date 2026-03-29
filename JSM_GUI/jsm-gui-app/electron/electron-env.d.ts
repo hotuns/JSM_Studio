@@ -33,6 +33,7 @@ interface Window {
     getActiveProfile: () => Promise<{ path: string; name: string; content: string }>
     activateLibraryProfile: (name: string) => Promise<{ path: string; name: string; content: string }>
     createLibraryProfile: () => Promise<{ path: string; name: string; content: string }>
+    copyActiveProfile: () => Promise<{ path: string; name: string; content: string }>
     renameLibraryProfile: (oldName: string, newName: string) => Promise<{ path: string; name: string; content: string }>
     deleteLibraryProfile: (name: string) => Promise<{ success: boolean; fallback?: { path: string; name: string; content: string } }>
     onCalibrationStatus: (callback: (payload: { calibrating: boolean; seconds?: number }) => void) => () => void

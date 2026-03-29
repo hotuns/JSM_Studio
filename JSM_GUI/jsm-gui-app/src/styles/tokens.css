@@ -1,0 +1,135 @@
+:root,
+:root[data-theme='dark'] {
+  /* Layout */
+  --top-bar-height: 72px;
+  --bp-main: 1060px;
+
+  /* Backgrounds */
+  --bg-0: #161618;      /* page backdrop */
+  --bg-1: #25262b;      /* side nav */
+  --bg-1-5: #232327;    /* top bar / tabs strip */
+  --bg-2: #1e1e20;      /* cards / panels */
+  --bg-btn: #1e1e20;    /* button + input base (match cards) */
+  --bg-btn-hover: #23252b;
+  --bg-btn-primary: #262933;
+  --bg-input: #111111;  /* config editor + inputs */
+
+  /* Text */
+  --text-strong: #e8ecf3;
+  --text-mid: #bcc2cc;
+  --text-muted: #8f949e;
+
+  /* Borders */
+  --border-1: #2a2c33;
+  --border-strong: #343741;
+
+  /* Accent */
+  --accent: #6fa7ff;
+
+  /* Specialty */
+  --telemetry-green: #9fe5c2;
+
+  /* Pills / alerts (dark) */
+  --pill-warn-bg: rgba(255, 183, 77, 0.12);
+  --pill-warn-border: rgba(255, 183, 77, 0.4);
+  --pill-warn-text: #ffd28a;
+
+  --pill-error-bg: rgba(255, 120, 111, 0.12);
+  --pill-error-border: rgba(255, 120, 111, 0.6);
+  --pill-error-text: #ffb7af;
+
+  --pill-success-bg: rgba(111, 213, 179, 0.12);
+  --pill-success-border: rgba(111, 213, 179, 0.4);
+  --pill-success-text: #a9ffe2;
+
+  /* Danger buttons/links (dark) */
+  --danger-bg: var(--pill-error-bg);
+  --danger-border: var(--pill-error-border);
+  --danger-text: var(--pill-error-text);
+
+  /* Toasts (dark) */
+  --toast-success-bg: #13382f;
+  --toast-success-border: #60d7b5;
+  --toast-success-text: #cafcee;
+  --toast-warn-bg: #3a2b10;
+  --toast-warn-border: #f1b355;
+  --toast-warn-text: #ffe1ae;
+  --toast-error-bg: #3a1818;
+  --toast-error-border: #f28a8a;
+  --toast-error-text: #ffd6d6;
+
+  /* Touchpad grid (dark) */
+  --touchpad-grid-bg: #121212;
+  --touchpad-grid-border: #2c2c2c;
+  --touchpad-grid-cell-bg: #151515;
+  --touchpad-grid-cell-border: #2f2f2f;
+  --touchpad-grid-muted: #b0b0b0;
+  --touchpad-grid-hint: #cfcfcf;
+  --touchpad-grid-limit: #bbbbbb;
+
+}
+
+/* Light theme (initial values; tune next) */
+:root[data-theme='light'] {
+  --top-bar-height: 72px;
+  --bp-main: 1060px;
+
+  --bg-0: #f7f8fb;
+  --bg-1: #f0f2f6;
+  --bg-1-5: #e8ebf2;
+  --bg-2: #ffffff;
+  --bg-btn: #ffffff;
+  --bg-btn-hover: #e8edf6;
+  --bg-btn-primary: #e0e7f3;
+  --bg-input: #ffffff;
+
+  --text-strong: #0f1116;
+  --text-mid: #3a4050;
+  --text-muted: #606778;
+
+  --border-1: #d3d8e2;
+  --border-strong: #b8c0ce;
+
+  --accent: #3b74ff;
+
+  /* Specialty */
+  --telemetry-green: #3b8f6d;
+
+  /* Pills / alerts (light) */
+  --pill-warn-bg: rgba(229, 140, 49, 0.14);
+  --pill-warn-border: rgba(229, 140, 49, 0.55);
+  --pill-warn-text: #9a4f1f;
+
+  --pill-error-bg: rgba(193, 80, 80, 0.14);
+  --pill-error-border: rgba(193, 80, 80, 0.55);
+  --pill-error-text: #b14545;
+
+  --pill-success-bg: rgba(59, 143, 109, 0.14);
+  --pill-success-border: rgba(59, 143, 109, 0.5);
+  --pill-success-text: #3b8f6d;
+
+  /* Danger buttons/links (light) */
+  --danger-bg: var(--pill-error-bg);
+  --danger-border: var(--pill-error-border);
+  --danger-text: var(--pill-error-text);
+
+  /* Toasts (light) */
+  --toast-success-bg: rgba(59, 143, 109, 0.12);
+  --toast-success-border: rgba(59, 143, 109, 0.6);
+  --toast-success-text: #29664e;
+  --toast-warn-bg: rgba(229, 140, 49, 0.12);
+  --toast-warn-border: rgba(229, 140, 49, 0.6);
+  --toast-warn-text: #a65e1f;
+  --toast-error-bg: rgba(193, 80, 80, 0.12);
+  --toast-error-border: rgba(193, 80, 80, 0.6);
+  --toast-error-text: #9a3a3a;
+
+  /* Touchpad grid (light) */
+  --touchpad-grid-bg: #eef2f9;
+  --touchpad-grid-border: #d3d8e2;
+  --touchpad-grid-cell-bg: #ffffff;
+  --touchpad-grid-cell-border: #c5ccda;
+  --touchpad-grid-muted: #5f6575;
+  --touchpad-grid-hint: #4a5160;
+  --touchpad-grid-limit: #737a8a;
+}

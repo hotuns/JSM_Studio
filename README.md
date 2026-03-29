@@ -1,36 +1,52 @@
 # JoyShockMapper Custom Curve
 
-This repo bundles a modded JoyShockMapper build with a new GUI. For full JSM command documentation, see the upstream project: https://github.com/Electronicks/JoyShockMapper. JSM is robust and not every command is surfaced in the UI; the built-in config editor lets power users add anything that’s missing.
+A community fork of [JoyShockMapper](https://github.com/Electronicks/JoyShockMapper) that adds custom features such as acceleration curves and a user interface for creating configurations. For full JSM command documentation, use the built-in documentation page inside the app.
 
-## Quick start
-- Download and run (Windows): [Latest GUI release](https://github.com/evan1mclean/JSM_custom_curve/releases/tag/v1.0.1-jsm-gui).
-- If using HidHide, point it to the JoyShockMapper.exe located in JoyShockMapper.Custom.Curve\resources\bin
-- The app launches JSM in the background when it starts and shuts it down when you close the GUI.
-- Create or load a profile; map bindings/gyro settings in the UI or import an existing config, then click Apply to push it immediately to JSM.
-- Use the Recalibrate button for a quick 5 second calibration whenever you need it.
+## Quick Start
+- Download and run the installer (Windows): [Latest release](https://github.com/evan1mclean/JSM_custom_curve/releases)
+- Windows SmartScreen warning: When first launching, Windows Defender may flag the app as a potential risk. This is because the app is unsigned and I don't want to pay money to do it... click **More info** then **Run anyway**
+- If using [HidHide](https://github.com/nefarius/HidHide) — a tool that hides your controller from games to prevent double inputs when using a full keyboard and mouse layout — whitelist the JoyShockMapper.exe in both `JoyShockMapper Custom Curve\resources\bin\SDL` and `\Legacy` folders
+- The app launches JSM in the background when it starts and shuts it down when you close the GUI
+- The app will automatically check for new updates on launch
 
-## What’s different from upstream JSM in this fork
-- Built off of SDL2 version of JSM using SDL2 compatibility layer for SDL3 for broader controller support.
-- Custom accel curve implementations (Natural, Power, Quadratic, Sigmoid, Jump) with catch2 unit tests.
-- Live telemetry bridge to feed the GUI.
-- Global gyro on/off binds exposed in the GUI and per-device ignore gyro binds for people connecting two devices to one JSM instance I.E. external gyro box users.
+## What's Different from Upstream JSM
+
+### Custom JSM Features
+- **Custom acceleration curves**: Natural, Power, Quadratic, Sigmoid, and Jump curves
+- **One Euro Filter**: Adaptive low-pass filter that suppresses jitter at rest while letting fast movement through with minimal latency
+- **Gyro smoothing decay**: Makes the smoothing window shrink as gyro speed increases, so fast inputs receive progressively less smoothing
+- **Yaw + Roll gyro space** with adjustable roll contribution
+- **Gyro angle snapping** with optional smooth ease transition
+- **Deceleration brake** to reduce cursor overshoot after fast flicks
+
+<div align="center">
+<img src="docs/acceleration.png" width="750" alt="Acceleration Curve">
+</div>
 
 ## GUI Features
-- Profile library: create, rename, delete, import, load; Apply pushes the current config straight to the bundled JSM with status messaging.
-- Live telemetry: gyro sample readouts and controller metadata displayed in the UI.
-- Sensitivity UI: static vs accel, modeshift support, custom accel curves (Linear, Natural, Power, Quadratic, Sigmoid, Jump) with graph and live dot (powered by telemetry).
-- Keymap UI: capture bindings per button (tap/hold/double/chord/simultaneous), special actions (gyro on/off/invert/trackball), trackball decay, trigger threshold, and timing windows.
-- Touchpad controls: mode toggle (Mouse vs Grid+Stick), grid sizing, sensitivity, bindings.
-- Stick controls: modes (Aim, Flick, Flick Only, Rotate Only, Mouse Area, Scroll Wheel, Hybrid Aim), ring modes, deadzones, aim/flick tuning, and modeshift stick mode assignments.
-- Per-device gyro ignore toggles.
 
-## Installation for devs
+The GUI covers most JSM settings without touching the command line. For advanced settings not surfaced in the UI, the built-in config editor lets power users add anything manually.
 
-- Note: I only kept installation instructions for windows because I don't personally use Linux or know anything about development for Linux. If you're a developer who wants to add support for it feel free to do so.
+- Live sensitivity graph
+- Keybind mapping with click-to-capture input
+- Profile library with quick switching and one-click apply
+- In-app JSM documentation with search
+- Guide for getting Real World Calibration for a given game
+- SDL / Legacy backend switcher
+- Light and dark theme toggle
 
-### Build JoyShockMapper core
+<div align="center">
+<img src="docs/homepage.png" width="750" alt="Gyro Behavior">
+<img src="docs/keybinds.png" width="750" alt="Keybinds">
+</div>
+
+## Installation for Devs
+
+> Windows only. Linux support contributions welcome.
+
+### Build JoyShockMapper — SDL version
 ```bash
-mkdir build && cd build
+mkdir build-jsm-sdl && cd build-jsm-sdl
 cmake .. -G "Visual Studio 17 2022" -A x64 -D SDL=ON
 cmake --build . --config Release
 ```
@@ -41,14 +57,22 @@ cmake --build . --config Release
 cd JoyShockMapper
 ctest --build-config Release
 ```
-Copy the built JoyShockMapper.exe and replace the one found in JSM_custom_curve/JSM_GUI/jsm-gui-app/bin
+Copy the built `JoyShockMapper.exe` into `JSM_GUI/jsm-gui-app/bin/SDL/`
 
-### GUI app
+### Build JoyShockMapper — Legacy version
+```bash
+mkdir build-jsm-legacy && cd build-jsm-legacy
+cmake .. -G "Visual Studio 17 2022" -A x64 -D SDL=OFF -DBUILD_SHARED_LIBS=ON
+cmake --build . --config Release
+```
+Copy the built binaries into `JSM_GUI/jsm-gui-app/bin/legacy/`
+
+### GUI App
 ```bash
 cd JSM_GUI/jsm-gui-app
 npm install
-npm run dev      # hot reload
-npm run build    # build + electron-builder package
+npm run dev      # dev server with hot reload
+npm run build    # production build + NSIS installer via electron-builder
 ```
 
 ## Links

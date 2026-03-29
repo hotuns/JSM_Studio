@@ -1,15 +1,20 @@
 import { SensitivityValues } from '../utils/keymap'
 import { Card } from './Card'
 import { SectionActions } from './SectionActions'
+import { LOCK_MESSAGE } from '../constants/messages'
+import { controllerLabel, formatVidPid } from '../utils/controllers'
+import styles from './Gyro.module.css'
+
 
 const TICK_TIME_OPTIONS = [
-  { value: '1', label: '500 Hz (1 ms)' },
-  { value: '2', label: '333 Hz (2 ms)' },
-  { value: '3', label: '250 Hz (3 ms)' },
+  { value: '1', label: '1 ms' },
+  { value: '2', label: '2 ms' },
+  { value: '3', label: '3 ms' },
 ]
 
 const GYRO_SPACE_OPTIONS = [
   { value: 'LOCAL', label: 'Local' },
+  { value: 'YAW_PLUS_ROLL', label: 'Yaw + Roll' },
   { value: 'PLAYER_TURN', label: 'Player Turn' },
   { value: 'WORLD_TURN', label: 'World Turn' },
 ]
@@ -36,9 +41,13 @@ type GyroBehaviorControlsProps = {
   counterOsMouseSpeed: boolean
   onCounterOsMouseSpeedChange: (enabled: boolean) => void
   onOpenCalibration?: () => void
+  onOpenRwcGuide?: () => void
   hasPendingChanges: boolean
   onApply: () => void
   onCancel: () => void
+  lockMessage?: string
+  appliedSampleHz?: string
+  backendChoice?: 'SDL' | 'legacy'
 }
 
 export function GyroBehaviorControls({
@@ -57,55 +66,29 @@ export function GyroBehaviorControls({
   counterOsMouseSpeed,
   onCounterOsMouseSpeedChange,
   onOpenCalibration,
+  onOpenRwcGuide,
   hasPendingChanges,
   onApply,
   onCancel,
+  lockMessage = LOCK_MESSAGE,
+  appliedSampleHz,
+  backendChoice = 'SDL',
 }: GyroBehaviorControlsProps) {
-  const controllerLabel = (type?: number) => {
-    switch (type) {
-      case 1:
-        return 'Joy-Con (Left)'
-      case 2:
-        return 'Joy-Con (Right)'
-      case 3:
-        return 'Switch Pro'
-      case 4:
-        return 'DualShock 4'
-      case 5:
-        return 'DualSense'
-      case 6:
-        return 'Xbox One'
-      case 7:
-        return 'Xbox Elite'
-      case 8:
-        return 'Xbox Series'
-      default:
-        return 'Unknown'
-    }
-  }
-  const formatVidPid = (vid?: number, pid?: number) => {
-    const v = typeof vid === 'number' ? vid : undefined
-    const p = typeof pid === 'number' ? pid : undefined
-    if (v === undefined && p === undefined) return ''
-    const toHex = (value: number) => `0x${value.toString(16).padStart(4, '0')}`
-    if (v !== undefined && p !== undefined) return `${toHex(v)}:${toHex(p)}`
-    if (v !== undefined) return toHex(v)
-    return toHex(p!)
-  }
-
   return (
-    <Card
-      className="control-panel"
-      lockable
-      locked={isCalibrating}
-      lockMessage="Controls locked while JSM calibrates"
-    >
+    <Card className="control-panel" lockable locked={isCalibrating} lockMessage={lockMessage}>
       <h2>Gyro Behavior</h2>
-      {onOpenCalibration && (
+      {(onOpenCalibration || onOpenRwcGuide) && (
         <div className="flex-inputs">
-          <button type="button" className="secondary-btn full-width-btn" onClick={onOpenCalibration} disabled={isCalibrating}>
-            Calculate real world calibration
-          </button>
+          {onOpenRwcGuide && (
+            <button type="button" className="secondary-btn full-width-btn" onClick={onOpenRwcGuide} disabled={isCalibrating}>
+              Easy real world calibration method
+            </button>
+          )}
+          {onOpenCalibration && (
+            <button type="button" className="secondary-btn full-width-btn" onClick={onOpenCalibration} disabled={isCalibrating}>
+              Calculate real world calibration manually
+            </button>
+          )}
         </div>
       )}
       <div className="flex-inputs">
@@ -130,7 +113,10 @@ export function GyroBehaviorControls({
       </div>
       <div className="flex-inputs">
         <label>
-          Polling Tick Time
+          <div className="label-row">
+            <span>Polling Tick Time</span>
+            {appliedSampleHz && <span className="field-description inline-helper">{appliedSampleHz} Hz</span>}
+          </div>
           <select
             value={sensitivity.tickTime?.toString() ?? ''}
             onChange={(e) => onTickTimeChange(e.target.value)}
@@ -195,25 +181,25 @@ export function GyroBehaviorControls({
           </select>
         </label>
       </div>
-      {devices && devices.length > 0 && (
+      {backendChoice !== 'legacy' && devices && devices.length > 0 && (
         <div className="flex-inputs">
           <label>
             Connected controllers
             <p className="field-description">Controller type and VID:PID detected by JSM. Toggle to ignore gyro output per device.</p>
-            <div className="controller-list">
+            <div className={styles.controllerList}>
               {devices.map(dev => {
                 const id = formatVidPid(dev.vid, dev.pid)
                 const isIgnored = id ? ignoredDevices?.includes(id.toLowerCase()) : false
                 const disabled = !dev.vid || !dev.pid
                 return (
-                  <div key={dev.handle} className="controller-card">
-                    <div className="controller-entry">
+                  <div key={dev.handle} className={styles.controllerCard}>
+                    <div className={styles.controllerEntry}>
                       {controllerLabel(dev.type)}
-                      {id && <span className="controller-vidpid">: {id}</span>}
+                      {id && <span className={styles.controllerVidpid}>: {id}</span>}
                     </div>
-                    <label className="toggle-switch">
-                      <span className="toggle-label">Ignore gyro output</span>
-                      <div className="toggle-wrapper">
+                    <label className={styles.toggleSwitch}>
+                      <span className={styles.toggleLabel}>Ignore gyro output</span>
+                      <div className={styles.toggleWrapper}>
                         <input
                           type="checkbox"
                           disabled={disabled}
@@ -223,7 +209,7 @@ export function GyroBehaviorControls({
                             onToggleIgnoreDevice?.(dev.vid, dev.pid, event.target.checked)
                           }}
                         />
-                        <span className="toggle-slider" />
+                        <span className={styles.toggleSlider} />
                       </div>
                     </label>
                   </div>

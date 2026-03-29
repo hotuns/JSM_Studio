@@ -29,6 +29,7 @@ struct TelemetrySample
 	std::string curve = "LINEAR";
 	std::string paramsJson = "{}";
 	std::vector<TelemetryDevice> devices;
+	float sampleRateHz = 0.0f;
 };
 
 namespace Telemetry

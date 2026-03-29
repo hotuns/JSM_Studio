@@ -1,4 +1,5 @@
 import { ReactNode } from 'react'
+import miscStyles from './Misc.module.css'
 
 type CardProps = {
   children: ReactNode
@@ -10,13 +11,13 @@ type CardProps = {
 
 export function Card({ children, className = '', lockable = false, locked = false, lockMessage }: CardProps) {
   const classes = ['app-card']
-  if (lockable) classes.push('lockable')
-  if (locked) classes.push('locked')
+  if (lockable) classes.push(miscStyles.lockable)
+  if (locked) classes.push(miscStyles.locked)
   if (className) classes.push(className)
 
   return (
     <section className={classes.join(' ')}>
-      {lockable && lockMessage && <div className="locked-overlay">{lockMessage}</div>}
+      {lockable && lockMessage && <div className={miscStyles.lockedOverlay}>{lockMessage}</div>}
       {children}
     </section>
   )

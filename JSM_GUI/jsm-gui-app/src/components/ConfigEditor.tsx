@@ -11,6 +11,7 @@ type ConfigEditorProps = {
 
 import { Card } from './Card'
 import { SectionActions } from './SectionActions'
+import styles from './ConfigEditor.module.css'
 
 export function ConfigEditor({
   value,
@@ -23,13 +24,13 @@ export function ConfigEditor({
   onCancel,
 }: ConfigEditorProps) {
   return (
-    <Card className="config-panel legacy">
+    <Card className={`${styles.configPanel} config-panel legacy`}>
       <label>
         {label}
         <textarea value={value} onChange={(e) => onChange(e.target.value)} rows={12} disabled={disabled} />
       </label>
       <SectionActions
-        className="config-actions"
+        className={`${styles.configActions} config-actions`}
         hasPendingChanges={hasPendingChanges}
         statusMessage={statusMessage}
         onApply={onApply}

@@ -16,10 +16,19 @@ export interface SensitivityValues {
   maxThreshold?: number
   gyroSensX?: number
   gyroSensY?: number
+  rollContribution?: number
   cutoffSpeed?: number
   cutoffRecovery?: number
   smoothTime?: number
   smoothThreshold?: number
+  smoothingDecay?: string
+  oneEuroFilter?: boolean
+  oneEuroMinCutoff?: number
+  oneEuroSpeedCoeff?: number
+  angleSnap?: number
+  angleSnapEase?: string
+  decelBrakeStrength?: number
+  decelBrakeThreshold?: number
   gyroSpace?: string
   gyroAxisX?: string
   gyroAxisY?: string
@@ -64,6 +73,13 @@ export function parseSensitivityValues(text: string, options?: { prefix?: string
   const minSens = get('MIN_GYRO_SENS', 2)
   const maxSens = get('MAX_GYRO_SENS', 2)
   const staticSens = get('GYRO_SENS', 2)
+  const rollContribution = single('ROLL_CONTRIBUTION')
+  const angleSnap = single('GYRO_ANGLE_SNAP')
+  const angleSnapEaseRaw = raw('GYRO_ANGLE_SNAP_EASE')
+  const smoothingDecayRaw = raw('GYRO_SMOOTHING_DECAY')
+  const oneEuroFilter = /^\s*ONE_EURO_FILTER\b/im.test(text)
+  const decelBrakeStrength = single('DECEL_BRAKE_STRENGTH')
+  const decelBrakeThreshold = single('DECEL_BRAKE_THRESHOLD')
 
   const result: SensitivityValues = {
     inGameSens: single('IN_GAME_SENS'),
@@ -76,10 +92,19 @@ export function parseSensitivityValues(text: string, options?: { prefix?: string
     maxThreshold: single('MAX_GYRO_THRESHOLD'),
     gyroSensX: staticSens[0],
     gyroSensY: staticSens[1],
+    rollContribution,
     cutoffSpeed: single('GYRO_CUTOFF_SPEED'),
     cutoffRecovery: single('GYRO_CUTOFF_RECOVERY'),
     smoothTime: single('GYRO_SMOOTH_TIME'),
     smoothThreshold: single('GYRO_SMOOTH_THRESHOLD'),
+    smoothingDecay: smoothingDecayRaw ? smoothingDecayRaw.toUpperCase() : undefined,
+    oneEuroFilter: oneEuroFilter || undefined,
+    oneEuroMinCutoff: single('ONE_EURO_MIN_CUTOFF'),
+    oneEuroSpeedCoeff: single('ONE_EURO_SPEED_COEFF'),
+    angleSnap,
+    angleSnapEase: angleSnapEaseRaw ? angleSnapEaseRaw.toUpperCase() : undefined,
+    decelBrakeStrength,
+    decelBrakeThreshold,
     gyroSpace: raw('GYRO_SPACE'),
     gyroAxisX: raw('GYRO_AXIS_X'),
     gyroAxisY: raw('GYRO_AXIS_Y'),
@@ -148,7 +173,7 @@ export function getKeymapValue(text: string, key: string) {
   return match?.[1]?.trim()
 }
 
-export type BindingSlot = 'tap' | 'hold' | 'double' | 'chord' | 'simultaneous'
+export type BindingSlot = 'tap' | 'hold' | 'double' | 'chord' | 'simultaneous' | 'diagonal'
 
 export type ButtonBindingSet = {
   tap?: string
@@ -157,6 +182,7 @@ export type ButtonBindingSet = {
 }
 
 export type ButtonBindingRow = {
+  id: string
   slot: BindingSlot
   label: string
   binding: string | null
@@ -165,10 +191,11 @@ export type ButtonBindingRow = {
 }
 
 export type ManualRowInfo = {
+  id: string
   modifierCommand?: string
 }
 
-export type ManualRowState = Partial<Record<BindingSlot, ManualRowInfo>>
+export type ManualRowState = Partial<Record<BindingSlot, ManualRowInfo[]>>
 
 const SLOT_LABELS: Record<BindingSlot, string> = {
   tap: 'Tap',
@@ -176,9 +203,10 @@ const SLOT_LABELS: Record<BindingSlot, string> = {
   double: 'Double Press',
   chord: 'Chorded Press',
   simultaneous: 'Simultaneous Press',
+  diagonal: 'Diagonal Press',
 }
 
-const FACE_BUTTONS = ['S', 'E', 'N', 'W'] as const
+const FACE_BUTTONS = ['N', 'E', 'S', 'W'] as const
 
 function parseBaseBinding(value?: string) {
   const tapHold: { tap?: string; hold?: string } = {}
@@ -239,14 +267,26 @@ export function setDoubleBinding(text: string, button: string, value?: string | 
 }
 
 type ComboBinding = {
+  id: string
   modifier: string
   binding: string
+  lineIndex: number
 }
 
-function parseComboBinding(text: string, button: string, separator: '+' | ','): ComboBinding | null {
+const comboSlotSeparator = (slot: Extract<BindingSlot, 'chord' | 'simultaneous' | 'diagonal'>) =>
+  slot === 'chord' ? ',' : slot === 'simultaneous' ? '+' : '*'
+
+function parseComboBindings(
+  text: string,
+  button: string,
+  separator: '+' | ',' | '*',
+  slot: Extract<BindingSlot, 'chord' | 'simultaneous' | 'diagonal'>
+): ComboBinding[] {
   const target = button.toUpperCase()
   const lines = text.split(/\r?\n/)
-  for (const line of lines) {
+  const results: ComboBinding[] = []
+  for (let lineIndex = 0; lineIndex < lines.length; lineIndex += 1) {
+    const line = lines[lineIndex]
     const trimmed = line.trim()
     if (!trimmed) continue
     const [rawKey, rawValue] = trimmed.split('=')
@@ -260,33 +300,61 @@ function parseComboBinding(text: string, button: string, separator: '+' | ','): 
     if (left.toUpperCase() === target) continue
     const bindingValue = value.split(/\s+/)[0]
     if (!bindingValue) continue
-    return { modifier: left, binding: bindingValue }
+    results.push({
+      id: `combo-${slot}-${target}-${results.length}`,
+      modifier: left,
+      binding: bindingValue,
+      lineIndex,
+    })
   }
-  return null
+  return results
 }
 
-function setComboBinding(
+export function setComboBindingLine(
   text: string,
   button: string,
+  slot: Extract<BindingSlot, 'chord' | 'simultaneous' | 'diagonal'>,
+  rowId: string,
   modifier: string | undefined,
-  separator: '+' | ',',
   value?: string | null
 ) {
   if (!modifier) return text
-  const key = `${modifier}${separator}${button}`
+  const separator = comboSlotSeparator(slot)
+  const lines = text.split(/\r?\n/)
+  const parsed = parseComboBindings(text, button, separator, slot)
   const trimmed = value?.trim()
+  const existing = parsed.find(entry => entry.id === rowId)
+
   if (!trimmed) {
-    return removeKeymapEntry(text, key)
+    if (existing) {
+      lines.splice(existing.lineIndex, 1)
+    }
+    return lines.join('\n')
   }
-  return updateKeymapEntry(text, key, [trimmed])
+
+  const nextLine = `${modifier}${separator}${button} = ${trimmed}`
+  if (existing) {
+    lines[existing.lineIndex] = nextLine
+    return lines.join('\n')
+  }
+
+  lines.push(nextLine)
+  return lines.join('\n')
 }
 
-export function setChordBinding(text: string, button: string, modifier: string | undefined, value?: string | null) {
-  return setComboBinding(text, button, modifier, ',', value)
-}
-
-export function setSimultaneousBinding(text: string, button: string, modifier: string | undefined, value?: string | null) {
-  return setComboBinding(text, button, modifier, '+', value)
+export function removeComboBindingLine(
+  text: string,
+  button: string,
+  slot: Extract<BindingSlot, 'chord' | 'simultaneous' | 'diagonal'>,
+  rowId: string
+) {
+  const separator = comboSlotSeparator(slot)
+  const lines = text.split(/\r?\n/)
+  const parsed = parseComboBindings(text, button, separator, slot)
+  const existing = parsed.find(entry => entry.id === rowId)
+  if (!existing) return text
+  lines.splice(existing.lineIndex, 1)
+  return lines.join('\n')
 }
 
 export function getButtonBindingRows(
@@ -297,6 +365,7 @@ export function getButtonBindingRows(
   const bindings = getButtonBindingSet(text, button)
   const rows: ButtonBindingRow[] = [
     {
+      id: `${button}-tap`,
       slot: 'tap',
       label: SLOT_LABELS.tap,
       binding: bindings.tap ?? null,
@@ -305,9 +374,11 @@ export function getButtonBindingRows(
   ]
   ;(['hold', 'double'] as BindingSlot[]).forEach(slot => {
     const bindingValue = slot === 'hold' ? bindings.hold : bindings.double
-    const manualInfo = manualState[slot]
+    const manualEntries = manualState[slot] ?? []
+    const manualInfo = manualEntries[0]
     if (bindingValue || manualInfo) {
       rows.push({
+        id: manualInfo?.id ?? `${button}-${slot}`,
         slot,
         label: SLOT_LABELS[slot],
         binding: bindingValue ?? null,
@@ -315,28 +386,32 @@ export function getButtonBindingRows(
       })
     }
   })
-const chordBinding = parseComboBinding(text, button, ',')
-  const chordManual = manualState['chord']
-  if (chordBinding || chordManual) {
-    rows.push({
-      slot: 'chord',
-      label: SLOT_LABELS.chord,
-      binding: chordBinding?.binding ?? null,
-      isManual: Boolean(chordManual),
-      modifierCommand: chordBinding?.modifier ?? chordManual?.modifierCommand,
+  ;(['chord', 'simultaneous', 'diagonal'] as const).forEach(slot => {
+    const separator = comboSlotSeparator(slot)
+    const parsedCombos = parseComboBindings(text, button, separator, slot)
+    const parsedIds = new Set(parsedCombos.map(entry => entry.id))
+    parsedCombos.forEach(entry => {
+      rows.push({
+        id: entry.id,
+        slot,
+        label: SLOT_LABELS[slot],
+        binding: entry.binding ?? null,
+        isManual: false,
+        modifierCommand: entry.modifier,
+      })
     })
-  }
-const simultaneousBinding = parseComboBinding(text, button, '+')
-  const simultaneousManual = manualState['simultaneous']
-  if (simultaneousBinding || simultaneousManual) {
-    rows.push({
-      slot: 'simultaneous',
-      label: SLOT_LABELS.simultaneous,
-      binding: simultaneousBinding?.binding ?? null,
-      isManual: Boolean(simultaneousManual),
-      modifierCommand: simultaneousBinding?.modifier ?? simultaneousManual?.modifierCommand,
+    const manualEntries = (manualState[slot] ?? []).filter(entry => !parsedIds.has(entry.id))
+    manualEntries.forEach(entry => {
+      rows.push({
+        id: entry.id,
+        slot,
+        label: SLOT_LABELS[slot],
+        binding: null,
+        isManual: true,
+        modifierCommand: entry.modifierCommand,
+      })
     })
-  }
+  })
   return rows
 }
 

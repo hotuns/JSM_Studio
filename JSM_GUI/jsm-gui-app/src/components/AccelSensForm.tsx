@@ -15,6 +15,7 @@ type AccelSensFormProps = {
   onMinSensYChange: (value: string) => void
   onMaxSensXChange: (value: string) => void
   onMaxSensYChange: (value: string) => void
+  onRollContributionChange: (value: string) => void
 }
 
 export function AccelSensForm({
@@ -32,6 +33,7 @@ export function AccelSensForm({
   onMinSensYChange,
   onMaxSensXChange,
   onMaxSensYChange,
+  onRollContributionChange,
 }: AccelSensFormProps) {
   const curveValue = (sensitivity.accelCurve ?? 'LINEAR').toUpperCase()
   const isNatural = curveValue === 'NATURAL'
@@ -46,13 +48,18 @@ export function AccelSensForm({
   const jumpTauValue = sensitivity.jumpTau ?? ''
 
   const minSensXValue = sensitivity.minSensX ?? ''
-  const minSensYValue = sensitivity.minSensY ?? sensitivity.minSensX ?? ''
+  const minSensYValue = sensitivity.minSensY ?? ''
   const maxSensXValue = sensitivity.maxSensX ?? ''
-  const maxSensYValue = sensitivity.maxSensY ?? sensitivity.maxSensX ?? ''
+  const maxSensYValue = sensitivity.maxSensY ?? ''
   const minSensXRange = sensitivity.minSensX ?? 0
-  const minSensYRange = sensitivity.minSensY ?? sensitivity.minSensX ?? 0
+  const minSensYRange = sensitivity.minSensY ?? 0
   const maxSensXRange = sensitivity.maxSensX ?? 0
-  const maxSensYRange = sensitivity.maxSensY ?? sensitivity.maxSensX ?? 0
+  const maxSensYRange = sensitivity.maxSensY ?? 0
+  const showRollContribution = sensitivity.gyroSpace?.trim().toUpperCase() === 'YAW_PLUS_ROLL'
+
+  const selectAllOnFocus = (event: React.FocusEvent<HTMLInputElement>) => {
+    event.target.select()
+  }
   return (
     <>
       <div className="flex-inputs">
@@ -90,6 +97,30 @@ export function AccelSensForm({
           <input type="range" min="0" max="30" step="0.1" value={maxSensYRange} onChange={(e) => onMaxSensYChange(e.target.value)} />
         </label>
       </div>
+      {showRollContribution && (
+        <div className="flex-inputs">
+          <label>
+            Roll Contribution (%)
+            <input
+              type="number"
+              step="1"
+              min="-100"
+              max="100"
+              value={sensitivity.rollContribution ?? ''}
+              onChange={(e) => onRollContributionChange(e.target.value)}
+              onFocus={selectAllOnFocus}
+            />
+            <input
+              type="range"
+              min="-100"
+              max="100"
+              step="1"
+              value={sensitivity.rollContribution ?? 0}
+              onChange={(e) => onRollContributionChange(e.target.value)}
+            />
+          </label>
+        </div>
+      )}
       <div className="flex-inputs">
         <label>
           Min Threshold

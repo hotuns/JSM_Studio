@@ -19,6 +19,8 @@
 #include <filesystem>
 #include <algorithm>
 #include <atomic>
+#include <deque>
+#include <unordered_map>
 #include <sstream>
 #define _USE_MATH_DEFINES
 #include <math.h> // M_PI
@@ -43,6 +45,7 @@ vector<JSMButton> mappings;      // array enables use of for each loop and other
 
 float os_mouse_speed = 1.0;
 float last_flick_and_rotation = 0.0;
+bool gyroOneEuroEnabled = false;
 unique_ptr<PollingThread> autoLoadThread;
 unique_ptr<JSM::AutoConnect> autoConnectThread;
 std::atomic<int> g_gyroGlobalOffCount(0);
@@ -547,6 +550,13 @@ void joyShockPollCallback(int jcHandle, JOY_SHOCK_STATE state, JOY_SHOCK_STATE l
 			gyroY += inGyroZ;
 		}
 	}
+	else if (gyroSpace == GyroSpace::YAW_PLUS_ROLL)
+	{
+		const float rollContribution = jc->getSetting(SettingID::ROLL_CONTRIBUTION) / 100.0f;
+		gyroX -= inGyroY;
+		gyroX -= inGyroZ * rollContribution;
+		gyroY -= inGyroX;
+	}
 	else
 	{
 		float gravLength = sqrtf(inGravX * inGravX + inGravY * inGravY + inGravZ * inGravZ);
@@ -675,14 +685,34 @@ void joyShockPollCallback(int jcHandle, JOY_SHOCK_STATE state, JOY_SHOCK_STATE l
 	}
 	float gyroLength = sqrt(gyroX * gyroX + gyroY * gyroY);
 	// do gyro smoothing
-	// convert gyro smooth time to number of samples
-	auto tick_time = SettingsManager::get<float>(SettingID::TICK_TIME)->value();
-	auto numGyroSamples = jc->getSetting(SettingID::GYRO_SMOOTH_TIME) * 1000.f / tick_time;
-	if (numGyroSamples < 1)
-		numGyroSamples = 1; // need at least 1 sample
-	auto threshold = jc->getSetting(SettingID::GYRO_SMOOTH_THRESHOLD);
-	jc->getSmoothedGyro(gyroX, gyroY, gyroLength, threshold / 2.0f, threshold, int(numGyroSamples), gyroX, gyroY);
-	// COUT << "%d Samples for threshold: %0.4f\n", numGyroSamples, gyro_smooth_threshold * maxSmoothingSamples);
+	const bool useDecaySmoothing = jc->getSetting<Switch>(SettingID::GYRO_SMOOTHING_DECAY) == Switch::ON;
+	if (useDecaySmoothing)
+	{
+		auto smoothingTime = jc->getSetting(SettingID::GYRO_SMOOTH_TIME);
+		auto threshold = jc->getSetting(SettingID::GYRO_SMOOTH_THRESHOLD);
+		jc->applyGyroDecaySmoothing(gyroX, gyroY, deltaTime, smoothingTime, threshold, gyroX, gyroY);
+	}
+	else
+	{
+		jc->disableGyroDecaySmoothing();
+		// convert gyro smooth time to number of samples
+		auto tick_time = SettingsManager::get<float>(SettingID::TICK_TIME)->value();
+		auto numGyroSamples = jc->getSetting(SettingID::GYRO_SMOOTH_TIME) * 1000.f / tick_time;
+		if (numGyroSamples < 1)
+			numGyroSamples = 1; // need at least 1 sample
+		auto threshold = jc->getSetting(SettingID::GYRO_SMOOTH_THRESHOLD);
+		jc->getSmoothedGyro(gyroX, gyroY, gyroLength, threshold / 2.0f, threshold, int(numGyroSamples), gyroX, gyroY);
+		// COUT << "%d Samples for threshold: %0.4f\n", numGyroSamples, gyro_smooth_threshold * maxSmoothingSamples);
+	}
+
+	// One Euro Filter — adaptive low-pass, smooth at low speed and responsive at high speed
+	if (gyroOneEuroEnabled)
+	{
+		jc->applyOneEuroFilter(gyroX, gyroY, deltaTime, gyroX, gyroY);
+	}
+
+	// Decel brake detection should use IMU-based, post-smoothing gyro before cutoff/recovery and before synthetic additions
+	jc->decelBrakeOmegaRaw = sqrt(gyroX * gyroX + gyroY * gyroY);
 
 	// now, honour gyro_cutoff_speed
 	gyroLength = sqrt(gyroX * gyroX + gyroY * gyroY);
@@ -841,7 +871,8 @@ void joyShockPollCallback(int jcHandle, JOY_SHOCK_STATE state, JOY_SHOCK_STATE l
 	const int globalOffCount = g_gyroGlobalOffCount.load();
 	if (globalOnCount > 0)
 	{
-		blockGyro = false;
+		if (!jc->_ignoreGyro)
+			blockGyro = false;
 	}
 	else if (globalOffCount > 0)
 	{
@@ -909,6 +940,7 @@ void joyShockPollCallback(int jcHandle, JOY_SHOCK_STATE state, JOY_SHOCK_STATE l
 	{
 		gyroX = 0;
 		gyroY = 0;
+		jc->resetOneEuroFilter();
 	}
 
 	float camSpeedX = 0.0f;
@@ -930,8 +962,127 @@ void joyShockPollCallback(int jcHandle, JOY_SHOCK_STATE state, JOY_SHOCK_STATE l
 	const float jumpTau = jc->getSetting(SettingID::ACCEL_JUMP_TAU);
 
 	// apply calibration factor
-	// get input velocity
-	float omega = sqrt(gyroX * gyroX + gyroY * gyroY);
+	// get input velocity (post snap; may include synthetic gyro later)
+	float omega = sqrt(gyroXVelocity * gyroXVelocity + gyroYVelocity * gyroYVelocity);
+
+	// Gyro deceleration brake detection uses pre-curve, post-smoothing (IMU-only) gyro vector
+	const float decelBrakeStrength = std::clamp(jc->getSetting(SettingID::DECEL_BRAKE_STRENGTH), 0.0f, 1.0f);
+	const float decelBrakeThreshold = std::max(0.0f, jc->getSetting(SettingID::DECEL_BRAKE_THRESHOLD));
+	float decelBrakeMultiplier = 1.0f;
+	if (decelBrakeStrength <= 0.0f)
+	{
+		jc->decelBrakeEngagement = 0.0f;
+	}
+	else
+	{
+		constexpr float kWindowSeconds = 0.010f;              // Tw
+		constexpr float kSpeedMin = 2.0f;                     // S_MIN
+		constexpr float kSpeedMax = 60.0f;                    // S_MAX
+		constexpr float kEngageTime = 0.010f;                 // T_ENGAGE
+		constexpr float kReleaseTime = 0.006f;                // T_RELEASE
+		constexpr float kFullBrakeFactor = 3.5f;              // k
+		constexpr auto kHistoryWindow = std::chrono::milliseconds(50);
+
+		const auto nowTs = std::chrono::steady_clock::now();
+		jc->decelBrakeHistory.push_back({ nowTs, jc->decelBrakeOmegaRaw });
+		while (!jc->decelBrakeHistory.empty() && nowTs - jc->decelBrakeHistory.front().first > kHistoryWindow)
+		{
+			jc->decelBrakeHistory.pop_front();
+		}
+
+		float sOld = jc->decelBrakeOmegaRaw;
+		const auto targetTs = nowTs - std::chrono::milliseconds(10);
+		for (auto it = jc->decelBrakeHistory.rbegin(); it != jc->decelBrakeHistory.rend(); ++it)
+		{
+			if (it->first <= targetTs)
+			{
+				sOld = it->second;
+				break;
+			}
+		}
+
+		const float slope = (jc->decelBrakeOmegaRaw - sOld) / kWindowSeconds; // deg/s^2
+		const float dNeg = std::max(0.0f, -slope);
+		const float d0 = kWindowSeconds > 0.0f ? decelBrakeThreshold / kWindowSeconds : 0.0f;
+		const float d1 = d0 * kFullBrakeFactor;
+		const float denom = (d1 > d0) ? (d1 - d0) : 1e-6f;
+
+		float bInst = 0.0f;
+		const bool speedGate = omega >= kSpeedMin && omega <= kSpeedMax;
+		if (speedGate)
+		{
+			bInst = std::clamp((dNeg - d0) / denom, 0.0f, 1.0f);
+		}
+
+		float &engagement = jc->decelBrakeEngagement;
+		if (speedGate && bInst > 0.0f)
+		{
+			engagement += (deltaTime / kEngageTime) * bInst;
+		}
+		else
+		{
+			engagement -= (deltaTime / kReleaseTime);
+		}
+		engagement = std::clamp(engagement, 0.0f, 1.0f);
+
+		if (decelBrakeStrength > 0.0f && engagement > 0.0f)
+		{
+			decelBrakeMultiplier = 1.0f - decelBrakeStrength * engagement;
+		}
+	}
+
+	// Apply angle snap after decel brake detection so braking is not triggered by snap-induced slowdown
+	const float gyroAngleSnapDeg = jc->getSetting(SettingID::GYRO_ANGLE_SNAP);
+	if (gyroAngleSnapDeg > 0.0f && (gyroXVelocity != 0.0f || gyroYVelocity != 0.0f))
+	{
+		const bool smoothSnap = jc->getSetting<Switch>(SettingID::GYRO_ANGLE_SNAP_EASE) == Switch::ON;
+		const float snapRad = gyroAngleSnapDeg * float(M_PI) / 180.0f;
+		const float referenceAngle = gyroXVelocity == 0.0f ? float(M_PI_2) : atan(fabsf(gyroYVelocity / gyroXVelocity));
+		const float mag = sqrtf(gyroXVelocity * gyroXVelocity + gyroYVelocity * gyroYVelocity);
+
+		if (mag > 0.0f)
+		{
+			if (smoothSnap)
+			{
+				auto smoothstep01 = [](float x) -> float {
+					x = fminf(fmaxf(x, 0.0f), 1.0f);
+					return x * x * (3.0f - 2.0f * x);
+				};
+
+				if (referenceAngle > float(M_PI_2) - snapRad)
+				{
+					float x = 1.0f - ((float(M_PI_2) - referenceAngle) / snapRad);
+					const float snap = smoothstep01(x);
+					gyroXVelocity *= (1.0f - snap);
+					gyroYVelocity = copysignf(mag, gyroYVelocity);
+				}
+				else if (referenceAngle < snapRad)
+				{
+					float x = 1.0f - (referenceAngle / snapRad);
+					const float snap = smoothstep01(x);
+					gyroYVelocity *= (1.0f - snap);
+					gyroXVelocity = copysignf(mag, gyroXVelocity);
+				}
+			}
+			else
+			{
+				if (referenceAngle > float(M_PI_2) - snapRad)
+				{
+					gyroXVelocity = 0.0f;
+					gyroYVelocity = copysign(mag, gyroYVelocity);
+				}
+				else if (referenceAngle < snapRad)
+				{
+					gyroXVelocity = copysign(mag, gyroXVelocity);
+					gyroYVelocity = 0.0f;
+				}
+			}
+		}
+	}
+
+	// Recompute omega after snapping to feed accel curves/telemetry
+	omega = sqrt(gyroXVelocity * gyroXVelocity + gyroYVelocity * gyroYVelocity);
+
 	// calculate position on minThreshold to maxThreshold scale
 	float minThreshold = jc->getSetting(SettingID::MIN_GYRO_THRESHOLD);
 	float maxThreshold = jc->getSetting(SettingID::MAX_GYRO_THRESHOLD);
@@ -990,6 +1141,12 @@ void joyShockPollCallback(int jcHandle, JOY_SHOCK_STATE state, JOY_SHOCK_STATE l
 	gyroXVelocity *= appliedSensX;
 	gyroYVelocity *= appliedSensY;
 
+	if (decelBrakeMultiplier < 1.0f)
+	{
+		gyroXVelocity *= decelBrakeMultiplier;
+		gyroYVelocity *= decelBrakeMultiplier;
+	}
+
 	TelemetrySample telemetrySample;
 	telemetrySample.omega = omega;
 	// Report post-curve normalized value so the live dot follows the selected curve
@@ -1002,6 +1159,77 @@ void joyShockPollCallback(int jcHandle, JOY_SHOCK_STATE state, JOY_SHOCK_STATE l
 	telemetrySample.sMaxX = hiSensXY.first;
 	telemetrySample.sMinY = lowSensXY.second;
 	telemetrySample.sMaxY = hiSensXY.second;
+	// Derive sample rate from backend report timestamps (JSL): count reports over a short window.
+	{
+		struct ReportWindow
+		{
+			std::deque<double> timestampsMs;
+			double lastReportMs = -1.0;
+		};
+		static std::unordered_map<int, ReportWindow> s_reportWindows;
+		constexpr double kWindowMs = 2000.0; // 2 seconds
+		constexpr double kMinStepMs = 0.1;   // ignore duplicate timestamps within 0.1ms
+
+		const auto nowUs = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
+		const double nowMs = nowUs / 1000.0;
+		const float deltaSinceUpdate = jsl->GetTimeSinceLastUpdate(jc->_handle);
+		if (deltaSinceUpdate > 0.0f)
+		{
+			const double reportTsMs = nowMs - (static_cast<double>(deltaSinceUpdate) * 1000.0);
+			auto &window = s_reportWindows[jc->_handle];
+			if (window.lastReportMs < 0.0 || (reportTsMs - window.lastReportMs) >= kMinStepMs)
+			{
+				window.timestampsMs.push_back(reportTsMs);
+				window.lastReportMs = reportTsMs;
+			}
+			// Drop old entries outside the window
+			while (!window.timestampsMs.empty() && (nowMs - window.timestampsMs.front()) > kWindowMs)
+			{
+				window.timestampsMs.pop_front();
+			}
+			const double windowSeconds = kWindowMs / 1000.0;
+			const double rate = window.timestampsMs.size() / windowSeconds;
+			telemetrySample.sampleRateHz = static_cast<float>(rate);
+		}
+	}
+#ifdef SDL
+	// SDL path: fall back to applied update rate (loop iterations over a short window).
+	{
+		static size_t s_loopCount = 0;
+		static auto s_windowStart = std::chrono::steady_clock::now();
+		static double s_lastAppliedRate = 0.0;
+		constexpr double kWindowSeconds = 2.0;
+
+		s_loopCount++;
+		const auto now = std::chrono::steady_clock::now();
+		const double elapsedSeconds =
+		  std::chrono::duration_cast<std::chrono::milliseconds>(now - s_windowStart).count() / 1000.0;
+		if (elapsedSeconds >= kWindowSeconds)
+		{
+			const double rate = s_loopCount / elapsedSeconds;
+			if (rate > 0.0)
+			{
+				s_lastAppliedRate = rate;
+			}
+			s_loopCount = 0;
+			s_windowStart = now;
+		}
+		if (telemetrySample.sampleRateHz <= 0.0f && s_lastAppliedRate > 0.0)
+		{
+			telemetrySample.sampleRateHz = static_cast<float>(s_lastAppliedRate);
+		}
+	}
+#else
+	// SDL path: measured sample rate provided by wrapper (legacy returns 0 here).
+	if (telemetrySample.sampleRateHz <= 0.0f)
+	{
+		const float backendRate = jsl->GetSampleRateHz(jc->_handle);
+		if (backendRate > 0.0f)
+		{
+			telemetrySample.sampleRateHz = backendRate;
+		}
+	}
+#endif
 	for (const auto &entry : handle_to_joyshock)
 	{
 		const auto &device = entry.second;
@@ -1430,6 +1658,11 @@ bool do_RESET_MAPPINGS(CmdRegistry *registry)
 
 	os_mouse_speed = 1.0f;
 	last_flick_and_rotation = 0.0f;
+	gyroOneEuroEnabled = false;
+	for (auto &[id, jc] : handle_to_joyshock)
+	{
+		jc->resetOneEuroFilter();
+	}
 	g_gyroGlobalOffCount.store(0);
 	g_gyroGlobalOnCount.store(0);
 	g_hasGyroOnAllBinding.store(false);
@@ -1487,6 +1720,17 @@ bool do_IGNORE_OS_MOUSE_SPEED()
 {
 	COUT << "Ignoring OS mouse speed setting\n";
 	os_mouse_speed = 1.0;
+	return true;
+}
+
+bool do_ONE_EURO_FILTER()
+{
+	COUT << "One Euro Filter enabled for gyro\n";
+	gyroOneEuroEnabled = true;
+	for (auto &[id, jc] : handle_to_joyshock)
+	{
+		jc->resetOneEuroFilter();
+	}
 	return true;
 }
 
@@ -1739,6 +1983,11 @@ float filterClamp01(float current, float next)
 float filterPositive(float current, float next)
 {
 	return max(0.0f, next);
+}
+
+float filterClampPercent(float current, float next)
+{
+	return clamp(next, -100.0f, 100.0f);
 }
 
 float filterSign(float current, float next)
@@ -2519,6 +2768,12 @@ void initJsmSettings(CmdRegistry *commandRegistry)
 	commandRegistry->add((new JSMAssignment<float>(*gyro_smooth_threshold))
 	                       ->setHelp("When the controller's angular velocity is below this threshold (in degrees per second), smoothing will be applied."));
 
+	auto gyro_smoothing_decay = new JSMSetting<Switch>(SettingID::GYRO_SMOOTHING_DECAY, Switch::OFF);
+	gyro_smoothing_decay->setFilter(&filterInvalidValue<Switch, Switch::INVALID>);
+	SettingsManager::add(gyro_smoothing_decay);
+	commandRegistry->add((new JSMAssignment<Switch>(*gyro_smoothing_decay))
+	                       ->setHelp("When ON, uses speed-decay EMA smoothing instead of the legacy moving-average gyro smoothing."));
+
 	auto gyro_cutoff_speed = new JSMSetting<float>(SettingID::GYRO_CUTOFF_SPEED, 0.0f);
 	gyro_cutoff_speed->setFilter(&filterPositive);
 	SettingsManager::add(gyro_cutoff_speed);
@@ -2530,6 +2785,44 @@ void initJsmSettings(CmdRegistry *commandRegistry)
 	SettingsManager::add(gyro_cutoff_recovery);
 	commandRegistry->add((new JSMAssignment<float>(*gyro_cutoff_recovery))
 	                       ->setHelp("Below this threshold (in degrees per second), gyro sensitivity is pushed down towards zero. This can tighten and steady aim without a deadzone."));
+
+	auto one_euro_min_cutoff = new JSMSetting<float>(SettingID::ONE_EURO_MIN_CUTOFF, 6.0f);
+	one_euro_min_cutoff->setFilter(&filterPositive);
+	SettingsManager::add(one_euro_min_cutoff);
+	commandRegistry->add((new JSMAssignment<float>(*one_euro_min_cutoff))
+	                       ->setHelp("Minimum cutoff frequency for One Euro filter. Lower this value to reduce slow speed jitter."));
+
+	auto one_euro_speed_coeff = new JSMSetting<float>(SettingID::ONE_EURO_SPEED_COEFF, 0.3f);
+	one_euro_speed_coeff->setFilter(&filterPositive);
+	SettingsManager::add(one_euro_speed_coeff);
+	commandRegistry->add((new JSMAssignment<float>(*one_euro_speed_coeff))
+	                       ->setHelp("Speed coefficient for One Euro filter. Raise this value to reduce speed lag."));
+
+	auto gyro_angle_snap_ease = new JSMSetting<Switch>(SettingID::GYRO_ANGLE_SNAP_EASE, Switch::OFF);
+	gyro_angle_snap_ease->setFilter(&filterInvalidValue<Switch, Switch::INVALID>);
+	SettingsManager::add(gyro_angle_snap_ease);
+	commandRegistry->add((new JSMAssignment<Switch>(*gyro_angle_snap_ease))
+	                       ->setHelp("When ON, applies a smooth transition into angle snapping instead of a hard snap."));
+
+	auto gyro_angle_snap = new JSMSetting<float>(SettingID::GYRO_ANGLE_SNAP, 0.0f);
+	gyro_angle_snap->setFilter([](float current, float next)
+	  { return std::clamp(next, 0.0f, 45.0f); });
+	SettingsManager::add(gyro_angle_snap);
+	commandRegistry->add((new JSMAssignment<float>(*gyro_angle_snap))
+	                       ->setHelp("Degrees of angle snapping for gyro input. Snaps movement to horizontal/vertical when within this angle. 0 disables snapping. (Range: 0-45)"));
+
+	auto decel_brake_strength = new JSMSetting<float>(SettingID::DECEL_BRAKE_STRENGTH, 0.0f);
+	decel_brake_strength->setFilter([](float current, float next)
+	  { return std::clamp(next, 0.0f, 1.0f); });
+	SettingsManager::add(decel_brake_strength);
+	commandRegistry->add((new JSMAssignment<float>(*decel_brake_strength))
+	                       ->setHelp("Deceleration brake strength (0-1). Higher values apply more braking when stopping."));
+
+	auto decel_brake_threshold = new JSMSetting<float>(SettingID::DECEL_BRAKE_THRESHOLD, 25.0f);
+	decel_brake_threshold->setFilter(&filterPositive);
+	SettingsManager::add(decel_brake_threshold);
+	commandRegistry->add((new JSMAssignment<float>(*decel_brake_threshold))
+	                       ->setHelp("Deceleration brake trigger threshold (deg/s drop over a short window). Lower values trigger more easily."));
 
 	auto stick_acceleration_rate = new JSMSetting<float>(SettingID::STICK_ACCELERATION_RATE, 0.0f);
 	stick_acceleration_rate->setFilter(&filterPositive);
@@ -2620,7 +2913,13 @@ void initJsmSettings(CmdRegistry *commandRegistry)
 	gyro_space->setFilter(&filterInvalidValue<GyroSpace, GyroSpace::INVALID>);
 	SettingsManager::add(gyro_space);
 	commandRegistry->add((new JSMAssignment<GyroSpace>(*gyro_space))
-	                       ->setHelp("How gyro input is converted to 2D input. With LOCAL, your MOUSE_X_FROM_GYRO_AXIS and MOUSE_Y_FROM_GYRO_AXIS settings decide which local angular axis maps to which 2D mouse axis.\nYour other options are PLAYER_TURN and PLAYER_LEAN. These both take gravity into account to combine your axes more reliably.\n\tUse PLAYER_TURN if you like to turn your camera or move your cursor by turning your controller side to side.\n\tUse PLAYER_LEAN if you'd rather lean your controller to turn the camera."));
+	                       ->setHelp("How gyro input is converted to 2D input. With LOCAL, your MOUSE_X_FROM_GYRO_AXIS and MOUSE_Y_FROM_GYRO_AXIS settings decide which local angular axis maps to which 2D mouse axis.\nYAW_PLUS_ROLL keeps pitch on Y and combines yaw + roll on X using ROLL_CONTRIBUTION.\nYour other options are PLAYER_TURN and PLAYER_LEAN. These both take gravity into account to combine your axes more reliably.\n\tUse PLAYER_TURN if you like to turn your camera or move your cursor by turning your controller side to side.\n\tUse PLAYER_LEAN if you'd rather lean your controller to turn the camera."));
+
+	auto roll_contribution = new JSMSetting<float>(SettingID::ROLL_CONTRIBUTION, 0.0f);
+	roll_contribution->setFilter(&filterClampPercent);
+	SettingsManager::add(roll_contribution);
+	commandRegistry->add((new JSMAssignment<float>(*roll_contribution))
+	                       ->setHelp("When GYRO_SPACE is YAW_PLUS_ROLL, adds roll to horizontal turn as a percentage of yaw sensitivity. Valid range is -100 to 100."));
 
 	auto trackball_decay = new JSMSetting<float>(SettingID::TRACKBALL_DECAY, 1.0f);
 	trackball_decay->setFilter(&filterPositive);
@@ -3124,6 +3423,7 @@ int main(int argc, char *argv[])
 		}))->setHelp("Look for newly connected controllers. Specify MERGE (default) or SPLIT whether you want to consider joycons as a single or separate controllers."));
 	commandRegistry.add((new JSMMacro("COUNTER_OS_MOUSE_SPEED"))->SetMacro(bind(do_COUNTER_OS_MOUSE_SPEED))->setHelp("JoyShockMapper will load the user's OS mouse sensitivity value to consider it in its calculations."));
 	commandRegistry.add((new JSMMacro("IGNORE_OS_MOUSE_SPEED"))->SetMacro(bind(do_IGNORE_OS_MOUSE_SPEED))->setHelp("Disable JoyShockMapper's consideration of the the user's OS mouse sensitivity value."));
+	commandRegistry.add((new JSMMacro("ONE_EURO_FILTER"))->SetMacro(bind(do_ONE_EURO_FILTER))->setHelp("Enable the One Euro adaptive filter on gyro input. Reduces jitter at low speeds without adding latency at high speeds."));
 	commandRegistry.add((new JSMMacro("CALCULATE_REAL_WORLD_CALIBRATION"))->SetMacro(bind(&do_CALCULATE_REAL_WORLD_CALIBRATION, placeholders::_2))->setHelp("Get JoyShockMapper to recommend you a REAL_WORLD_CALIBRATION value after performing the calibration sequence. Visit GyroWiki for details:\nhttp://gyrowiki.jibbsmart.com/blog:joyshockmapper-guide#calibrating"));
 	commandRegistry.add((new JSMMacro("SLEEP"))->SetMacro(bind(&do_SLEEP, placeholders::_2))->setHelp("Sleep for the given number of seconds, or one second if no number is given. Can't sleep more than 10 seconds per command."));
 	commandRegistry.add((new JSMMacro("FINISH_GYRO_CALIBRATION"))->SetMacro(bind(&do_FINISH_GYRO_CALIBRATION))->setHelp("Finish calibrating the gyro in all controllers."));

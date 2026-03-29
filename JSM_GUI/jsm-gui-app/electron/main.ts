@@ -1,4 +1,5 @@
-import { app, BrowserWindow, ipcMain } from 'electron'
+import { app, BrowserWindow, ipcMain, shell } from 'electron'
+import { autoUpdater } from 'electron-updater'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 import fs from 'node:fs/promises'
@@ -25,6 +26,7 @@ export const RENDERER_DIST = path.join(APP_ROOT, 'dist')
 
 process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, 'public') : RENDERER_DIST
 const DATA_DIR = app.getPath('userData')
+const BACKEND_FILE = path.join(DATA_DIR, 'backend.json')
 
 let win: BrowserWindow | null
 let telemetrySocket: dgram.Socket | null = null
@@ -32,19 +34,29 @@ let latestTelemetryPacket: Record<string, unknown> | null = null
 let jsmProcess: ChildProcess | null = null
 let calibrationTimer: NodeJS.Timeout | null = null
 let calibrationSecondsSetting = 5
+let pendingUpdateVersion: string | null = null
+let updateReadyToInstall = false
 
+type BackendChoice = 'SDL' | 'legacy'
 const TELEMETRY_PORT = 8974
-const BIN_DIR = app.isPackaged ? path.join(process.resourcesPath, 'bin') : path.join(APP_ROOT, 'bin')
-const STARTUP_FILE = path.join(BIN_DIR, 'OnStartUp.txt')
+let backendChoice: BackendChoice = 'SDL'
+let BIN_DIR = app.isPackaged ? path.join(process.resourcesPath, 'bin', backendChoice) : path.join(APP_ROOT, 'bin', backendChoice)
+let STARTUP_FILE = path.join(BIN_DIR, 'OnStartUp.txt')
 const STARTUP_COMMAND = 'OnStartUp.txt'
-const JSM_EXECUTABLE = path.join(BIN_DIR, process.platform === 'win32' ? 'JoyShockMapper.exe' : 'JoyShockMapper')
-const CONSOLE_INJECTOR = path.join(BIN_DIR, process.platform === 'win32' ? 'jsm-console-injector.exe' : 'jsm-console-injector')
+let JSM_EXECUTABLE = path.join(BIN_DIR, process.platform === 'win32' ? 'JoyShockMapper.exe' : 'JoyShockMapper')
+let CONSOLE_INJECTOR = path.join(BIN_DIR, process.platform === 'win32' ? 'jsm-console-injector.exe' : 'jsm-console-injector')
 const LOG_FILE = path.join(DATA_DIR, 'jsm-gui.log')
 const WINDOW_STATE_FILE = path.join(DATA_DIR, 'window-state.json')
 
-const PROFILE_LIBRARY_DIR = path.join(BIN_DIR, 'profiles-library')
+const PROFILE_LIBRARY_DIR = app.isPackaged
+  ? path.join(process.resourcesPath, 'bin', 'profiles-library')
+  : path.join(APP_ROOT, 'bin', 'profiles-library')
+const CALIBRATION_DIR = app.isPackaged
+  ? path.join(process.resourcesPath, 'bin', 'GyroConfigs')
+  : path.join(APP_ROOT, 'bin', 'GyroConfigs')
 const DEFAULT_PROFILE_NAME = 'Profile 1'
-const DEFAULT_PROFILE_RELATIVE = `profiles-library/${DEFAULT_PROFILE_NAME}.txt`
+const PROFILE_LIBRARY_RELATIVE = path.posix.join('..', 'profiles-library')
+const DEFAULT_PROFILE_RELATIVE = `${PROFILE_LIBRARY_RELATIVE}/${DEFAULT_PROFILE_NAME}.txt`
 const PROFILE_TEMPLATE_LINES = ['RESET_MAPPINGS', 'TELEMETRY_ENABLED = ON', 'TELEMETRY_PORT = 8974']
 const getStartupHeaderLines = () => [
   'TELEMETRY_ENABLED = ON',
@@ -78,19 +90,50 @@ async function ensureRequiredFiles() {
   await ensureActiveProfileExists()
 }
 
+async function loadBackendChoice() {
+  try {
+    const raw = await fs.readFile(BACKEND_FILE, 'utf8')
+    const parsed = JSON.parse(raw)
+    if (parsed === 'SDL' || parsed === 'legacy') {
+      backendChoice = parsed
+    }
+  } catch {
+    backendChoice = 'SDL'
+  }
+  BIN_DIR = app.isPackaged ? path.join(process.resourcesPath, 'bin', backendChoice) : path.join(APP_ROOT, 'bin', backendChoice)
+  STARTUP_FILE = path.join(BIN_DIR, 'OnStartUp.txt')
+  JSM_EXECUTABLE = path.join(BIN_DIR, process.platform === 'win32' ? 'JoyShockMapper.exe' : 'JoyShockMapper')
+  CONSOLE_INJECTOR = path.join(BIN_DIR, process.platform === 'win32' ? 'jsm-console-injector.exe' : 'jsm-console-injector')
+}
+
+async function saveBackendChoice(choice: BackendChoice) {
+  backendChoice = choice
+  await fs.mkdir(path.dirname(BACKEND_FILE), { recursive: true })
+  await fs.writeFile(BACKEND_FILE, JSON.stringify(choice), 'utf8')
+  BIN_DIR = app.isPackaged ? path.join(process.resourcesPath, 'bin', backendChoice) : path.join(APP_ROOT, 'bin', backendChoice)
+  STARTUP_FILE = path.join(BIN_DIR, 'OnStartUp.txt')
+  JSM_EXECUTABLE = path.join(BIN_DIR, process.platform === 'win32' ? 'JoyShockMapper.exe' : 'JoyShockMapper')
+  CONSOLE_INJECTOR = path.join(BIN_DIR, process.platform === 'win32' ? 'jsm-console-injector.exe' : 'jsm-console-injector')
+}
+
 async function ensureLibraryDir() {
   await fs.mkdir(PROFILE_LIBRARY_DIR, { recursive: true })
 }
 
 const sanitizeProfileName = (rawName: string) => {
   const trimmed = rawName?.trim() ?? ''
-  const cleaned = trimmed.replace(/[^a-zA-Z0-9-_ ]/g, '').substring(0, 80)
-  return cleaned.length > 0 ? cleaned : 'Profile'
+  // Allow letters, numbers, spaces, dashes/underscores, parentheses, apostrophes, commas, and periods.
+  const cleaned = trimmed.replace(/[^a-zA-Z0-9-_.(),' ]/g, '').substring(0, 80)
+  const withoutTrailing = cleaned.replace(/[. ]+$/g, '')
+  return withoutTrailing.length > 0 ? withoutTrailing : 'Profile'
 }
 
-const relativeProfilePathFromName = (name: string) => `profiles-library/${name}.txt`
-const absoluteProfilePath = (relativePath: string) =>
-  path.join(BIN_DIR, relativePath.replace(/\//g, path.sep))
+const relativeProfilePathFromName = (name: string) => `${PROFILE_LIBRARY_RELATIVE}/${name}.txt`
+const absoluteProfilePath = (relativePath: string) => {
+  const normalized = relativePath.replace(/\\/g, '/')
+  const stripped = normalized.replace(/^(\.\.\/)?profiles-library\//, '')
+  return path.join(PROFILE_LIBRARY_DIR, stripped.replace(/\//g, path.sep))
+}
 
 async function generateUniqueProfileName(preferred?: string) {
   const existing = await listLibraryProfiles()
@@ -116,6 +159,21 @@ async function generateUniqueProfileName(preferred?: string) {
   while (used.has(candidate.toLowerCase())) {
     counter += 1
     candidate = `${prefix} ${counter}`.trim()
+  }
+  return candidate
+}
+
+async function generateCopyProfileName(baseName: string) {
+  const existing = await listLibraryProfiles()
+  const used = new Set(existing.map(name => name.toLowerCase()))
+  const safeBase = sanitizeProfileName(baseName)
+  const match = safeBase.match(/^(.*?)(?:\s*\((\d+)\))?$/)
+  const root = (match?.[1]?.trim() || safeBase || DEFAULT_PROFILE_NAME).trim() || DEFAULT_PROFILE_NAME
+  let counter = match?.[2] ? parseInt(match[2], 10) : 0
+  let candidate = counter > 0 ? `${root} (${counter})` : root
+  while (used.has(candidate.toLowerCase())) {
+    counter += 1
+    candidate = `${root} (${counter})`
   }
   return candidate
 }
@@ -147,6 +205,13 @@ async function setStartupProfilePath(relativePath: string) {
 
 async function ensureStartupCalibrationBlock() {
   let relative = await getStartupProfilePath()
+  if (relative) {
+    try {
+      await fs.access(absoluteProfilePath(relative))
+    } catch {
+      relative = null
+    }
+  }
   if (!relative) {
     relative = DEFAULT_PROFILE_RELATIVE
   }
@@ -491,8 +556,12 @@ async function createWindow() {
   win = new BrowserWindow({
     width: state.width ?? 1200,
     height: state.height ?? 900,
+    minWidth: 775,
+    minHeight: 600,
     x: state.x,
     y: state.y,
+    title: 'JSM Custom Curve',
+    autoHideMenuBar: true,
     icon: path.join(process.env.VITE_PUBLIC, 'gyro-icon.ico'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.mjs'),
@@ -504,6 +573,12 @@ async function createWindow() {
     win?.webContents.send('main-process-message', (new Date).toLocaleString())
     if (latestTelemetryPacket) {
       win?.webContents.send('telemetry-sample', latestTelemetryPacket)
+    }
+    if (pendingUpdateVersion) {
+      win?.webContents.send('update-available', pendingUpdateVersion)
+    }
+    if (updateReadyToInstall) {
+      win?.webContents.send('update-downloaded')
     }
   })
 
@@ -544,6 +619,8 @@ app.on('activate', () => {
 })
 
 app.whenReady().then(async () => {
+  await loadBackendChoice()
+  await restoreUserDataAfterUpdate()
   await ensureRequiredFiles()
   await loadCalibrationSecondsFromStartup()
   startTelemetryListener()
@@ -551,6 +628,24 @@ app.whenReady().then(async () => {
   setTimeout(() => {
     launchJoyShockMapper(calibrationSecondsSetting).catch(err => console.error('Auto-launch failed', err))
   }, 500)
+
+  autoUpdater.autoDownload = false
+  autoUpdater.checkForUpdates().catch(err => console.error('Update check failed', err))
+
+  autoUpdater.on('update-available', (info) => {
+    pendingUpdateVersion = info.version
+    win?.webContents.send('update-available', info.version)
+  })
+
+  autoUpdater.on('download-progress', (progress) => {
+    win?.webContents.send('update-download-progress', Math.floor(progress.percent))
+  })
+
+  autoUpdater.on('update-downloaded', () => {
+    pendingUpdateVersion = null
+    updateReadyToInstall = true
+    win?.webContents.send('update-downloaded')
+  })
 })
 
 app.on('will-quit', () => {
@@ -563,14 +658,99 @@ app.on('will-quit', () => {
 const normalizeRelativeProfilePath = (input?: string | null) => {
   if (!input) return null
   const normalized = input.replace(/\\/g, '/')
-  if (!normalized.startsWith('profiles-library/')) {
+  const allowedPrefix = normalized.startsWith(PROFILE_LIBRARY_RELATIVE + '/') || normalized.startsWith('profiles-library/')
+  if (!allowedPrefix) {
     return null
   }
-  if (normalized.includes('..')) {
+  if (normalized.includes('../') || normalized.includes('..\\')) {
     return null
   }
   return normalized
 }
+
+async function backupUserDataForUpdate() {
+  const backupDir = path.join(DATA_DIR, 'update-backup')
+  const backupProfilesDir = path.join(backupDir, 'profiles-library')
+  try {
+    await fs.mkdir(backupProfilesDir, { recursive: true })
+    const profiles = await fs.readdir(PROFILE_LIBRARY_DIR).catch(() => [])
+    for (const file of profiles) {
+      if (file.toLowerCase().endsWith('.txt')) {
+        await fs.copyFile(
+          path.join(PROFILE_LIBRARY_DIR, file),
+          path.join(backupProfilesDir, file)
+        )
+      }
+    }
+    try {
+      await fs.copyFile(STARTUP_FILE, path.join(backupDir, 'OnStartUp.txt'))
+    } catch {
+      // OnStartUp.txt may not exist yet — not a fatal error
+    }
+    await writeLog('User data backed up for update')
+  } catch (err) {
+    await writeLog(`Failed to backup user data for update: ${String(err)}`)
+    throw err
+  }
+}
+
+async function restoreUserDataAfterUpdate() {
+  const backupDir = path.join(DATA_DIR, 'update-backup')
+  try {
+    await fs.access(backupDir)
+  } catch {
+    return // No backup present — normal startup
+  }
+  try {
+    const backupProfilesDir = path.join(backupDir, 'profiles-library')
+    await fs.mkdir(PROFILE_LIBRARY_DIR, { recursive: true })
+    const files = await fs.readdir(backupProfilesDir).catch(() => [])
+    for (const file of files) {
+      if (file.toLowerCase().endsWith('.txt')) {
+        await fs.copyFile(
+          path.join(backupProfilesDir, file),
+          path.join(PROFILE_LIBRARY_DIR, file)
+        )
+      }
+    }
+    try {
+      await fs.copyFile(path.join(backupDir, 'OnStartUp.txt'), STARTUP_FILE)
+    } catch {
+      // Backed-up OnStartUp.txt may not exist — ensureStartupCalibrationBlock will recreate it
+    }
+    await fs.rm(backupDir, { recursive: true, force: true })
+    await writeLog('User data restored after update')
+  } catch (err) {
+    await writeLog(`Failed to restore user data after update: ${String(err)}`)
+    // Don't throw — proceed with startup even if restore partially fails
+  }
+}
+
+ipcMain.handle('open-external', (_event, url: string) => shell.openExternal(url))
+ipcMain.handle('download-update', () => autoUpdater.downloadUpdate())
+ipcMain.handle('install-update', async () => {
+  await backupUserDataForUpdate()
+  autoUpdater.quitAndInstall(true, true)
+})
+
+ipcMain.handle('get-backend-choice', async () => backendChoice)
+
+ipcMain.handle('set-backend-choice', async (_event, choice: BackendChoice) => {
+  if (choice !== 'SDL' && choice !== 'legacy') {
+    return { success: false, backend: backendChoice }
+  }
+  if (choice === backendChoice) {
+    return { success: true, backend: backendChoice }
+  }
+  await terminateJoyShockMapper()
+  await saveBackendChoice(choice)
+  await ensureRequiredFiles()
+  await loadCalibrationSecondsFromStartup()
+  setTimeout(() => {
+    launchJoyShockMapper(calibrationSecondsSetting).catch(err => console.error('Auto-launch failed after backend switch', err))
+  }, 300)
+  return { success: true, backend: backendChoice }
+})
 
 ipcMain.handle('apply-profile', async (_event, profileRelativePath: string | undefined, content: string) => {
   await ensureRequiredFiles()
@@ -670,6 +850,20 @@ ipcMain.handle('library-delete-profile', async (_event, name: string) => {
   return { success: true, fallback }
 })
 
+ipcMain.handle('library-copy-active-profile', async () => {
+  await ensureRequiredFiles()
+  const activeRelative = await ensureActiveProfileExists()
+  const activeAbsolute = absoluteProfilePath(activeRelative)
+  const content = await fs.readFile(activeAbsolute, 'utf8')
+  const activeName = path.basename(activeRelative, path.extname(activeRelative))
+  const copyName = await generateCopyProfileName(activeName)
+  const copyRelative = relativeProfilePathFromName(copyName)
+  const copyAbsolute = absoluteProfilePath(copyRelative)
+  await fs.writeFile(copyAbsolute, content ?? '', 'utf8')
+  await setStartupProfilePath(copyRelative)
+  return { name: copyName, path: copyRelative, content }
+})
+
 ipcMain.handle('recalibrate-gyro', async () => {
   const injected = await tryInjectConsoleCommand(STARTUP_COMMAND)
   if (injected) {
@@ -708,9 +902,10 @@ ipcMain.handle('set-calibration-seconds', async (_event, seconds: number) => {
 
 ipcMain.handle('load-calibration-preset', async () => {
   await ensureRequiredFiles()
+  await fs.mkdir(CALIBRATION_DIR, { recursive: true })
   const active = (await getStartupProfilePath()) ?? DEFAULT_PROFILE_RELATIVE
-  const calibrationRelative = 'GyroConfigs/_3Dcalibrate.txt'
-  const calibrationAbsolute = absoluteProfilePath(calibrationRelative)
+  const calibrationRelative = path.posix.join('..', 'GyroConfigs', '_3Dcalibrate.txt')
+  const calibrationAbsolute = path.join(CALIBRATION_DIR, '_3Dcalibrate.txt')
   try {
     await fs.access(calibrationAbsolute)
   } catch {
@@ -723,8 +918,9 @@ ipcMain.handle('load-calibration-preset', async () => {
 
 ipcMain.handle('read-calibration-preset', async () => {
   await ensureRequiredFiles()
-  const calibrationRelative = 'GyroConfigs/_3Dcalibrate.txt'
-  const calibrationAbsolute = absoluteProfilePath(calibrationRelative)
+  await fs.mkdir(CALIBRATION_DIR, { recursive: true })
+  const calibrationRelative = path.posix.join('..', 'GyroConfigs', '_3Dcalibrate.txt')
+  const calibrationAbsolute = path.join(CALIBRATION_DIR, '_3Dcalibrate.txt')
   try {
     const content = await fs.readFile(calibrationAbsolute, 'utf8')
     return { success: true, calibrationProfile: calibrationRelative, content }
@@ -736,11 +932,12 @@ ipcMain.handle('read-calibration-preset', async () => {
 
 ipcMain.handle('save-calibration-preset', async (_event, content: string) => {
   await ensureRequiredFiles()
-  const calibrationRelative = 'GyroConfigs/_3Dcalibrate.txt'
-  const calibrationAbsolute = absoluteProfilePath(calibrationRelative)
+  await fs.mkdir(CALIBRATION_DIR, { recursive: true })
+  const calibrationRelative = path.posix.join('..', 'GyroConfigs', '_3Dcalibrate.txt')
+  const calibrationAbsolute = path.join(CALIBRATION_DIR, '_3Dcalibrate.txt')
   try {
     await fs.writeFile(calibrationAbsolute, content ?? '', 'utf8')
-    return { success: true }
+    return { success: true, calibrationProfile: calibrationRelative }
   } catch (err) {
     await writeLog(`Failed to save calibration preset: ${String(err)}`)
     return { success: false }

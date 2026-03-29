@@ -7,6 +7,7 @@ export type TelemetrySample = {
   sensX?: number
   sensY?: number
   curve?: string
+  sampleHz?: number
   devices?: {
     handle: number
     type: number

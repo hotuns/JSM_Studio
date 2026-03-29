@@ -8,6 +8,35 @@
 #include "SettingsManager.h"
 #include "../src/quatMaths.cpp"
 
+struct LowPassFilter1E
+{
+	float prev = 0.f;
+	bool initialized = false;
+	float filter(float x, float alpha)
+	{
+		if (!initialized) { prev = x; initialized = true; }
+		prev = alpha * x + (1.f - alpha) * prev;
+		return prev;
+	}
+	void reset() { initialized = false; }
+};
+
+struct OneEuroFilter
+{
+	LowPassFilter1E xFilt, dxFilt;
+	float xPrev = 0.f;
+	bool initialized = false;
+	static constexpr float dCutoff   = 1.0f;
+
+	static float alpha(float cutoff, float dt)
+	{
+		float tau = 1.f / (6.2831853f * cutoff);
+		return 1.f / (1.f + tau / dt);
+	}
+	float filter(float x, float dt);
+	void reset() { initialized = false; xFilt.reset(); dxFilt.reset(); }
+};
+
 // An instance of this class represents a single controller device that JSM is listening to.
 class JoyShock
 {
@@ -46,6 +75,10 @@ public:
 	AxisSignPair getSetting<AxisSignPair>(SettingID index);
 
 	void getSmoothedGyro(float x, float y, float length, float bottomThreshold, float topThreshold, int maxSamples, float &outX, float &outY);
+	void applyGyroDecaySmoothing(float rawX, float rawY, float deltaTime, float smoothingTime, float threshold, float &outX, float &outY);
+	void disableGyroDecaySmoothing();
+	void applyOneEuroFilter(float rawX, float rawY, float deltaTime, float &outX, float &outY);
+	void resetOneEuroFilter();
 
 	void handleButtonChange(ButtonID id, bool pressed, int touchpadID = -1);
 
@@ -102,6 +135,10 @@ public:
 	float gyroXVelocity = 0.f;
 	float gyroYVelocity = 0.f;
 
+	std::deque<std::pair<std::chrono::steady_clock::time_point, float>> decelBrakeHistory;
+	float decelBrakeEngagement = 0.f;
+	float decelBrakeOmegaRaw = 0.f;
+
 private:
 	// this large functions is defined further down
 	float handleFlickStick(float stickX, float stickY, Stick &stick, float stickLength, StickMode mode);
@@ -130,6 +167,13 @@ private:
 
 	array<FloatXY, MAX_GYRO_SAMPLES> _gyroSamples;
 	int _frontGyroSample = 0;
+	float _gyroDecayX = 0.f;
+	float _gyroDecayY = 0.f;
+	bool _gyroDecayInit = false;
+	bool _gyroDecayEnabledLast = false;
+
+	OneEuroFilter _oneEuroX;
+	OneEuroFilter _oneEuroY;
 
 	Vec _lastGrav = Vec(0.f, -1.f, 0.f);
 
