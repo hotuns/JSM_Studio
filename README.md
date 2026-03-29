@@ -2,12 +2,9 @@
 
 A community fork of [JoyShockMapper](https://github.com/Electronicks/JoyShockMapper) that adds custom features such as acceleration curves and a user interface for creating configurations. For full JSM command documentation, use the built-in documentation page inside the app.
 
-![Gyro Behavior](docs/homepage.png)
-![Acceleration Curve](docs/acceleration.png)
-![Keybinds](docs/keybinds.png)
-
 ## Quick Start
 - Download and run the installer (Windows): [Latest release](https://github.com/evan1mclean/JSM_custom_curve/releases)
+- Windows SmartScreen warning: When first launching, Windows Defender may flag the app as a potential risk. This is because the app is unsigned and I don't want to pay money to do it... click **More info** then **Run anyway**
 - If using [HidHide](https://github.com/nefarius/HidHide) — a tool that hides your controller from games to prevent double inputs when using a full keyboard and mouse layout — whitelist the JoyShockMapper.exe in both `JoyShockMapper Custom Curve\resources\bin\SDL` and `\Legacy` folders
 - The app launches JSM in the background when it starts and shuts it down when you close the GUI
 - The app will automatically check for new updates on launch
@@ -16,11 +13,15 @@ A community fork of [JoyShockMapper](https://github.com/Electronicks/JoyShockMap
 
 ### Custom JSM Features
 - **Custom acceleration curves**: Natural, Power, Quadratic, Sigmoid, and Jump curves
-- **One Euro Filter**: Adaptive low-pass filter that suppresses jitter at rest while letting fast movement through with minimal latency.
+- **One Euro Filter**: Adaptive low-pass filter that suppresses jitter at rest while letting fast movement through with minimal latency
 - **Gyro smoothing decay**: Makes the smoothing window shrink as gyro speed increases, so fast inputs receive progressively less smoothing
 - **Yaw + Roll gyro space** with adjustable roll contribution
 - **Gyro angle snapping** with optional smooth ease transition
 - **Deceleration brake** to reduce cursor overshoot after fast flicks
+
+<div align="center">
+<img src="docs/acceleration.png" width="750" alt="Acceleration Curve">
+</div>
 
 ## GUI Features
 
@@ -33,6 +34,11 @@ The GUI covers most JSM settings without touching the command line. For advanced
 - Guide for getting Real World Calibration for a given game
 - SDL / Legacy backend switcher
 - Light and dark theme toggle
+
+<div align="center">
+<img src="docs/homepage.png" width="750" alt="Gyro Behavior">
+<img src="docs/keybinds.png" width="750" alt="Keybinds">
+</div>
 
 ## Installation for Devs
 
