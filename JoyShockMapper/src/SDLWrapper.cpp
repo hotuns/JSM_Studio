@@ -237,6 +237,31 @@ public:
 
 struct SdlInstance : public JslWrapper
 {
+private:
+#ifdef _WIN32
+	// Raise process priority, but not too high.
+	// https://learn.microsoft.com/en-us/windows/win32/procthread/scheduling-priorities
+	void RaiseProcessPriority()
+	{
+		SetPriorityClass(GetCurrentProcess(), ABOVE_NORMAL_PRIORITY_CLASS);
+	}
+
+	// Raise thread priority, but not too high.
+	// https://learn.microsoft.com/en-us/windows/win32/procthread/scheduling-priorities
+	void RaiseThreadPriority()
+	{
+		SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_HIGHEST);
+	}
+#else
+	void RaiseProcessPriority()
+	{
+	}
+
+	void RaiseThreadPriority()
+	{
+	}
+#endif // _WIN32
+
 public:
 	SdlInstance()
 	{
@@ -263,6 +288,8 @@ public:
 
 	int pollDevices()
 	{
+		RaiseThreadPriority();
+
 		while (keep_polling)
 		{
 			auto tick_time = SettingsManager::get<float>(SettingID::TICK_TIME)->value();
@@ -303,6 +330,8 @@ public:
 
 	int ConnectDevices() override
 	{
+		RaiseProcessPriority();
+
 		bool isFalse = false;
 		if (keep_polling.compare_exchange_strong(isFalse, true))
 		{
