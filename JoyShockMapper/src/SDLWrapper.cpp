@@ -239,6 +239,22 @@ struct SdlInstance : public JslWrapper
 {
 private:
 #ifdef _WIN32
+	// Make Windows 11 honor timer resolution when window is minimized or
+	// another application is fullscreen. EcoQoS is also disabled.
+	// https://learn.microsoft.com/en-us/windows/win32/api/timeapi/nf-timeapi-timebeginperiod
+	// https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-setprocessinformation
+	void DisableProcessPowerThrottling()
+	{
+		PROCESS_POWER_THROTTLING_STATE state;
+		memset(&state, 0, sizeof(state));
+		state.Version = PROCESS_POWER_THROTTLING_CURRENT_VERSION;
+		state.ControlMask = PROCESS_POWER_THROTTLING_EXECUTION_SPEED
+		                    | PROCESS_POWER_THROTTLING_IGNORE_TIMER_RESOLUTION;
+		state.StateMask = 0;
+		SetProcessInformation(GetCurrentProcess(), ProcessPowerThrottling,
+		                      &state, sizeof(state));
+	}
+
 	// Raise process priority, but not too high.
 	// https://learn.microsoft.com/en-us/windows/win32/procthread/scheduling-priorities
 	void RaiseProcessPriority()
@@ -253,6 +269,10 @@ private:
 		SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_HIGHEST);
 	}
 #else
+	void DisableProcessPowerThrottling()
+	{
+	}
+
 	void RaiseProcessPriority()
 	{
 	}
@@ -330,6 +350,7 @@ public:
 
 	int ConnectDevices() override
 	{
+		DisableProcessPowerThrottling();
 		RaiseProcessPriority();
 
 		bool isFalse = false;
