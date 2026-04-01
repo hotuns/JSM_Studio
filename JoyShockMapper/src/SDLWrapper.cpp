@@ -321,6 +321,46 @@ private:
 			ZwSetTimerResolution(win_timer_res, TRUE, &cur_res);
 		}
 	}
+
+	uint64_t next_poll_time = 0;
+
+	void InitPollingTimer()
+	{
+		next_poll_time = SDL_GetTicksNS();
+	}
+
+	void PollingTimer(uint64_t interval_ms)
+	{
+		const uint64_t interval_ns = interval_ms * 1000000ULL;
+		next_poll_time += interval_ns;
+
+		uint64_t now = SDL_GetTicksNS();
+		if (now < next_poll_time)
+		{
+			// Sleep when delay is longer than timer resolution.
+			const uint64_t delay_thresh_ns = now + timer_res_ns;
+			if (delay_thresh_ns < next_poll_time)
+			{
+				// Leave a gap equal to the timer resolution.
+				const uint64_t delay_ns = next_poll_time - delay_thresh_ns;
+				ReapplyMaxTimerRes();
+				SDL_DelayNS(delay_ns);
+				now = SDL_GetTicksNS();
+			}
+
+			// Busy-wait for the remaining time.
+			while (now < next_poll_time)
+			{
+				SDL_CPUPauseInstruction();
+				now = SDL_GetTicksNS();
+			}
+		}
+		else
+		{
+			// Fell behind.
+			next_poll_time = now;
+		}
+	}
 #else
 	void DisableProcessPowerThrottling()
 	{
@@ -336,6 +376,15 @@ private:
 
 	void SetMaxTimerResolution()
 	{
+	}
+
+	void InitPollingTimer()
+	{
+	}
+
+	void PollingTimer(uint64_t interval_ms)
+	{
+		SDL_DelayNS(interval_ms * 1000000ULL);
 	}
 #endif // _WIN32
 
@@ -368,11 +417,12 @@ public:
 	int pollDevices()
 	{
 		RaiseThreadPriority();
+		InitPollingTimer();
 
 		while (keep_polling)
 		{
 			auto tick_time = SettingsManager::get<float>(SettingID::TICK_TIME)->value();
-			SDL_Delay(Uint32(tick_time));
+			PollingTimer(uint64_t(tick_time));
 
 			lock_guard guard(controller_lock);
 			SDL_UpdateGamepads();
