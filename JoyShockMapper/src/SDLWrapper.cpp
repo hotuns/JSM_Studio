@@ -268,6 +268,59 @@ private:
 	{
 		SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_HIGHEST);
 	}
+
+	typedef long NTSTATUS;
+	typedef NTSTATUS (NTAPI *PZEQTR)(PULONG MinRes, PULONG MaxRes, PULONG CurrentRes);
+	typedef NTSTATUS (NTAPI *PZESTR)(ULONG DesiredRes, BOOLEAN SetRes, PULONG CurrentRes);
+	PZEQTR ZwQueryTimerResolution = nullptr;
+	PZESTR ZwSetTimerResolution = nullptr;
+	ULONG win_timer_res = 0;
+	uint64_t timer_res_ns = 0;
+
+	// Reduce system clock interrupt interval to 0.5 ms. Windows default is
+	// 15.625 ms (1000/64). SDL default is 1 ms but it uses timeBeginPeriod.
+	void SetMaxTimerResolution()
+	{
+		ZwQueryTimerResolution = (PZEQTR)GetProcAddress(
+		    GetModuleHandle(TEXT("ntdll.dll")), "ZwQueryTimerResolution");
+		ZwSetTimerResolution = (PZESTR)GetProcAddress(
+		    GetModuleHandle(TEXT("ntdll.dll")), "ZwSetTimerResolution");
+		ULONG min_res = 0, max_res = 0, cur_res = 0;
+		bool result = false;
+
+		if (ZwQueryTimerResolution != nullptr
+		    && ZwQueryTimerResolution(&min_res, &max_res, &cur_res) == 0)
+		{
+			if (ZwSetTimerResolution != nullptr
+			    && ZwSetTimerResolution(max_res, TRUE, &cur_res) == 0)
+			{
+				win_timer_res = cur_res;
+				timer_res_ns = win_timer_res * 100; // 100-ns to ns.
+				result = true;
+			}
+		}
+
+		if (!result)
+		{
+			// Don't call again.
+			ZwQueryTimerResolution = nullptr;
+			ZwSetTimerResolution = nullptr;
+
+			// Use safe defaults.
+			win_timer_res = 10000;  // 1 ms in 100-ns units.
+			timer_res_ns = 1000000; // 1 ms.
+		}
+	}
+
+	// Call before using a waitable timer to ensure resolution is still correct.
+	void ReapplyMaxTimerRes()
+	{
+		if (ZwSetTimerResolution != nullptr)
+		{
+			ULONG cur_res = 0;
+			ZwSetTimerResolution(win_timer_res, TRUE, &cur_res);
+		}
+	}
 #else
 	void DisableProcessPowerThrottling()
 	{
@@ -278,6 +331,10 @@ private:
 	}
 
 	void RaiseThreadPriority()
+	{
+	}
+
+	void SetMaxTimerResolution()
 	{
 	}
 #endif // _WIN32
@@ -298,7 +355,9 @@ public:
 		SDL_SetHint(SDL_HINT_JOYSTICK_HIDAPI_SWITCH_HOME_LED, "0");
 		SDL_SetHint(SDL_HINT_JOYSTICK_ENHANCED_REPORTS, "1");
 		SDL_SetHint(SDL_HINT_JOYSTICK_THREAD, "1");
+		SDL_SetHintWithPriority(SDL_HINT_TIMER_RESOLUTION, "1", SDL_HINT_OVERRIDE);
 		SDL_Init(SDL_INIT_GAMEPAD);
+		SetMaxTimerResolution();
 	}
 
 	virtual ~SdlInstance()
