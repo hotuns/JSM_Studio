@@ -1425,13 +1425,18 @@ void joyShockPollCallback(int jcHandle, JOY_SHOCK_STATE state, JOY_SHOCK_STATE l
 		case JS_TYPE_XBOX_SERIES:
 			jc->handleButtonChange(ButtonID::CAPTURE, buttons & (1 << JSOFFSET_CAPTURE));
 			break;
-		default: // Switch Pro controllers and left joycon
-		{
+		case JS_TYPE_JOYCON_LEFT:
 			jc->handleButtonChange(ButtonID::CAPTURE, buttons & (1 << JSOFFSET_CAPTURE));
 			jc->handleButtonChange(ButtonID::LSL, buttons & (1 << JSOFFSET_SL));
 			jc->handleButtonChange(ButtonID::LSR, buttons & (1 << JSOFFSET_SR));
-		}
-		break;
+			break;
+		default:
+			jc->handleButtonChange(ButtonID::CAPTURE, buttons & (1 << JSOFFSET_CAPTURE));
+			jc->handleButtonChange(ButtonID::LSL, buttons & (1 << JSOFFSET_SL));
+			jc->handleButtonChange(ButtonID::RSR, buttons & (1 << JSOFFSET_SR));
+			jc->handleButtonChange(ButtonID::LSR, buttons & (1 << JSOFFSET_FNL));
+			jc->handleButtonChange(ButtonID::RSL, buttons & (1 << JSOFFSET_FNR));
+			break;
 		}
 	}
 	else // split type IS right
