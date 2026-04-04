@@ -217,7 +217,7 @@ public:
 	virtual MOTION_STATE GetMotionState(int deviceId) = 0;
 	virtual TOUCH_STATE GetTouchState(int deviceId, bool previous = false) = 0;
 	virtual bool GetTouchpadDimension(int deviceId, int& sizeX, int& sizeY) = 0;
-	virtual int GetButtons(int deviceId) = 0;
+	virtual uint64_t GetButtons(int deviceId) = 0;
 	virtual float GetLeftX(int deviceId) = 0;
 	virtual float GetLeftY(int deviceId) = 0;
 	virtual float GetRightX(int deviceId) = 0;
