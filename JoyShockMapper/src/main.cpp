@@ -1430,6 +1430,9 @@ void joyShockPollCallback(int jcHandle, JOY_SHOCK_STATE state, JOY_SHOCK_STATE l
 			jc->handleButtonChange(ButtonID::LSL, buttons & (1ULL << JSOFFSET_SL));
 			jc->handleButtonChange(ButtonID::LSR, buttons & (1ULL << JSOFFSET_SR));
 			break;
+		case JS_TYPE_PRO_CONTROLLER:
+			jc->handleButtonChange(ButtonID::CAPTURE, buttons & (1ULL << JSOFFSET_CAPTURE));
+			break;
 		case JS_TYPE_HORI_STEAM:
 			jc->handleButtonChange(ButtonID::LSL, buttons & (1ULL << JSOFFSET_SL));        // L4 back button
 			jc->handleButtonChange(ButtonID::RSR, buttons & (1ULL << JSOFFSET_SR));        // R4 back button
