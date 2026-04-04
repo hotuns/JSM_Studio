@@ -102,33 +102,28 @@ struct ControllerDevice
 						break;
 					case SDL_GamepadType::SDL_GAMEPAD_TYPE_XBOXONE:
 						_ctrlr_type = JS_TYPE_XBOXONE;
-						if (_vendorId == 0x0e6f) // PDP Vendor ID
+						switch (_vendorId)
 						{
+						case JS_VENDOR_PDP:
+						case JS_VENDOR_POWERA:
 							_ctrlr_type = JS_TYPE_XBOX_SERIES;
-						}
-						if (_vendorId == 0x24c6) // PowerA
-						{
-							_ctrlr_type = JS_TYPE_XBOX_SERIES;
-						}
-						if (_vendorId == 0x045e) // Microsoft Vendor ID
-						{
+							break;
+						case JS_VENDOR_MICROSOFT:
 							switch (_productId)
 							{
-							case(0x02e3): // Xbox Elite Series 1
-								// Intentional fall through to the next case
-							case(0x0b05): //Xbox Elite Series 2 - Bluetooth
-								// Intentional fall through to the next case
-							case(0x0b00): //Xbox Elite Series 2
-							case (0x02ff): //XBOXGIP driver software PID - not sure what this is, might be from Valve's driver for using Elite paddles
-								// in any case, this is what my ELite Series 2 is showing as currently, so adding it here for now    
+							case JS_PRODUCT_XBOX_ONE_ELITE_SERIES_1:
+							case JS_PRODUCT_XBOX_ONE_ELITE_SERIES_2:
+							case JS_PRODUCT_XBOX_ONE_ELITE_SERIES_2_BLUETOOTH:
+							case JS_PRODUCT_XBOX_ONE_ELITE_SERIES_2_BLE:
+							case JS_PRODUCT_XBOX_ONE_XBOXGIP_CONTROLLER:
 								_ctrlr_type = JS_TYPE_XBOXONE_ELITE;
 								break;
-							case(0x0b12): //Xbox Series controller
-								// Intentional fall through to the next case
-							case(0x0b13): // Xbox Series controller - bluetooth
+							case JS_PRODUCT_XBOX_SERIES_X:
+							case JS_PRODUCT_XBOX_SERIES_X_BLE:
 								_ctrlr_type = JS_TYPE_XBOX_SERIES;
 								break;
 							}
+							break;
 						}
 						break;
 					}
