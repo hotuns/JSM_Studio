@@ -83,6 +83,35 @@ struct ControllerDevice
 
 					switch (_vendorId)
 					{
+					case JS_VENDOR_8BITDO:
+						switch (_productId)
+						{
+						case JS_PRODUCT_8BITDO_SF30_PRO:
+							_ctrlr_type = JS_TYPE_8BITDO_SF30_PRO;
+							break;
+						case JS_PRODUCT_8BITDO_SF30_PRO_BT:
+							_ctrlr_type = JS_TYPE_8BITDO_SF30_PRO_BT;
+							break;
+						case JS_PRODUCT_8BITDO_SN30_PRO:
+							_ctrlr_type = JS_TYPE_8BITDO_SN30_PRO;
+							break;
+						case JS_PRODUCT_8BITDO_SN30_PRO_BT:
+							_ctrlr_type = JS_TYPE_8BITDO_SN30_PRO_BT;
+							break;
+						case JS_PRODUCT_8BITDO_PRO_2:
+							_ctrlr_type = JS_TYPE_8BITDO_PRO_2;
+							break;
+						case JS_PRODUCT_8BITDO_PRO_2_BT:
+							_ctrlr_type = JS_TYPE_8BITDO_PRO_2_BT;
+							break;
+						case JS_PRODUCT_8BITDO_PRO_3:
+							_ctrlr_type = JS_TYPE_8BITDO_PRO_3;
+							break;
+						case JS_PRODUCT_8BITDO_ULTIMATE2_WIRELESS:
+							_ctrlr_type = JS_TYPE_8BITDO_ULTIMATE2_WIRELESS;
+							break;
+						}
+						break;
 					case JS_VENDOR_HORI:
 						if (_productId == JS_PRODUCT_HORI_STEAM_CONTROLLER ||
 							_productId == JS_PRODUCT_HORI_STEAM_CONTROLLER_BT)
@@ -698,6 +727,26 @@ public:
 			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_LEFT_PADDLE1) ? 1ULL << JSOFFSET_SL : 0;   // L4 back button
 			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_MISC2) ? 1ULL << JSOFFSET_LMINI : 0;       // L5 mini shoulder button
 			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_MISC3) ? 1ULL << JSOFFSET_RMINI : 0;       // R5 mini shoulder button
+			break;
+		// 8BitDo controllers with gyro and no additional buttons.
+		case JS_TYPE_8BITDO_SF30_PRO:
+		case JS_TYPE_8BITDO_SF30_PRO_BT:
+		case JS_TYPE_8BITDO_SN30_PRO:
+		case JS_TYPE_8BITDO_SN30_PRO_BT:
+			break;
+		// 8BitDo controllers with gyro and two additional buttons.
+		case JS_TYPE_8BITDO_PRO_2:
+		case JS_TYPE_8BITDO_PRO_2_BT:
+			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_RIGHT_PADDLE1) ? 1ULL << JSOFFSET_SR : 0; // P1 back button (right)
+			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_LEFT_PADDLE1) ? 1ULL << JSOFFSET_SL : 0;  // P2 back button (left)
+			break;
+		// 8BitDo controllers with gyro and four additional buttons.
+		case JS_TYPE_8BITDO_PRO_3:
+		case JS_TYPE_8BITDO_ULTIMATE2_WIRELESS:
+			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_RIGHT_PADDLE1) ? 1ULL << JSOFFSET_RMINI : 0; // R4 mini shoulder button
+			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_LEFT_PADDLE1) ? 1ULL << JSOFFSET_LMINI : 0;  // L4 mini shoulder button
+			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_RIGHT_PADDLE2) ? 1ULL << JSOFFSET_SR : 0;    // PR back button
+			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_LEFT_PADDLE2) ? 1ULL << JSOFFSET_SL : 0;     // PL back button
 			break;
 		default:
 			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_MISC1) ? 1ULL << JSOFFSET_CAPTURE : 0;

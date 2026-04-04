@@ -58,6 +58,14 @@ inline bool operator!=(const AdaptiveTriggerSetting &lhs, const AdaptiveTriggerS
 #define JS_TYPE_XBOX_SERIES 8
 #define JS_TYPE_HORI_STEAM 9
 #define JS_TYPE_G7_PRO_8K 10
+#define JS_TYPE_8BITDO_SF30_PRO 11
+#define JS_TYPE_8BITDO_SF30_PRO_BT 12
+#define JS_TYPE_8BITDO_SN30_PRO 13
+#define JS_TYPE_8BITDO_SN30_PRO_BT 14
+#define JS_TYPE_8BITDO_PRO_2 15
+#define JS_TYPE_8BITDO_PRO_2_BT 16
+#define JS_TYPE_8BITDO_PRO_3 17
+#define JS_TYPE_8BITDO_ULTIMATE2_WIRELESS 18
 
 #define JS_SPLIT_TYPE_LEFT 1
 #define JS_SPLIT_TYPE_RIGHT 2
@@ -65,6 +73,7 @@ inline bool operator!=(const AdaptiveTriggerSetting &lhs, const AdaptiveTriggerS
 
 // USB VID values
 #define JS_VENDOR_UNKNOWN 0
+#define JS_VENDOR_8BITDO 0x2dc8
 #define JS_VENDOR_GAMESIR 0x3537
 #define JS_VENDOR_HORI 0x0f0d
 #define JS_VENDOR_MICROSOFT 0x045e
@@ -73,6 +82,14 @@ inline bool operator!=(const AdaptiveTriggerSetting &lhs, const AdaptiveTriggerS
 
 // USB PID values
 #define JS_PRODUCT_UNKNOWN 0
+#define JS_PRODUCT_8BITDO_SF30_PRO 0x6000
+#define JS_PRODUCT_8BITDO_SF30_PRO_BT 0x6100
+#define JS_PRODUCT_8BITDO_SN30_PRO 0x6001
+#define JS_PRODUCT_8BITDO_SN30_PRO_BT 0x6101
+#define JS_PRODUCT_8BITDO_PRO_2 0x6003
+#define JS_PRODUCT_8BITDO_PRO_2_BT 0x6006
+#define JS_PRODUCT_8BITDO_PRO_3 0x6009
+#define JS_PRODUCT_8BITDO_ULTIMATE2_WIRELESS 0x6012
 #define JS_PRODUCT_GAMESIR_GAMEPAD_G7_PRO_8K 0x10B8
 #define JS_PRODUCT_HORI_STEAM_CONTROLLER 0x01ab
 #define JS_PRODUCT_HORI_STEAM_CONTROLLER_BT 0x0196
