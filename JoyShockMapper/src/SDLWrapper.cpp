@@ -150,6 +150,11 @@ struct ControllerDevice
 						{
 							_ctrlr_type = JS_TYPE_G7_PRO_8K;
 						}
+					case JS_VENDOR_NINTENDO:
+						if (_productId == JS_PRODUCT_NINTENDO_SWITCH2_PRO)
+						{
+							_ctrlr_type = JS_TYPE_SWITCH2_PRO_CONTROLLER;
+						}
 						break;
 					}
 
@@ -726,6 +731,12 @@ public:
 			break;
 		case JS_TYPE_PRO_CONTROLLER:
 			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_MISC1) ? 1ULL << JSOFFSET_CAPTURE : 0;
+			break;
+		case JS_TYPE_SWITCH2_PRO_CONTROLLER:
+			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_MISC1) ? 1ULL << JSOFFSET_CAPTURE : 0;    // Capture button
+			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_RIGHT_PADDLE1) ? 1ULL << JSOFFSET_SR : 0; // GR back button
+			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_LEFT_PADDLE1) ? 1ULL << JSOFFSET_SL : 0;  // GL back button
+			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_MISC2) ? 1ULL << JSOFFSET_MISC1 : 0;      // C button
 			break;
 		case JS_TYPE_DS:
 			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_MISC1) ? 1ULL << JSOFFSET_MIC : 0;

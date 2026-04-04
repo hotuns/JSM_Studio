@@ -70,6 +70,7 @@ inline bool operator!=(const AdaptiveTriggerSetting &lhs, const AdaptiveTriggerS
 #define JS_TYPE_FLYDIGI_VADER3_PRO 20
 #define JS_TYPE_FLYDIGI_VADER4_PRO 21
 #define JS_TYPE_FLYDIGI_VADER5_PRO 22
+#define JS_TYPE_SWITCH2_PRO_CONTROLLER 23
 
 #define JS_SPLIT_TYPE_LEFT 1
 #define JS_SPLIT_TYPE_RIGHT 2
@@ -83,6 +84,7 @@ inline bool operator!=(const AdaptiveTriggerSetting &lhs, const AdaptiveTriggerS
 #define JS_VENDOR_GAMESIR 0x3537
 #define JS_VENDOR_HORI 0x0f0d
 #define JS_VENDOR_MICROSOFT 0x045e
+#define JS_VENDOR_NINTENDO 0x057e
 #define JS_VENDOR_PDP 0x0e6f
 #define JS_VENDOR_POWERA 0x24c6
 
@@ -102,6 +104,7 @@ inline bool operator!=(const AdaptiveTriggerSetting &lhs, const AdaptiveTriggerS
 #define JS_PRODUCT_GAMESIR_GAMEPAD_G7_PRO_8K 0x10B8
 #define JS_PRODUCT_HORI_STEAM_CONTROLLER 0x01ab
 #define JS_PRODUCT_HORI_STEAM_CONTROLLER_BT 0x0196
+#define JS_PRODUCT_NINTENDO_SWITCH2_PRO 0x2069
 #define JS_PRODUCT_XBOX_ONE_ELITE_SERIES_1 0x02e3
 #define JS_PRODUCT_XBOX_ONE_ELITE_SERIES_2 0x0b00
 #define JS_PRODUCT_XBOX_ONE_ELITE_SERIES_2_BLUETOOTH 0x0b05
