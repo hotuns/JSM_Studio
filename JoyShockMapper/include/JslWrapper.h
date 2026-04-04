@@ -47,6 +47,7 @@ inline bool operator!=(const AdaptiveTriggerSetting &lhs, const AdaptiveTriggerS
 
 #else
 
+#define JS_TYPE_UNKNOWN 0
 #define JS_TYPE_JOYCON_LEFT 1
 #define JS_TYPE_JOYCON_RIGHT 2
 #define JS_TYPE_PRO_CONTROLLER 3
