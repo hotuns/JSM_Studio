@@ -66,6 +66,10 @@ inline bool operator!=(const AdaptiveTriggerSetting &lhs, const AdaptiveTriggerS
 #define JS_TYPE_8BITDO_PRO_2_BT 16
 #define JS_TYPE_8BITDO_PRO_3 17
 #define JS_TYPE_8BITDO_ULTIMATE2_WIRELESS 18
+#define JS_TYPE_FLYDIGI_APEX5 19
+#define JS_TYPE_FLYDIGI_VADER3_PRO 20
+#define JS_TYPE_FLYDIGI_VADER4_PRO 21
+#define JS_TYPE_FLYDIGI_VADER5_PRO 22
 
 #define JS_SPLIT_TYPE_LEFT 1
 #define JS_SPLIT_TYPE_RIGHT 2
@@ -74,6 +78,8 @@ inline bool operator!=(const AdaptiveTriggerSetting &lhs, const AdaptiveTriggerS
 // USB VID values
 #define JS_VENDOR_UNKNOWN 0
 #define JS_VENDOR_8BITDO 0x2dc8
+#define JS_VENDOR_FLYDIGI_V1 0x04b4
+#define JS_VENDOR_FLYDIGI_V2 0x37d7
 #define JS_VENDOR_GAMESIR 0x3537
 #define JS_VENDOR_HORI 0x0f0d
 #define JS_VENDOR_MICROSOFT 0x045e
@@ -90,6 +96,9 @@ inline bool operator!=(const AdaptiveTriggerSetting &lhs, const AdaptiveTriggerS
 #define JS_PRODUCT_8BITDO_PRO_2_BT 0x6006
 #define JS_PRODUCT_8BITDO_PRO_3 0x6009
 #define JS_PRODUCT_8BITDO_ULTIMATE2_WIRELESS 0x6012
+#define JS_PRODUCT_FLYDIGI_V1_GAMEPAD 0x2412
+#define JS_PRODUCT_FLYDIGI_V2_APEX 0x2501
+#define JS_PRODUCT_FLYDIGI_V2_VADER 0x2401
 #define JS_PRODUCT_GAMESIR_GAMEPAD_G7_PRO_8K 0x10B8
 #define JS_PRODUCT_HORI_STEAM_CONTROLLER 0x01ab
 #define JS_PRODUCT_HORI_STEAM_CONTROLLER_BT 0x0196
@@ -106,6 +115,13 @@ inline bool operator!=(const AdaptiveTriggerSetting &lhs, const AdaptiveTriggerS
 #define JS_HARDWARE_BUS_USB 0x03
 #define JS_HARDWARE_BUS_BLUETOOTH 0x05
 #define JS_HARDWARE_BUS_VIRTUAL 0xff
+
+// Flydigi controller type
+#define JS_FLYDIGI_UNKNOWN 0
+#define JS_FLYDIGI_APEX5 4
+#define JS_FLYDIGI_VADER3_PRO 19
+#define JS_FLYDIGI_VADER4_PRO 20
+#define JS_FLYDIGI_VADER5_PRO 21
 
 #define JSMASK_UP 0x000001
 #define JSMASK_DOWN 0x000002
