@@ -51,6 +51,16 @@ const map<ButtonID, string> buttonHelpMap{
 	{ ButtonID::TLEFT, "Touch stick tilted left" },
 	{ ButtonID::TRIGHT, "Touch stick tilted right" },
 	{ ButtonID::TRING, "Touch ring binding, either inner or outer." },
+	{ ButtonID::LTOUCH, "Left stick capacitive touch" },
+	{ ButtonID::RTOUCH, "Right stick capacitive touch" },
+	{ ButtonID::LMINI, "Left mini shoulder button" },
+	{ ButtonID::RMINI, "Right mini shoulder button" },
+	{ ButtonID::MISC1, "Additional button that varies by controller" },
+	{ ButtonID::MISC2, "Additional button that varies by controller" },
+	{ ButtonID::MISC3, "Additional button that varies by controller" },
+	{ ButtonID::MISC4, "Additional button that varies by controller" },
+	{ ButtonID::MISC5, "Additional button that varies by controller" },
+	{ ButtonID::MISC6, "Additional button that varies by controller" },
 };
 
 map<int, ButtonID> nnm = { 

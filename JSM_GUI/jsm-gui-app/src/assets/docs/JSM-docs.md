@@ -106,6 +106,11 @@ MRING: Motion ring binding, either inner or outer.
 LEAN_LEFT, LEAN_RIGHT: Tilt the controller to the left or right
 TOUCH : The Playstation touchpad senses a finger
 MIC: The Sony Dualsense microphone button
+LTOUCH: Left stick capacitive touch
+RTOUCH: Right stick capacitive touch
+LMINI: Left mini shoulder button
+RMINI: Right mini shoulder button
+MISC1, MISC2, MISC3, MISC4, MISC5, MISC6: Additional buttons that vary by controller
 ```
 
 These can all be mapped to the following keyboard and mouse inputs:

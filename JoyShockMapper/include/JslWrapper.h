@@ -110,6 +110,16 @@ inline bool operator!=(const AdaptiveTriggerSetting &lhs, const AdaptiveTriggerS
 #define JSMASK_SR 0x100000
 #define JSMASK_FNL 0x20000
 #define JSMASK_FNR 0x400000
+#define JSMASK_LTOUCH 0x800000
+#define JSMASK_RTOUCH 0x1000000
+#define JSMASK_LMINI 0x2000000
+#define JSMASK_RMINI 0x4000000
+#define JSMASK_MISC1 0x8000000
+#define JSMASK_MISC2 0x10000000
+#define JSMASK_MISC3 0x20000000
+#define JSMASK_MISC4 0x40000000
+#define JSMASK_MISC5 0x80000000
+#define JSMASK_MISC6 0x100000000
 
 #define JSOFFSET_UP 0
 #define JSOFFSET_DOWN 1
@@ -138,6 +148,16 @@ inline bool operator!=(const AdaptiveTriggerSetting &lhs, const AdaptiveTriggerS
 #define JSOFFSET_SR 20
 #define JSOFFSET_FNL 21
 #define JSOFFSET_FNR 22
+#define JSOFFSET_LTOUCH 23
+#define JSOFFSET_RTOUCH 24
+#define JSOFFSET_LMINI 25
+#define JSOFFSET_RMINI 26
+#define JSOFFSET_MISC1 27
+#define JSOFFSET_MISC2 28
+#define JSOFFSET_MISC3 29
+#define JSOFFSET_MISC4 30
+#define JSOFFSET_MISC5 31
+#define JSOFFSET_MISC6 32
 
 // PS5 Player maps for the DS Player Lightbar
 #define DS5_PLAYER_1 = 4
