@@ -237,6 +237,157 @@ public:
 
 struct SdlInstance : public JslWrapper
 {
+private:
+#ifdef _WIN32
+	// Make Windows 11 honor timer resolution when window is minimized or
+	// another application is fullscreen. EcoQoS is also disabled.
+	// https://learn.microsoft.com/en-us/windows/win32/api/timeapi/nf-timeapi-timebeginperiod
+	// https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-setprocessinformation
+	void DisableProcessPowerThrottling()
+	{
+		PROCESS_POWER_THROTTLING_STATE state;
+		memset(&state, 0, sizeof(state));
+		state.Version = PROCESS_POWER_THROTTLING_CURRENT_VERSION;
+		state.ControlMask = PROCESS_POWER_THROTTLING_EXECUTION_SPEED
+		                    | PROCESS_POWER_THROTTLING_IGNORE_TIMER_RESOLUTION;
+		state.StateMask = 0;
+		SetProcessInformation(GetCurrentProcess(), ProcessPowerThrottling,
+		                      &state, sizeof(state));
+	}
+
+	// Raise process priority, but not too high.
+	// https://learn.microsoft.com/en-us/windows/win32/procthread/scheduling-priorities
+	void RaiseProcessPriority()
+	{
+		SetPriorityClass(GetCurrentProcess(), ABOVE_NORMAL_PRIORITY_CLASS);
+	}
+
+	// Raise thread priority, but not too high.
+	// https://learn.microsoft.com/en-us/windows/win32/procthread/scheduling-priorities
+	void RaiseThreadPriority()
+	{
+		SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_HIGHEST);
+	}
+
+	typedef long NTSTATUS;
+	typedef NTSTATUS (NTAPI *PZEQTR)(PULONG MinRes, PULONG MaxRes, PULONG CurrentRes);
+	typedef NTSTATUS (NTAPI *PZESTR)(ULONG DesiredRes, BOOLEAN SetRes, PULONG CurrentRes);
+	PZEQTR ZwQueryTimerResolution = nullptr;
+	PZESTR ZwSetTimerResolution = nullptr;
+	ULONG win_timer_res = 0;
+	uint64_t timer_res_ns = 0;
+
+	// Reduce system clock interrupt interval to 0.5 ms. Windows default is
+	// 15.625 ms (1000/64). SDL default is 1 ms but it uses timeBeginPeriod.
+	void SetMaxTimerResolution()
+	{
+		ZwQueryTimerResolution = (PZEQTR)GetProcAddress(
+		    GetModuleHandle(TEXT("ntdll.dll")), "ZwQueryTimerResolution");
+		ZwSetTimerResolution = (PZESTR)GetProcAddress(
+		    GetModuleHandle(TEXT("ntdll.dll")), "ZwSetTimerResolution");
+		ULONG min_res = 0, max_res = 0, cur_res = 0;
+		bool result = false;
+
+		if (ZwQueryTimerResolution != nullptr
+		    && ZwQueryTimerResolution(&min_res, &max_res, &cur_res) == 0)
+		{
+			if (ZwSetTimerResolution != nullptr
+			    && ZwSetTimerResolution(max_res, TRUE, &cur_res) == 0)
+			{
+				win_timer_res = cur_res;
+				timer_res_ns = win_timer_res * 100; // 100-ns to ns.
+				result = true;
+			}
+		}
+
+		if (!result)
+		{
+			// Don't call again.
+			ZwQueryTimerResolution = nullptr;
+			ZwSetTimerResolution = nullptr;
+
+			// Use safe defaults.
+			win_timer_res = 10000;  // 1 ms in 100-ns units.
+			timer_res_ns = 1000000; // 1 ms.
+		}
+	}
+
+	// Call before using a waitable timer to ensure resolution is still correct.
+	void ReapplyMaxTimerRes()
+	{
+		if (ZwSetTimerResolution != nullptr)
+		{
+			ULONG cur_res = 0;
+			ZwSetTimerResolution(win_timer_res, TRUE, &cur_res);
+		}
+	}
+
+	uint64_t next_poll_time = 0;
+
+	void InitPollingTimer()
+	{
+		next_poll_time = SDL_GetTicksNS();
+	}
+
+	void PollingTimer(uint64_t interval_ms)
+	{
+		const uint64_t interval_ns = interval_ms * 1000000ULL;
+		next_poll_time += interval_ns;
+
+		uint64_t now = SDL_GetTicksNS();
+		if (now < next_poll_time)
+		{
+			// Sleep when delay is longer than timer resolution.
+			const uint64_t delay_thresh_ns = now + timer_res_ns;
+			if (delay_thresh_ns < next_poll_time)
+			{
+				// Leave a gap equal to the timer resolution.
+				const uint64_t delay_ns = next_poll_time - delay_thresh_ns;
+				ReapplyMaxTimerRes();
+				SDL_DelayNS(delay_ns);
+				now = SDL_GetTicksNS();
+			}
+
+			// Busy-wait for the remaining time.
+			while (now < next_poll_time)
+			{
+				SDL_CPUPauseInstruction();
+				now = SDL_GetTicksNS();
+			}
+		}
+		else
+		{
+			// Fell behind.
+			next_poll_time = now;
+		}
+	}
+#else
+	void DisableProcessPowerThrottling()
+	{
+	}
+
+	void RaiseProcessPriority()
+	{
+	}
+
+	void RaiseThreadPriority()
+	{
+	}
+
+	void SetMaxTimerResolution()
+	{
+	}
+
+	void InitPollingTimer()
+	{
+	}
+
+	void PollingTimer(uint64_t interval_ms)
+	{
+		SDL_DelayNS(interval_ms * 1000000ULL);
+	}
+#endif // _WIN32
+
 public:
 	SdlInstance()
 	{
@@ -253,7 +404,9 @@ public:
 		SDL_SetHint(SDL_HINT_JOYSTICK_HIDAPI_SWITCH_HOME_LED, "0");
 		SDL_SetHint(SDL_HINT_JOYSTICK_ENHANCED_REPORTS, "1");
 		SDL_SetHint(SDL_HINT_JOYSTICK_THREAD, "1");
+		SDL_SetHintWithPriority(SDL_HINT_TIMER_RESOLUTION, "1", SDL_HINT_OVERRIDE);
 		SDL_Init(SDL_INIT_GAMEPAD);
+		SetMaxTimerResolution();
 	}
 
 	virtual ~SdlInstance()
@@ -263,10 +416,13 @@ public:
 
 	int pollDevices()
 	{
+		RaiseThreadPriority();
+		InitPollingTimer();
+
 		while (keep_polling)
 		{
 			auto tick_time = SettingsManager::get<float>(SettingID::TICK_TIME)->value();
-			SDL_Delay(Uint32(tick_time));
+			PollingTimer(uint64_t(tick_time));
 
 			lock_guard guard(controller_lock);
 			SDL_UpdateGamepads();
@@ -303,6 +459,9 @@ public:
 
 	int ConnectDevices() override
 	{
+		DisableProcessPowerThrottling();
+		RaiseProcessPriority();
+
 		bool isFalse = false;
 		if (keep_polling.compare_exchange_strong(isFalse, true))
 		{
