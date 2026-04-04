@@ -78,6 +78,7 @@ struct ControllerDevice
 
 					_vendorId = SDL_GetGamepadVendor(_sdlController);
 					_productId = SDL_GetGamepadProduct(_sdlController);
+					_guid = SDL_GetJoystickGUID(SDL_GetGamepadJoystick(_sdlController));
 					_ctrlr_type = JS_TYPE_UNKNOWN;
 
 					switch (_vendorId)
@@ -87,6 +88,13 @@ struct ControllerDevice
 							_productId == JS_PRODUCT_HORI_STEAM_CONTROLLER_BT)
 						{
 							_ctrlr_type = JS_TYPE_HORI_STEAM;
+						}
+						break;
+					case JS_VENDOR_GAMESIR:
+						if (_productId == JS_PRODUCT_GAMESIR_GAMEPAD_G7_PRO_8K &&
+							_guid.data[0] == JS_HARDWARE_BUS_USB) // No extended features over Bluetooth
+						{
+							_ctrlr_type = JS_TYPE_G7_PRO_8K;
 						}
 						break;
 					}
@@ -238,6 +246,7 @@ public:
 	int _ctrlr_type = JS_TYPE_UNKNOWN;
 	int _vendorId = JS_VENDOR_UNKNOWN;
 	int _productId = JS_PRODUCT_UNKNOWN;
+	SDL_GUID _guid;
 	uint16_t _small_rumble = 0;
 	uint16_t _big_rumble = 0;
 	AdaptiveTriggerSetting _leftTriggerEffect;
@@ -682,6 +691,13 @@ public:
 			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_MISC2) ? 1ULL << JSOFFSET_MISC1 : 0;       // QAM button ("..." button)
 			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_MISC3) ? 1ULL << JSOFFSET_LTOUCH : 0;      // Left stick capacitive touch
 			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_MISC4) ? 1ULL << JSOFFSET_RTOUCH : 0;      // Right stick capacitive touch
+			break;
+		case JS_TYPE_G7_PRO_8K:
+			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_MISC1) ? 1ULL << JSOFFSET_CAPTURE : 0;     // Share button
+			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_RIGHT_PADDLE1) ? 1ULL << JSOFFSET_SR : 0;  // R4 back button
+			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_LEFT_PADDLE1) ? 1ULL << JSOFFSET_SL : 0;   // L4 back button
+			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_MISC2) ? 1ULL << JSOFFSET_LMINI : 0;       // L5 mini shoulder button
+			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_MISC3) ? 1ULL << JSOFFSET_RMINI : 0;       // R5 mini shoulder button
 			break;
 		default:
 			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_MISC1) ? 1ULL << JSOFFSET_CAPTURE : 0;

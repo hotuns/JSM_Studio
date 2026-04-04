@@ -57,6 +57,7 @@ inline bool operator!=(const AdaptiveTriggerSetting &lhs, const AdaptiveTriggerS
 #define JS_TYPE_XBOXONE_ELITE 7
 #define JS_TYPE_XBOX_SERIES 8
 #define JS_TYPE_HORI_STEAM 9
+#define JS_TYPE_G7_PRO_8K 10
 
 #define JS_SPLIT_TYPE_LEFT 1
 #define JS_SPLIT_TYPE_RIGHT 2
@@ -64,6 +65,7 @@ inline bool operator!=(const AdaptiveTriggerSetting &lhs, const AdaptiveTriggerS
 
 // USB VID values
 #define JS_VENDOR_UNKNOWN 0
+#define JS_VENDOR_GAMESIR 0x3537
 #define JS_VENDOR_HORI 0x0f0d
 #define JS_VENDOR_MICROSOFT 0x045e
 #define JS_VENDOR_PDP 0x0e6f
@@ -71,6 +73,7 @@ inline bool operator!=(const AdaptiveTriggerSetting &lhs, const AdaptiveTriggerS
 
 // USB PID values
 #define JS_PRODUCT_UNKNOWN 0
+#define JS_PRODUCT_GAMESIR_GAMEPAD_G7_PRO_8K 0x10B8
 #define JS_PRODUCT_HORI_STEAM_CONTROLLER 0x01ab
 #define JS_PRODUCT_HORI_STEAM_CONTROLLER_BT 0x0196
 #define JS_PRODUCT_XBOX_ONE_ELITE_SERIES_1 0x02e3

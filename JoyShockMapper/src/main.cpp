@@ -1439,6 +1439,13 @@ void joyShockPollCallback(int jcHandle, JOY_SHOCK_STATE state, JOY_SHOCK_STATE l
 			jc->handleButtonChange(ButtonID::RTOUCH, buttons & (1ULL << JSOFFSET_RTOUCH)); // Right stick capacitive touch
 			jc->handleButtonChange(ButtonID::MISC1, buttons & (1ULL << JSOFFSET_MISC1));   // QAM button ("..." button)
 			break;
+		case JS_TYPE_G7_PRO_8K:
+			jc->handleButtonChange(ButtonID::LMINI, buttons & (1ULL << JSOFFSET_LMINI));     // L5 mini shoulder button
+			jc->handleButtonChange(ButtonID::RMINI, buttons & (1ULL << JSOFFSET_RMINI));     // R5 mini shoulder button
+			jc->handleButtonChange(ButtonID::LSL, buttons & (1ULL << JSOFFSET_SL));          // L4 back button
+			jc->handleButtonChange(ButtonID::RSR, buttons & (1ULL << JSOFFSET_SR));          // R4 back button
+			jc->handleButtonChange(ButtonID::CAPTURE, buttons & (1ULL << JSOFFSET_CAPTURE)); // Share button
+			break;
 		default:
 			jc->handleButtonChange(ButtonID::CAPTURE, buttons & (1ULL << JSOFFSET_CAPTURE));
 			jc->handleButtonChange(ButtonID::LSL, buttons & (1ULL << JSOFFSET_SL));
