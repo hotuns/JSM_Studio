@@ -150,6 +150,7 @@ struct ControllerDevice
 						{
 							_ctrlr_type = JS_TYPE_G7_PRO_8K;
 						}
+						break;
 					case JS_VENDOR_NINTENDO:
 						if (_productId == JS_PRODUCT_NINTENDO_SWITCH2_PRO)
 						{
@@ -712,7 +713,7 @@ public:
 			{ SDL_GAMEPAD_BUTTON_DPAD_RIGHT, JSOFFSET_RIGHT }
 		};
 
-		int buttons = 0;
+		uint64_t buttons = 0;
 		for (auto pair : sdl2jsl)
 		{
 			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GamepadButton(pair.first)) ? 1ULL << pair.second : 0;
