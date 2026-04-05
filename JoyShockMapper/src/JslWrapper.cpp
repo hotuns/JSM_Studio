@@ -61,9 +61,9 @@ public:
 		return JslGetTouchpadDimension(deviceId, sizeX, sizeY);
 	}
 
-	int GetButtons(int deviceId) override
+	uint64_t GetButtons(int deviceId) override
 	{
-		return JslGetButtons(deviceId);
+		return uint64_t(JslGetButtons(deviceId));
 	}
 
 	float GetLeftX(int deviceId) override

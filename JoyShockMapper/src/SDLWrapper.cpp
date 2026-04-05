@@ -78,6 +78,90 @@ struct ControllerDevice
 
 					_vendorId = SDL_GetGamepadVendor(_sdlController);
 					_productId = SDL_GetGamepadProduct(_sdlController);
+					_guid = SDL_GetJoystickGUID(SDL_GetGamepadJoystick(_sdlController));
+					_ctrlr_type = JS_TYPE_UNKNOWN;
+
+					switch (_vendorId)
+					{
+					case JS_VENDOR_8BITDO:
+						switch (_productId)
+						{
+						case JS_PRODUCT_8BITDO_SF30_PRO:
+							_ctrlr_type = JS_TYPE_8BITDO_SF30_PRO;
+							break;
+						case JS_PRODUCT_8BITDO_SF30_PRO_BT:
+							_ctrlr_type = JS_TYPE_8BITDO_SF30_PRO_BT;
+							break;
+						case JS_PRODUCT_8BITDO_SN30_PRO:
+							_ctrlr_type = JS_TYPE_8BITDO_SN30_PRO;
+							break;
+						case JS_PRODUCT_8BITDO_SN30_PRO_BT:
+							_ctrlr_type = JS_TYPE_8BITDO_SN30_PRO_BT;
+							break;
+						case JS_PRODUCT_8BITDO_PRO_2:
+							_ctrlr_type = JS_TYPE_8BITDO_PRO_2;
+							break;
+						case JS_PRODUCT_8BITDO_PRO_2_BT:
+							_ctrlr_type = JS_TYPE_8BITDO_PRO_2_BT;
+							break;
+						case JS_PRODUCT_8BITDO_PRO_3:
+							_ctrlr_type = JS_TYPE_8BITDO_PRO_3;
+							break;
+						case JS_PRODUCT_8BITDO_ULTIMATE2_WIRELESS:
+							_ctrlr_type = JS_TYPE_8BITDO_ULTIMATE2_WIRELESS;
+							break;
+						}
+						break;
+					case JS_VENDOR_HORI:
+						if (_productId == JS_PRODUCT_HORI_STEAM_CONTROLLER ||
+							_productId == JS_PRODUCT_HORI_STEAM_CONTROLLER_BT)
+						{
+							_ctrlr_type = JS_TYPE_HORI_STEAM;
+						}
+						break;
+					case JS_VENDOR_FLYDIGI_V1:
+					case JS_VENDOR_FLYDIGI_V2:
+						if ((_vendorId == JS_VENDOR_FLYDIGI_V1 &&
+							 _productId == JS_PRODUCT_FLYDIGI_V1_GAMEPAD) ||
+							(_vendorId == JS_VENDOR_FLYDIGI_V2 &&
+							 (_productId == JS_PRODUCT_FLYDIGI_V2_APEX ||
+							  _productId == JS_PRODUCT_FLYDIGI_V2_VADER)))
+						{
+							switch (_guid.data[15])
+							{
+							case JS_FLYDIGI_APEX5:
+								_ctrlr_type = JS_TYPE_FLYDIGI_APEX5;
+								break;
+							case JS_FLYDIGI_VADER3_PRO:
+								_ctrlr_type = JS_TYPE_FLYDIGI_VADER3_PRO;
+								break;
+							case JS_FLYDIGI_VADER4_PRO:
+								_ctrlr_type = JS_TYPE_FLYDIGI_VADER4_PRO;
+								break;
+							case JS_FLYDIGI_VADER5_PRO:
+								_ctrlr_type = JS_TYPE_FLYDIGI_VADER5_PRO;
+								break;
+							}
+						}
+						break;
+					case JS_VENDOR_GAMESIR:
+						if (_productId == JS_PRODUCT_GAMESIR_GAMEPAD_G7_PRO_8K &&
+							_guid.data[0] == JS_HARDWARE_BUS_USB) // No extended features over Bluetooth
+						{
+							_ctrlr_type = JS_TYPE_G7_PRO_8K;
+						}
+					case JS_VENDOR_NINTENDO:
+						if (_productId == JS_PRODUCT_NINTENDO_SWITCH2_PRO)
+						{
+							_ctrlr_type = JS_TYPE_SWITCH2_PRO_CONTROLLER;
+						}
+						break;
+					}
+
+					if (_ctrlr_type != JS_TYPE_UNKNOWN)
+					{
+						continue;
+					}
 
 					auto sdl_ctrlr_type = SDL_GetGamepadType(_sdlController);
 					switch (sdl_ctrlr_type)
@@ -102,33 +186,28 @@ struct ControllerDevice
 						break;
 					case SDL_GamepadType::SDL_GAMEPAD_TYPE_XBOXONE:
 						_ctrlr_type = JS_TYPE_XBOXONE;
-						if (_vendorId == 0x0e6f) // PDP Vendor ID
+						switch (_vendorId)
 						{
+						case JS_VENDOR_PDP:
+						case JS_VENDOR_POWERA:
 							_ctrlr_type = JS_TYPE_XBOX_SERIES;
-						}
-						if (_vendorId == 0x24c6) // PowerA
-						{
-							_ctrlr_type = JS_TYPE_XBOX_SERIES;
-						}
-						if (_vendorId == 0x045e) // Microsoft Vendor ID
-						{
+							break;
+						case JS_VENDOR_MICROSOFT:
 							switch (_productId)
 							{
-							case(0x02e3): // Xbox Elite Series 1
-								// Intentional fall through to the next case
-							case(0x0b05): //Xbox Elite Series 2 - Bluetooth
-								// Intentional fall through to the next case
-							case(0x0b00): //Xbox Elite Series 2
-							case (0x02ff): //XBOXGIP driver software PID - not sure what this is, might be from Valve's driver for using Elite paddles
-								// in any case, this is what my ELite Series 2 is showing as currently, so adding it here for now    
+							case JS_PRODUCT_XBOX_ONE_ELITE_SERIES_1:
+							case JS_PRODUCT_XBOX_ONE_ELITE_SERIES_2:
+							case JS_PRODUCT_XBOX_ONE_ELITE_SERIES_2_BLUETOOTH:
+							case JS_PRODUCT_XBOX_ONE_ELITE_SERIES_2_BLE:
+							case JS_PRODUCT_XBOX_ONE_XBOXGIP_CONTROLLER:
 								_ctrlr_type = JS_TYPE_XBOXONE_ELITE;
 								break;
-							case(0x0b12): //Xbox Series controller
-								// Intentional fall through to the next case
-							case(0x0b13): // Xbox Series controller - bluetooth
+							case JS_PRODUCT_XBOX_SERIES_X:
+							case JS_PRODUCT_XBOX_SERIES_X_BLE:
 								_ctrlr_type = JS_TYPE_XBOX_SERIES;
 								break;
 							}
+							break;
 						}
 						break;
 					}
@@ -223,9 +302,10 @@ public:
 	bool _has_gyro;
 	bool _has_accel;
 	int _split_type = JS_SPLIT_TYPE_FULL;
-	int _ctrlr_type = 0;
+	int _ctrlr_type = JS_TYPE_UNKNOWN;
 	int _vendorId = JS_VENDOR_UNKNOWN;
 	int _productId = JS_PRODUCT_UNKNOWN;
+	SDL_GUID _guid;
 	uint16_t _small_rumble = 0;
 	uint16_t _big_rumble = 0;
 	AdaptiveTriggerSetting _leftTriggerEffect;
@@ -612,9 +692,9 @@ public:
 		return false;
 	}
 
-	int GetButtons(int deviceId) override
+	uint64_t GetButtons(int deviceId) override
 	{
-		static const map<int, int> sdl2jsl = {
+		static const map<int, uint64_t> sdl2jsl = {
 			{ SDL_GAMEPAD_BUTTON_SOUTH, JSOFFSET_S },
 			{ SDL_GAMEPAD_BUTTON_EAST, JSOFFSET_E },
 			{ SDL_GAMEPAD_BUTTON_WEST, JSOFFSET_W },
@@ -635,44 +715,111 @@ public:
 		int buttons = 0;
 		for (auto pair : sdl2jsl)
 		{
-			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GamepadButton(pair.first)) ? 1 << pair.second : 0;
+			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GamepadButton(pair.first)) ? 1ULL << pair.second : 0;
 
 		}
 		switch (_controllerMap[deviceId]->_ctrlr_type)
 		{
 		case JS_TYPE_JOYCON_LEFT:
-			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_MISC1) ? 1 << JSOFFSET_CAPTURE : 0;
-			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_LEFT_PADDLE1) ? 1 << JSOFFSET_SL : 0;
-			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_LEFT_PADDLE2) ? 1 << JSOFFSET_SR : 0;
+			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_MISC1) ? 1ULL << JSOFFSET_CAPTURE : 0;
+			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_LEFT_PADDLE1) ? 1ULL << JSOFFSET_SL : 0;
+			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_LEFT_PADDLE2) ? 1ULL << JSOFFSET_SR : 0;
 			break;
 		case JS_TYPE_JOYCON_RIGHT:
-			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_RIGHT_PADDLE1) ? 1 << JSOFFSET_SL : 0;
-			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_RIGHT_PADDLE2) ? 1 << JSOFFSET_SR : 0;
-			break;
-		case JS_TYPE_DS:
-			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_MISC1) ? 1 << JSOFFSET_MIC : 0;
-			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_TOUCHPAD) ? 1 << JSOFFSET_CAPTURE : 0;
-			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_RIGHT_PADDLE1) ? 1 << JSOFFSET_SR : 0;
-			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_LEFT_PADDLE1) ? 1 << JSOFFSET_SL : 0;
-			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_RIGHT_PADDLE2) ? 1 << JSOFFSET_FNR : 0;
-			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_LEFT_PADDLE2) ? 1 << JSOFFSET_FNL : 0;
-			break;
-		case JS_TYPE_DS4:
-			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_TOUCHPAD) ? 1 << JSOFFSET_CAPTURE : 0;
-			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_RIGHT_PADDLE1) ? 1 << JSOFFSET_SL : 0;
-			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_RIGHT_PADDLE2) ? 1 << JSOFFSET_SR : 0;
+			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_RIGHT_PADDLE1) ? 1ULL << JSOFFSET_SR : 0;
+			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_RIGHT_PADDLE2) ? 1ULL << JSOFFSET_SL : 0;
 			break;
 		case JS_TYPE_PRO_CONTROLLER:
-			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_MISC1) ? 1 << JSOFFSET_CAPTURE : 0;
-			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_RIGHT_PADDLE1) ? 1 << JSOFFSET_SR : 0;
-			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_LEFT_PADDLE1) ? 1 << JSOFFSET_SL : 0;
-			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_RIGHT_PADDLE2) ? 1 << JSOFFSET_FNR : 0;
-			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_LEFT_PADDLE2) ? 1 << JSOFFSET_FNL : 0;
+			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_MISC1) ? 1ULL << JSOFFSET_CAPTURE : 0;
+			break;
+		case JS_TYPE_SWITCH2_PRO_CONTROLLER:
+			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_MISC1) ? 1ULL << JSOFFSET_CAPTURE : 0;    // Capture button
+			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_RIGHT_PADDLE1) ? 1ULL << JSOFFSET_SR : 0; // GR back button
+			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_LEFT_PADDLE1) ? 1ULL << JSOFFSET_SL : 0;  // GL back button
+			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_MISC2) ? 1ULL << JSOFFSET_MISC1 : 0;      // C button
+			break;
+		case JS_TYPE_DS:
+			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_MISC1) ? 1ULL << JSOFFSET_MIC : 0;
+			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_TOUCHPAD) ? 1ULL << JSOFFSET_CAPTURE : 0;
+			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_RIGHT_PADDLE1) ? 1ULL << JSOFFSET_SR : 0;
+			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_LEFT_PADDLE1) ? 1ULL << JSOFFSET_SL : 0;
+			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_RIGHT_PADDLE2) ? 1ULL << JSOFFSET_FNR : 0;
+			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_LEFT_PADDLE2) ? 1ULL << JSOFFSET_FNL : 0;
+			break;
+		case JS_TYPE_DS4:
+			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_TOUCHPAD) ? 1ULL << JSOFFSET_CAPTURE : 0;
+			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_RIGHT_PADDLE1) ? 1ULL << JSOFFSET_SL : 0;
+			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_RIGHT_PADDLE2) ? 1ULL << JSOFFSET_SR : 0;
+			break;
+		case JS_TYPE_HORI_STEAM:
+			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_RIGHT_PADDLE1) ? 1ULL << JSOFFSET_SR : 0;  // R4 back button
+			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_LEFT_PADDLE1) ? 1ULL << JSOFFSET_SL : 0;   // L4 back button
+			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_RIGHT_PADDLE2) ? 1ULL << JSOFFSET_FNR : 0; // M2 button below right stick
+			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_LEFT_PADDLE2) ? 1ULL << JSOFFSET_FNL : 0;  // M1 button below left stick
+			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_MISC2) ? 1ULL << JSOFFSET_MISC1 : 0;       // QAM button ("..." button)
+			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_MISC3) ? 1ULL << JSOFFSET_LTOUCH : 0;      // Left stick capacitive touch
+			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_MISC4) ? 1ULL << JSOFFSET_RTOUCH : 0;      // Right stick capacitive touch
+			break;
+		case JS_TYPE_G7_PRO_8K:
+			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_MISC1) ? 1ULL << JSOFFSET_CAPTURE : 0;     // Share button
+			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_RIGHT_PADDLE1) ? 1ULL << JSOFFSET_SR : 0;  // R4 back button
+			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_LEFT_PADDLE1) ? 1ULL << JSOFFSET_SL : 0;   // L4 back button
+			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_MISC2) ? 1ULL << JSOFFSET_LMINI : 0;       // L5 mini shoulder button
+			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_MISC3) ? 1ULL << JSOFFSET_RMINI : 0;       // R5 mini shoulder button
+			break;
+		// 8BitDo controllers with gyro and no additional buttons.
+		case JS_TYPE_8BITDO_SF30_PRO:
+		case JS_TYPE_8BITDO_SF30_PRO_BT:
+		case JS_TYPE_8BITDO_SN30_PRO:
+		case JS_TYPE_8BITDO_SN30_PRO_BT:
+			break;
+		// 8BitDo controllers with gyro and two additional buttons.
+		case JS_TYPE_8BITDO_PRO_2:
+		case JS_TYPE_8BITDO_PRO_2_BT:
+			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_RIGHT_PADDLE1) ? 1ULL << JSOFFSET_SR : 0; // P1 back button (right)
+			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_LEFT_PADDLE1) ? 1ULL << JSOFFSET_SL : 0;  // P2 back button (left)
+			break;
+		// 8BitDo controllers with gyro and four additional buttons.
+		case JS_TYPE_8BITDO_PRO_3:
+		case JS_TYPE_8BITDO_ULTIMATE2_WIRELESS:
+			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_RIGHT_PADDLE1) ? 1ULL << JSOFFSET_RMINI : 0; // R4 mini shoulder button
+			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_LEFT_PADDLE1) ? 1ULL << JSOFFSET_LMINI : 0;  // L4 mini shoulder button
+			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_RIGHT_PADDLE2) ? 1ULL << JSOFFSET_SR : 0;    // PR back button
+			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_LEFT_PADDLE2) ? 1ULL << JSOFFSET_SL : 0;     // PL back button
+			break;
+		case JS_TYPE_FLYDIGI_APEX5:
+			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_RIGHT_PADDLE1) ? 1ULL << JSOFFSET_SR : 0;  // M1 back button (top right)
+			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_LEFT_PADDLE1) ? 1ULL << JSOFFSET_SL : 0;   // M2 back button (top left)
+			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_RIGHT_PADDLE2) ? 1ULL << JSOFFSET_FNR : 0; // M3 back button (bottom left)
+			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_LEFT_PADDLE2) ? 1ULL << JSOFFSET_FNL : 0;  // M4 back button (bottom right)
+			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_MISC2) ? 1ULL << JSOFFSET_LMINI : 0;       // LM mini shoulder button
+			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_MISC3) ? 1ULL << JSOFFSET_RMINI : 0;       // RM mini shoulder button
+			break;
+		case JS_TYPE_FLYDIGI_VADER5_PRO:
+			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_MISC4) ? 1ULL << JSOFFSET_LMINI : 0;       // LM mini shoulder button
+			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_MISC5) ? 1ULL << JSOFFSET_RMINI : 0;       // RM mini shoulder button
+			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_MISC6) ? 1ULL << JSOFFSET_MISC3 : 0;       // Circle button below right stick
+			// Fall through.
+		case JS_TYPE_FLYDIGI_VADER4_PRO:
+		case JS_TYPE_FLYDIGI_VADER3_PRO:
+			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_RIGHT_PADDLE1) ? 1ULL << JSOFFSET_SR : 0;  // M1 back button (top right)
+			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_LEFT_PADDLE1) ? 1ULL << JSOFFSET_SL : 0;   // M2 back button (top left)
+			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_RIGHT_PADDLE2) ? 1ULL << JSOFFSET_FNR : 0; // M3 back button (bottom left)
+			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_LEFT_PADDLE2) ? 1ULL << JSOFFSET_FNL : 0;  // M4 back button (bottom right)
+			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_MISC2) ? 1ULL << JSOFFSET_MISC1 : 0;       // C face button
+			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_MISC3) ? 1ULL << JSOFFSET_MISC2 : 0;       // Z face button
 			break;
 		default:
-			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_MISC1) ? 1 << JSOFFSET_CAPTURE : 0;
-			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_RIGHT_PADDLE2) ? 1 << JSOFFSET_FNL : 0;
-			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_RIGHT_PADDLE1) ? 1 << JSOFFSET_FNR : 0;
+			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_MISC1) ? 1ULL << JSOFFSET_MISC1 : 0;
+			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_RIGHT_PADDLE1) ? 1ULL << JSOFFSET_SR : 0;
+			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_LEFT_PADDLE1) ? 1ULL << JSOFFSET_SL : 0;
+			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_RIGHT_PADDLE2) ? 1ULL << JSOFFSET_FNR : 0;
+			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_LEFT_PADDLE2) ? 1ULL << JSOFFSET_FNL : 0;
+			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_MISC2) ? 1ULL << JSOFFSET_MISC2 : 0;
+			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_MISC3) ? 1ULL << JSOFFSET_MISC3 : 0;
+			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_MISC4) ? 1ULL << JSOFFSET_MISC4 : 0;
+			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_MISC5) ? 1ULL << JSOFFSET_MISC5 : 0;
+			buttons |= SDL_GetGamepadButton(_controllerMap[deviceId]->_sdlController, SDL_GAMEPAD_BUTTON_MISC6) ? 1ULL << JSOFFSET_MISC6 : 0;
 			break;
 		}
 		return buttons;
