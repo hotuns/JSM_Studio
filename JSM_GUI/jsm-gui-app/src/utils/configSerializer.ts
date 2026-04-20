@@ -4,6 +4,8 @@ import {
   DPAD_BUTTONS,
   FACE_BUTTONS,
   LEFT_STICK_BUTTONS,
+  MINI_BUTTONS,
+  MISC_BUTTONS,
   PADDLE_BUTTONS,
   RIGHT_STICK_BUTTONS,
   TOUCH_BUTTONS,
@@ -39,6 +41,7 @@ type KeymapSubsection =
   | 'paddles'
   | 'touch'
   | 'stick_buttons'
+  | 'extra'
   | 'misc'
 
 type ParsedLine = {
@@ -71,6 +74,7 @@ const KEYMAP_SUB_HEADERS: Record<KeymapSubsection, string> = {
   paddles: '# Paddles',
   touch: '# Touchpad',
   stick_buttons: '# Stick bindings',
+  extra: '# Extra buttons',
   misc: '# Misc keymap',
 }
 
@@ -94,18 +98,20 @@ const KEYMAP_SUB_ORDER: KeymapSubsection[] = [
   'paddles',
   'touch',
   'stick_buttons',
+  'extra',
   'misc',
 ]
 
 const BUTTON_TO_SUBSECTION: Array<{ commands: string[]; subsection: KeymapSubsection }> = [
   { commands: FACE_BUTTONS.map(b => b.command.toUpperCase()), subsection: 'face' },
   { commands: DPAD_BUTTONS.map(b => b.command.toUpperCase()), subsection: 'dpad' },
-  { commands: BUMPER_BUTTONS.map(b => b.command.toUpperCase()), subsection: 'bumpers' },
+  { commands: [...BUMPER_BUTTONS, ...MINI_BUTTONS].map(b => b.command.toUpperCase()), subsection: 'bumpers' },
   { commands: TRIGGER_BUTTONS.map(b => b.command.toUpperCase()), subsection: 'triggers' },
   { commands: CENTER_BUTTONS.map(b => b.command.toUpperCase()), subsection: 'center' },
   { commands: PADDLE_BUTTONS.map(b => b.command.toUpperCase()), subsection: 'paddles' },
   { commands: TOUCH_BUTTONS.map(b => b.command.toUpperCase()), subsection: 'touch' },
   { commands: LEFT_STICK_BUTTONS.map(b => b.command.toUpperCase()).concat(RIGHT_STICK_BUTTONS.map(b => b.command.toUpperCase())), subsection: 'stick_buttons' },
+  { commands: MISC_BUTTONS.map(b => b.command.toUpperCase()), subsection: 'extra' },
 ]
 
 const SPECIAL_BIND_COMMANDS = new Set(bindingSpecialKeys.map(key => key.toUpperCase()))

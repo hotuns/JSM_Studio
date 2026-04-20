@@ -6,7 +6,7 @@ import {
   getButtonBindingRows,
   getKeymapValue,
 } from '../utils/keymap'
-import { buildModifierOptions, ControllerLayout } from '../utils/modifierOptions'
+import { buildModifierOptions } from '../utils/modifierOptions'
 import { DEFAULT_STICK_DEADZONE_INNER, DEFAULT_STICK_DEADZONE_OUTER } from '../constants/defaults'
 import {
   BUMPER_BUTTONS,
@@ -14,6 +14,8 @@ import {
   DPAD_BUTTONS,
   FACE_BUTTONS,
   LEFT_STICK_BUTTONS,
+  MINI_BUTTONS,
+  MISC_BUTTONS,
   PADDLE_BUTTONS,
   RIGHT_STICK_BUTTONS,
   SPECIAL_BINDINGS,
@@ -377,7 +379,6 @@ export function KeymapControls({
   onZlModeChange = () => {},
   onZrModeChange = () => {},
 }: KeymapControlsProps) {
-  const [layout, setLayout] = useState<ControllerLayout>('playstation')
   const [stickView, setStickView] = useState<'bindings' | 'modes'>('bindings')
   const {
     manualRows,
@@ -418,8 +419,8 @@ export function KeymapControls({
   const clampedGridCells = touchpadMode === 'GRID_AND_STICK' ? Math.min(25, clampedGridCols * clampedGridRows) : 0
   const configuredGridButtons = gridActive ? clampedGridCells : 0
   const modifierOptions = useMemo(() => {
-    return buildModifierOptions(layout, gridActive, configuredGridButtons)
-  }, [layout, gridActive, configuredGridButtons])
+    return buildModifierOptions(gridActive, configuredGridButtons)
+  }, [gridActive, configuredGridButtons])
 
   const touchpadGridButtons = useMemo<ButtonDefinition[]>(() => {
     return Array.from({ length: clampedGridCells }, (_, index) => {
@@ -440,12 +441,14 @@ export function KeymapControls({
       ...FACE_BUTTONS,
       ...DPAD_BUTTONS,
       ...BUMPER_BUTTONS,
+      ...MINI_BUTTONS,
       ...TRIGGER_BUTTONS,
       ...CENTER_BUTTONS,
       ...PADDLE_BUTTONS,
       ...LEFT_STICK_BUTTONS,
       ...RIGHT_STICK_BUTTONS,
       ...TOUCH_BUTTONS,
+      ...MISC_BUTTONS,
       ...touchpadGridButtons,
     ].forEach(({ command }) => {
       record[command] = getButtonBindingRows(configText, command, manualRows[command] ?? {})
@@ -507,7 +510,6 @@ export function KeymapControls({
     return (
       <ButtonBindingsCard
         button={button}
-        layout={layout}
         rows={rows}
         modifierOptions={modifierOptions}
         specialsByButton={specialsByButton}
@@ -606,16 +608,6 @@ export function KeymapControls({
         <h2>
           {view === 'touchpad' ? 'Touchpad Controls' : view === 'sticks' ? 'Stick Bindings' : 'Keymap Controls'}
         </h2>
-        {view === 'full' && (
-          <div className="mode-toggle">
-            <button className={`pill-tab ${layout === 'playstation' ? 'active' : ''}`} onClick={() => setLayout('playstation')}>
-              PlayStation Labels
-            </button>
-            <button className={`pill-tab ${layout === 'xbox' ? 'active' : ''}`} onClick={() => setLayout('xbox')}>
-              Xbox Labels
-            </button>
-          </div>
-        )}
       </div>
 
       {showFullLayout &&
@@ -673,9 +665,14 @@ export function KeymapControls({
             node: (
               <ButtonGridSection
                 title="Bumpers"
-                description="L1/R1 bindings with the usual specials and extra slots."
-                buttons={BUMPER_BUTTONS}
+                description="L1/R1 and mini shoulder button bindings."
+                buttons={[...BUMPER_BUTTONS, ...MINI_BUTTONS]}
                 renderButton={renderButtonCard}
+                extraContent={
+                  <small className={keymapStyles.paddleNote}>
+                    LMINI / RMINI are mini shoulder buttons on supported controllers (e.g. L5/R5 on Razer Wolverine, L4/R4 on Xbox Elite).
+                  </small>
+                }
                 {...actionsProps}
               />
             ),
@@ -751,8 +748,25 @@ export function KeymapControls({
                 renderButton={renderButtonCard}
                 extraContent={
                   <small className={keymapStyles.paddleNote}>
-                    DualSense Edge uses <strong>LSL</strong> (left paddle) and <strong>RSR</strong> (right paddle) only.
-                    Xbox Elite and Joy-Con support all four.
+                    Back paddle mappings vary by controller. Most controllers use <strong>LSL</strong> and <strong>RSR</strong> for primary paddles. Joy-Con, Xbox Elite, and some third-party controllers support all four.
+                  </small>
+                }
+                {...actionsProps}
+              />
+            ),
+          },
+          {
+            key: 'extra',
+            shouldRender: isVisible('extra'),
+            node: (
+              <ButtonGridSection
+                title="Extra buttons"
+                description="Controller-specific extra buttons. Which MISC slot maps to which button depends on the controller."
+                buttons={MISC_BUTTONS}
+                renderButton={renderButtonCard}
+                extraContent={
+                  <small className={keymapStyles.paddleNote}>
+                    Examples: MISC1 = Steam Deck QAM ("..."), Nunchuk C, Joy-Con SR. MISC2 = Nunchuk Z, Joy-Con SL. Mapping varies by controller and firmware.
                   </small>
                 }
                 {...actionsProps}

@@ -96,7 +96,7 @@ export function SensitivityControls({
   const displaySensitivity = sensitivity
 
   const isTouchpadGridActive = touchpadMode === 'GRID_AND_STICK'
-  const modifierOptions = buildModifierOptions('playstation', isTouchpadGridActive, isTouchpadGridActive ? touchpadGridCells : 0)
+  const modifierOptions = buildModifierOptions(isTouchpadGridActive, isTouchpadGridActive ? touchpadGridCells : 0)
   const modeshiftOptions = [{ value: '', label: 'No mode shift' }, ...modifierOptions]
 
   return (

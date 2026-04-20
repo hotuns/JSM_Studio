@@ -27,7 +27,6 @@ import keymapStyles from '../Keymap.module.css'
 
 type ButtonBindingsCardProps = {
   button: ButtonDefinition
-  layout: 'playstation' | 'xbox'
   rows: ButtonBindingRow[]
   modifierOptions: { value: string; label: string; disabled?: boolean }[]
   specialsByButton: Record<string, string | undefined>
@@ -66,7 +65,6 @@ type ButtonBindingsCardProps = {
 
 export const ButtonBindingsCard = ({
   button,
-  layout,
   rows,
   modifierOptions,
   specialsByButton,
@@ -108,7 +106,9 @@ export const ButtonBindingsCard = ({
   return (
     <div className={`${keymapStyles.keymapRow} ${rowCapturing ? keymapStyles.keymapRowCapturing : ''}`} key={button.command}>
       <div className={keymapStyles.keymapLabel}>
-        <span className={keymapStyles.buttonName}>{layout === 'playstation' ? button.playstation : button.xbox}</span>
+        <span className={keymapStyles.buttonName}>
+          {button.playstation === button.xbox ? button.playstation : `${button.playstation} / ${button.xbox}`}
+        </span>
         <span className={keymapStyles.buttonMeta}>{button.description}</span>
       </div>
       <div className={keymapStyles.keymapBindingControls}>
