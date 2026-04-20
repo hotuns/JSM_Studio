@@ -700,9 +700,9 @@ export function KeymapControls({
               return (
                 <>
                   <KeymapSection title="Triggers" description="Soft/full pulls for L2/R2.">
-                    <div className={keymapStyles.keymapGrid} data-capture-ignore="true">
+                    <div className={keymapStyles.keymapGrid}>
                       {TRIGGER_BUTTONS.filter(b => b.command === 'ZL').map(b => <div key={b.command}>{renderButtonCard(b)}</div>)}
-                      <div className={keymapStyles.globalControlRow}>
+                      <div className={keymapStyles.globalControlRow} data-capture-ignore="true">
                         <span className={keymapStyles.globalControlTitle}>L2 full pull mode</span>
                         <select className="app-select" value={zlModeValue || 'NO_FULL'} onChange={e => onZlModeChange(e.target.value)} disabled={actionsProps.applyDisabled}>
                           {modeOptions.map(m => <option key={m} value={m}>{m}{m === 'NO_FULL' ? ' (default)' : ''}</option>)}
@@ -710,7 +710,7 @@ export function KeymapControls({
                       </div>
                       {zlActive && TRIGGER_BUTTONS.filter(b => b.command === 'ZLF').map(b => <div key={b.command}>{renderButtonCard(b)}</div>)}
                       {TRIGGER_BUTTONS.filter(b => b.command === 'ZR').map(b => <div key={b.command}>{renderButtonCard(b)}</div>)}
-                      <div className={keymapStyles.globalControlRow}>
+                      <div className={keymapStyles.globalControlRow} data-capture-ignore="true">
                         <span className={keymapStyles.globalControlTitle}>R2 full pull mode</span>
                         <select className="app-select" value={zrModeValue || 'NO_FULL'} onChange={e => onZrModeChange(e.target.value)} disabled={actionsProps.applyDisabled}>
                           {modeOptions.map(m => <option key={m} value={m}>{m}{m === 'NO_FULL' ? ' (default)' : ''}</option>)}
