@@ -67,6 +67,16 @@ enum class ButtonID
 	MRIGHT,
 	MRING,
 	TOUCH,   // Touch anywhere on the touchpad
+	LTOUCH,  // Left stick capacitive touch
+	RTOUCH,  // Right stick capacitive touch
+	LMINI,   // Left mini shoulder button
+	RMINI,   // Right mini shoulder button
+	MISC1,   // Additional button that varies by controller
+	MISC2,   // Additional button that varies by controller
+	MISC3,   // Additional button that varies by controller
+	MISC4,   // Additional button that varies by controller
+	MISC5,   // Additional button that varies by controller
+	MISC6,   // Additional button that varies by controller
 	ZLF,     // = FIRST_ANALOG_TRIGGER
 	CAPTURE, // Full press of touchpad touch + press
 	// insert more analog triggers here

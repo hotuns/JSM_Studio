@@ -24,10 +24,16 @@
   },
   "win": {
     "icon": "public/gyro-icon.ico",
-    "artifactName": "JoyShockMapper-Custom-Curve-Setup-${version}.${ext}",
+    "artifactName": "JoyShockMapper-Custom-Curve-${version}.${ext}",
     "target": [
       {
         "target": "nsis",
+        "arch": [
+          "x64"
+        ]
+      },
+      {
+        "target": "zip",
         "arch": [
           "x64"
         ]
@@ -40,5 +46,5 @@
     "allowToChangeInstallationDirectory": true,
     "deleteAppDataOnUninstall": false,
     "createDesktopShortcut": true
-  }
+  },
 }

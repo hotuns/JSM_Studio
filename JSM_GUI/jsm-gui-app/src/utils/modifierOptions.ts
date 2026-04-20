@@ -1,5 +1,3 @@
-export type ControllerLayout = 'playstation' | 'xbox'
-
 export type ModifierSelectOption = { value: string; label: string; disabled?: boolean }
 
 const BASE_MODIFIER_OPTIONS: ModifierSelectOption[] = [
@@ -14,13 +12,13 @@ const BASE_MODIFIER_OPTIONS: ModifierSelectOption[] = [
   { value: 'ZR', label: 'ZR – right trigger soft pull (R2 / RT)' },
   { value: 'ZRF', label: 'ZRF – right trigger full pull' },
   { value: '-', label: '- – Minus / Share button' },
-  { value: '+', label: '+ – Plus / Options button' },
+  { value: '+', label: '+ – Options / Menu button' },
   { value: 'HOME', label: 'HOME – PS / Guide button' },
   { value: 'CAPTURE', label: 'CAPTURE – Touchpad click / Capture' },
-  { value: 'LSL', label: 'LSL – Joy-Con paddle (left side)' },
-  { value: 'LSR', label: 'LSR – Joy-Con paddle (left side)' },
-  { value: 'RSL', label: 'RSL – Joy-Con paddle (right side)' },
-  { value: 'RSR', label: 'RSR – Joy-Con paddle (right side)' },
+  { value: 'LSL', label: 'LSL – primary left back paddle' },
+  { value: 'RSR', label: 'RSR – primary right back paddle' },
+  { value: 'LSR', label: 'LSR – secondary left back paddle' },
+  { value: 'RSL', label: 'RSL – secondary right back paddle' },
   { value: 'L3', label: 'L3 – left stick click' },
   { value: 'R3', label: 'R3 – right stick click' },
   { value: 'N', label: 'N – North face button (Triangle / Y)' },
@@ -40,6 +38,16 @@ const BASE_MODIFIER_OPTIONS: ModifierSelectOption[] = [
   { value: 'LEAN_LEFT', label: 'LEAN_LEFT – tilt controller left' },
   { value: 'LEAN_RIGHT', label: 'LEAN_RIGHT – tilt controller right' },
   { value: 'MIC', label: 'MIC – DualSense microphone button' },
+  { value: 'LMINI', label: 'LMINI – left mini shoulder button' },
+  { value: 'RMINI', label: 'RMINI – right mini shoulder button' },
+  { value: 'LTOUCH', label: 'LTOUCH – left stick capacitive touch' },
+  { value: 'RTOUCH', label: 'RTOUCH – right stick capacitive touch' },
+  { value: 'MISC1', label: 'MISC1 – extra button 1' },
+  { value: 'MISC2', label: 'MISC2 – extra button 2' },
+  { value: 'MISC3', label: 'MISC3 – extra button 3' },
+  { value: 'MISC4', label: 'MISC4 – extra button 4' },
+  { value: 'MISC5', label: 'MISC5 – extra button 5' },
+  { value: 'MISC6', label: 'MISC6 – extra button 6' },
 ]
 
 const TOUCHPAD_CORE_OPTIONS: ModifierSelectOption[] = [{ value: 'TOUCH', label: 'TOUCH – touchpad touch' }]
@@ -52,27 +60,23 @@ const clampGridButtons = (value: number) => {
 }
 
 export const buildModifierOptions = (
-  layout: ControllerLayout,
   gridActive: boolean,
   configuredGridButtons: number
 ) => {
-  const options: ModifierSelectOption[] = [...BASE_MODIFIER_OPTIONS]
-  if (layout === 'playstation') {
-    options.push(...TOUCHPAD_CORE_OPTIONS)
-    if (gridActive) {
-      const count = clampGridButtons(configuredGridButtons || 1)
-      for (let index = 1; index <= count; index += 1) {
-        options.push({ value: `T${index}`, label: `T${index} – touch grid region ${index}` })
-      }
-    } else {
-      const previewCount = Math.min(TOUCHPAD_GRID_PREVIEW_COUNT, Math.max(configuredGridButtons, 2) || 2)
-      for (let index = 1; index <= previewCount; index += 1) {
-        options.push({
-          value: `T${index}`,
-          label: `T${index} – touch grid region ${index} (enable GRID_AND_STICK to use)`,
-          disabled: true,
-        })
-      }
+  const options: ModifierSelectOption[] = [...BASE_MODIFIER_OPTIONS, ...TOUCHPAD_CORE_OPTIONS]
+  if (gridActive) {
+    const count = clampGridButtons(configuredGridButtons || 1)
+    for (let index = 1; index <= count; index += 1) {
+      options.push({ value: `T${index}`, label: `T${index} – touch grid region ${index}` })
+    }
+  } else {
+    const previewCount = Math.min(TOUCHPAD_GRID_PREVIEW_COUNT, Math.max(configuredGridButtons, 2) || 2)
+    for (let index = 1; index <= previewCount; index += 1) {
+      options.push({
+        value: `T${index}`,
+        label: `T${index} – touch grid region ${index} (enable GRID_AND_STICK to use)`,
+        disabled: true,
+      })
     }
   }
   return options

@@ -10,10 +10,10 @@ export type ButtonDefinition = {
 }
 
 export const FACE_BUTTONS: ButtonDefinition[] = [
-  { command: 'N', description: 'North / Top', playstation: 'Triangle', xbox: 'Y' },
-  { command: 'E', description: 'East / Right', playstation: 'Circle', xbox: 'B' },
-  { command: 'S', description: 'South / Bottom', playstation: 'Cross', xbox: 'A' },
-  { command: 'W', description: 'West / Left', playstation: 'Square', xbox: 'X' },
+  { command: 'N', description: 'North / Top', playstation: '△', xbox: 'Y' },
+  { command: 'E', description: 'East / Right', playstation: '○', xbox: 'B' },
+  { command: 'S', description: 'South / Bottom', playstation: '✕', xbox: 'A' },
+  { command: 'W', description: 'West / Left', playstation: '◻', xbox: 'X' },
 ]
 
 export const DPAD_BUTTONS: ButtonDefinition[] = [
@@ -36,22 +36,27 @@ export const TRIGGER_BUTTONS: ButtonDefinition[] = [
 ]
 
 export const CENTER_BUTTONS: ButtonDefinition[] = [
-  { command: '+', description: 'Options / Menu (plus)', playstation: 'Options', xbox: 'Options' },
+  { command: '+', description: 'Options / Menu (plus)', playstation: 'Options', xbox: 'Menu' },
   { command: '-', description: 'Share / View (minus)', playstation: 'Share', xbox: 'View' },
   { command: 'MIC', description: 'Microphone button', playstation: 'Mic', xbox: 'Mic' },
   { command: 'HOME', description: 'Home / Guide', playstation: 'PS', xbox: 'Guide' },
 ]
 
 export const PADDLE_BUTTONS: ButtonDefinition[] = [
-  { command: 'LSL', description: 'Left Joy-Con SL / Xbox Elite left paddle / DS Edge left paddle',  playstation: 'SL (Left)',  xbox: 'L Paddle 1' },
-  { command: 'LSR', description: 'Left Joy-Con SR / Xbox Elite right paddle',                       playstation: 'SR (Left)',  xbox: 'R Paddle 1' },
-  { command: 'RSL', description: 'Right Joy-Con SL / Xbox Elite left paddle',                       playstation: 'SL (Right)', xbox: 'L Paddle 2' },
-  { command: 'RSR', description: 'Right Joy-Con SR / Xbox Elite right paddle / DS Edge right paddle',playstation: 'SR (Right)', xbox: 'R Paddle 2' },
+  { command: 'LSL', description: 'Primary left back paddle / Joy-Con L SL',   playstation: 'L Paddle 1', xbox: 'L SL' },
+  { command: 'RSR', description: 'Primary right back paddle / Joy-Con R SR',   playstation: 'R Paddle 1', xbox: 'R SR' },
+  { command: 'LSR', description: 'Secondary left back paddle / Joy-Con L SR',  playstation: 'L Paddle 2', xbox: 'L SR' },
+  { command: 'RSL', description: 'Secondary right back paddle / Joy-Con R SL', playstation: 'R Paddle 2', xbox: 'R SL' },
+]
+
+export const MINI_BUTTONS: ButtonDefinition[] = [
+  { command: 'LMINI', description: 'Left mini shoulder button', playstation: 'L Mini', xbox: 'L Mini' },
+  { command: 'RMINI', description: 'Right mini shoulder button', playstation: 'R Mini', xbox: 'R Mini' },
 ]
 
 export const TOUCH_BUTTONS: ButtonDefinition[] = [
   { command: 'TOUCH', description: 'Touch contact', playstation: 'Touch', xbox: 'Touch' },
-  { command: 'CAPTURE', description: 'Touchpad click', playstation: 'Click', xbox: 'Click' },
+  { command: 'CAPTURE', description: 'Touchpad click / Share / Capture', playstation: 'Click', xbox: 'Click' },
 ]
 
 export const LEFT_STICK_BUTTONS: ButtonDefinition[] = [
@@ -61,6 +66,7 @@ export const LEFT_STICK_BUTTONS: ButtonDefinition[] = [
   { command: 'LRIGHT', description: 'Left stick right direction', playstation: 'LS Right', xbox: 'LS Right' },
   { command: 'L3', description: 'Left stick click', playstation: 'L3', xbox: 'LS Click' },
   { command: 'LRING', description: 'Left stick ring binding', playstation: 'L-Ring', xbox: 'L-Ring' },
+  { command: 'LTOUCH', description: 'Left stick capacitive touch', playstation: 'LS Touch', xbox: 'LS Touch' },
 ]
 
 export const RIGHT_STICK_BUTTONS: ButtonDefinition[] = [
@@ -70,6 +76,16 @@ export const RIGHT_STICK_BUTTONS: ButtonDefinition[] = [
   { command: 'RRIGHT', description: 'Right stick right direction', playstation: 'RS Right', xbox: 'RS Right' },
   { command: 'R3', description: 'Right stick click', playstation: 'R3', xbox: 'RS Click' },
   { command: 'RRING', description: 'Right stick ring binding', playstation: 'R-Ring', xbox: 'R-Ring' },
+  { command: 'RTOUCH', description: 'Right stick capacitive touch', playstation: 'RS Touch', xbox: 'RS Touch' },
+]
+
+export const MISC_BUTTONS: ButtonDefinition[] = [
+  { command: 'MISC1', description: 'Extra button 1 (varies by controller)', playstation: 'Misc 1', xbox: 'Misc 1' },
+  { command: 'MISC2', description: 'Extra button 2 (varies by controller)', playstation: 'Misc 2', xbox: 'Misc 2' },
+  { command: 'MISC3', description: 'Extra button 3 (varies by controller)', playstation: 'Misc 3', xbox: 'Misc 3' },
+  { command: 'MISC4', description: 'Extra button 4 (varies by controller)', playstation: 'Misc 4', xbox: 'Misc 4' },
+  { command: 'MISC5', description: 'Extra button 5 (varies by controller)', playstation: 'Misc 5', xbox: 'Misc 5' },
+  { command: 'MISC6', description: 'Extra button 6 (varies by controller)', playstation: 'Misc 6', xbox: 'Misc 6' },
 ]
 
 export const buildStickShiftValue = (target: 'LEFT' | 'RIGHT', mode: string) => `STICK_SHIFT:${target}:${mode}`

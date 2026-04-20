@@ -28,7 +28,7 @@ import { showToast } from './utils/toast'
 
 type PrimaryTab = 'gyro' | 'keybinds' | 'touchpad' | 'sticks' | 'help'
 type GyroSubTab = 'behavior' | 'sensitivity' | 'noise'
-type KeybindsSubTab = 'global' | 'face' | 'dpad' | 'bumpers' | 'triggers' | 'center' | 'paddles'
+type KeybindsSubTab = 'global' | 'face' | 'dpad' | 'bumpers' | 'triggers' | 'center' | 'paddles' | 'extra'
 type TouchpadSubTab = 'mode' | 'bind'
 type SticksSubTab = 'bindings' | 'modes'
 
@@ -422,7 +422,7 @@ function App() {
 
   const renderKeybindsNav = () => (
     <div className="subnav">
-      {(['global', 'face', 'dpad', 'bumpers', 'triggers', 'center', 'paddles'] as KeybindsSubTab[]).map(entry => (
+      {(['global', 'face', 'dpad', 'bumpers', 'triggers', 'center', 'paddles', 'extra'] as KeybindsSubTab[]).map(entry => (
         <button key={entry} className={`pill-tab ${keybindsSubTab === entry ? 'active' : ''}`} onClick={() => setKeybindsSubTab(entry)}>
           {entry === 'global' && 'Global Settings'}
           {entry === 'face' && 'Face'}
@@ -431,6 +431,7 @@ function App() {
           {entry === 'triggers' && 'Triggers'}
           {entry === 'center' && 'Center'}
           {entry === 'paddles' && 'Paddles'}
+          {entry === 'extra' && 'Extra'}
         </button>
       ))}
     </div>

@@ -307,7 +307,7 @@ void touchCallback(int jcHandle, TOUCH_STATE newState, TOUCH_STATE prevState, fl
 
 void calibrateTriggers(shared_ptr<JoyShock> jc)
 {
-	if (jsl->GetButtons(jc->_handle) & (1 << JSOFFSET_HOME))
+	if (jsl->GetButtons(jc->_handle) & (1ULL << JSOFFSET_HOME))
 	{
 		COUT << "Abandonning calibration\n";
 		triggerCalibrationStep = 0;
@@ -334,7 +334,7 @@ void calibrateTriggers(shared_ptr<JoyShock> jc)
 		triggerCalibrationStep++;
 		break;
 	case 2:
-		if (jsl->GetButtons(jc->_handle) & (1 << JSOFFSET_DOWN))
+		if (jsl->GetButtons(jc->_handle) & (1ULL << JSOFFSET_DOWN))
 		{
 			triggerCalibrationStep++;
 		}
@@ -378,7 +378,7 @@ void calibrateTriggers(shared_ptr<JoyShock> jc)
 		triggerCalibrationStep++;
 		break;
 	case 7:
-		if (jsl->GetButtons(jc->_handle) & (1 << JSOFFSET_S))
+		if (jsl->GetButtons(jc->_handle) & (1ULL << JSOFFSET_S))
 		{
 			triggerCalibrationStep++;
 		}
@@ -1379,17 +1379,17 @@ void joyShockPollCallback(int jcHandle, JOY_SHOCK_STATE state, JOY_SHOCK_STATE l
 		}
 	}
 
-	int buttons = jsl->GetButtons(jc->_handle);
+	uint64_t buttons = jsl->GetButtons(jc->_handle);
 	// button mappings
 	if (jc->_splitType != JS_SPLIT_TYPE_RIGHT)
 	{
-		jc->handleButtonChange(ButtonID::UP, buttons & (1 << JSOFFSET_UP));
-		jc->handleButtonChange(ButtonID::DOWN, buttons & (1 << JSOFFSET_DOWN));
-		jc->handleButtonChange(ButtonID::LEFT, buttons & (1 << JSOFFSET_LEFT));
-		jc->handleButtonChange(ButtonID::RIGHT, buttons & (1 << JSOFFSET_RIGHT));
-		jc->handleButtonChange(ButtonID::L, buttons & (1 << JSOFFSET_L));
-		jc->handleButtonChange(ButtonID::MINUS, buttons & (1 << JSOFFSET_MINUS));
-		jc->handleButtonChange(ButtonID::L3, buttons & (1 << JSOFFSET_LCLICK));
+		jc->handleButtonChange(ButtonID::UP, buttons & (1ULL << JSOFFSET_UP));
+		jc->handleButtonChange(ButtonID::DOWN, buttons & (1ULL << JSOFFSET_DOWN));
+		jc->handleButtonChange(ButtonID::LEFT, buttons & (1ULL << JSOFFSET_LEFT));
+		jc->handleButtonChange(ButtonID::RIGHT, buttons & (1ULL << JSOFFSET_RIGHT));
+		jc->handleButtonChange(ButtonID::L, buttons & (1ULL << JSOFFSET_L));
+		jc->handleButtonChange(ButtonID::MINUS, buttons & (1ULL << JSOFFSET_MINUS));
+		jc->handleButtonChange(ButtonID::L3, buttons & (1ULL << JSOFFSET_LCLICK));
 
 		float lTrigger = jsl->GetLeftTrigger(jc->_handle);
 		jc->handleTriggerChange(ButtonID::ZL, ButtonID::ZLF, jc->getSetting<TriggerMode>(SettingID::ZL_MODE), lTrigger, jc->_leftEffect);
@@ -1400,57 +1400,134 @@ void joyShockPollCallback(int jcHandle, JOY_SHOCK_STATE state, JOY_SHOCK_STATE l
 		case JS_TYPE_DS:
 			// JSL mapps mic button on the SL index
 			// Edge grips
-			jc->handleButtonChange(ButtonID::LSL, buttons & (1 << JSOFFSET_SL));
-			jc->handleButtonChange(ButtonID::RSR, buttons & (1 << JSOFFSET_SR));
+			jc->handleButtonChange(ButtonID::LSL, buttons & (1ULL << JSOFFSET_SL));
+			jc->handleButtonChange(ButtonID::RSR, buttons & (1ULL << JSOFFSET_SR));
 			// Edge FN
-			jc->handleButtonChange(ButtonID::LSR, buttons & (1 << JSOFFSET_FNL));
-			jc->handleButtonChange(ButtonID::RSL, buttons & (1 << JSOFFSET_FNR));
+			jc->handleButtonChange(ButtonID::LSR, buttons & (1ULL << JSOFFSET_FNL));
+			jc->handleButtonChange(ButtonID::RSL, buttons & (1ULL << JSOFFSET_FNR));
 
-			jc->handleButtonChange(ButtonID::MIC, buttons & (1 << JSOFFSET_MIC));
+			jc->handleButtonChange(ButtonID::MIC, buttons & (1ULL << JSOFFSET_MIC));
 			// Don't break but continue onto DS4 stuff too
 		case JS_TYPE_DS4:
 		{
-			float triggerpos = buttons & (1 << JSOFFSET_CAPTURE) ? 1.f :
+			float triggerpos = buttons & (1ULL << JSOFFSET_CAPTURE) ? 1.f :
 			  touch                                              ? 0.99f :
 			                                                       0.f;
 			jc->handleTriggerChange(ButtonID::TOUCH, ButtonID::CAPTURE, jc->getSetting<TriggerMode>(SettingID::TOUCHPAD_DUAL_STAGE_MODE), triggerpos, jc->_unusedEffect);
 		}
 		break;
 		case JS_TYPE_XBOXONE_ELITE:
-			jc->handleButtonChange(ButtonID::LSL, buttons & (1 << JSOFFSET_SL)); // Xbox Elite back paddles
-			jc->handleButtonChange(ButtonID::RSR, buttons & (1 << JSOFFSET_SR));
-			jc->handleButtonChange(ButtonID::LSR, buttons & (1 << JSOFFSET_FNL));
-			jc->handleButtonChange(ButtonID::RSL, buttons & (1 << JSOFFSET_FNR));
+			jc->handleButtonChange(ButtonID::LSL, buttons & (1ULL << JSOFFSET_SL)); // Xbox Elite back paddles
+			jc->handleButtonChange(ButtonID::RSR, buttons & (1ULL << JSOFFSET_SR));
+			jc->handleButtonChange(ButtonID::LSR, buttons & (1ULL << JSOFFSET_FNL));
+			jc->handleButtonChange(ButtonID::RSL, buttons & (1ULL << JSOFFSET_FNR));
 			break;
 		case JS_TYPE_XBOX_SERIES:
-			jc->handleButtonChange(ButtonID::CAPTURE, buttons & (1 << JSOFFSET_CAPTURE));
+			jc->handleButtonChange(ButtonID::CAPTURE, buttons & (1ULL << JSOFFSET_CAPTURE));
 			break;
-		default: // Switch Pro controllers and left joycon
-		{
-			jc->handleButtonChange(ButtonID::CAPTURE, buttons & (1 << JSOFFSET_CAPTURE));
-			jc->handleButtonChange(ButtonID::LSL, buttons & (1 << JSOFFSET_SL));
-			jc->handleButtonChange(ButtonID::LSR, buttons & (1 << JSOFFSET_SR));
-		}
-		break;
+		case JS_TYPE_JOYCON_LEFT:
+			jc->handleButtonChange(ButtonID::CAPTURE, buttons & (1ULL << JSOFFSET_CAPTURE));
+			jc->handleButtonChange(ButtonID::LSL, buttons & (1ULL << JSOFFSET_SL));
+			jc->handleButtonChange(ButtonID::LSR, buttons & (1ULL << JSOFFSET_SR));
+			break;
+		case JS_TYPE_PRO_CONTROLLER:
+			jc->handleButtonChange(ButtonID::CAPTURE, buttons & (1ULL << JSOFFSET_CAPTURE));
+			break;
+		case JS_TYPE_SWITCH2_PRO_CONTROLLER:
+			jc->handleButtonChange(ButtonID::CAPTURE, buttons & (1ULL << JSOFFSET_CAPTURE)); // Capture button
+			jc->handleButtonChange(ButtonID::LSL, buttons & (1ULL << JSOFFSET_SL));          // GL back button
+			jc->handleButtonChange(ButtonID::RSR, buttons & (1ULL << JSOFFSET_SR));          // GR back button
+			jc->handleButtonChange(ButtonID::MISC1, buttons & (1ULL << JSOFFSET_MISC1));     // C button
+			break;
+		case JS_TYPE_HORI_STEAM:
+			jc->handleButtonChange(ButtonID::LSL, buttons & (1ULL << JSOFFSET_SL));        // L4 back button
+			jc->handleButtonChange(ButtonID::RSR, buttons & (1ULL << JSOFFSET_SR));        // R4 back button
+			jc->handleButtonChange(ButtonID::LSR, buttons & (1ULL << JSOFFSET_FNL));       // M1 button below left stick
+			jc->handleButtonChange(ButtonID::RSL, buttons & (1ULL << JSOFFSET_FNR));       // M2 button below right stick
+			jc->handleButtonChange(ButtonID::LTOUCH, buttons & (1ULL << JSOFFSET_LTOUCH)); // Left stick capacitive touch
+			jc->handleButtonChange(ButtonID::RTOUCH, buttons & (1ULL << JSOFFSET_RTOUCH)); // Right stick capacitive touch
+			jc->handleButtonChange(ButtonID::MISC1, buttons & (1ULL << JSOFFSET_MISC1));   // QAM button ("..." button)
+			break;
+		case JS_TYPE_G7_PRO_8K:
+			jc->handleButtonChange(ButtonID::LMINI, buttons & (1ULL << JSOFFSET_LMINI));     // L5 mini shoulder button
+			jc->handleButtonChange(ButtonID::RMINI, buttons & (1ULL << JSOFFSET_RMINI));     // R5 mini shoulder button
+			jc->handleButtonChange(ButtonID::LSL, buttons & (1ULL << JSOFFSET_SL));          // L4 back button
+			jc->handleButtonChange(ButtonID::RSR, buttons & (1ULL << JSOFFSET_SR));          // R4 back button
+			jc->handleButtonChange(ButtonID::CAPTURE, buttons & (1ULL << JSOFFSET_CAPTURE)); // Share button
+			break;
+		// 8BitDo controllers with gyro and no additional buttons.
+		case JS_TYPE_8BITDO_SF30_PRO:
+		case JS_TYPE_8BITDO_SF30_PRO_BT:
+		case JS_TYPE_8BITDO_SN30_PRO:
+		case JS_TYPE_8BITDO_SN30_PRO_BT:
+			break;
+		// 8BitDo controllers with gyro and two additional buttons.
+		case JS_TYPE_8BITDO_PRO_2:
+		case JS_TYPE_8BITDO_PRO_2_BT:
+			jc->handleButtonChange(ButtonID::LSL, buttons & (1ULL << JSOFFSET_SL)); // P2 back button (left)
+			jc->handleButtonChange(ButtonID::RSR, buttons & (1ULL << JSOFFSET_SR)); // P1 back button (right)
+			break;
+		// 8BitDo controllers with gyro and four additional buttons.
+		case JS_TYPE_8BITDO_PRO_3:
+		case JS_TYPE_8BITDO_ULTIMATE2_WIRELESS:
+			jc->handleButtonChange(ButtonID::LMINI, buttons & (1ULL << JSOFFSET_LMINI)); // L4 mini shoulder button
+			jc->handleButtonChange(ButtonID::RMINI, buttons & (1ULL << JSOFFSET_RMINI)); // R4 mini shoulder button
+			jc->handleButtonChange(ButtonID::LSL, buttons & (1ULL << JSOFFSET_SL));      // PL back button
+			jc->handleButtonChange(ButtonID::RSR, buttons & (1ULL << JSOFFSET_SR));      // PR back button
+			break;
+		case JS_TYPE_FLYDIGI_APEX5:
+			jc->handleButtonChange(ButtonID::LMINI, buttons & (1ULL << JSOFFSET_LMINI)); // LM mini shoulder button
+			jc->handleButtonChange(ButtonID::RMINI, buttons & (1ULL << JSOFFSET_RMINI)); // RM mini shoulder button
+			jc->handleButtonChange(ButtonID::LSL, buttons & (1ULL << JSOFFSET_SL));  // M2 back button (top left)
+			jc->handleButtonChange(ButtonID::RSR, buttons & (1ULL << JSOFFSET_SR));  // M1 back button (top right)
+			jc->handleButtonChange(ButtonID::LSR, buttons & (1ULL << JSOFFSET_FNL)); // M4 back button (bottom left)
+			jc->handleButtonChange(ButtonID::RSL, buttons & (1ULL << JSOFFSET_FNR)); // M3 back button (bottom right)
+			break;
+		case JS_TYPE_FLYDIGI_VADER5_PRO:
+			jc->handleButtonChange(ButtonID::LMINI, buttons & (1ULL << JSOFFSET_LMINI)); // LM mini shoulder button
+			jc->handleButtonChange(ButtonID::RMINI, buttons & (1ULL << JSOFFSET_RMINI)); // RM mini shoulder button
+			jc->handleButtonChange(ButtonID::MISC3, buttons & (1ULL << JSOFFSET_MISC3)); // Circle button below right stick
+			// Fall through.
+		case JS_TYPE_FLYDIGI_VADER4_PRO:
+		case JS_TYPE_FLYDIGI_VADER3_PRO:
+			jc->handleButtonChange(ButtonID::LSL, buttons & (1ULL << JSOFFSET_SL));  // M2 back button (top left)
+			jc->handleButtonChange(ButtonID::RSR, buttons & (1ULL << JSOFFSET_SR));  // M1 back button (top right)
+			jc->handleButtonChange(ButtonID::LSR, buttons & (1ULL << JSOFFSET_FNL)); // M4 back button (bottom left)
+			jc->handleButtonChange(ButtonID::RSL, buttons & (1ULL << JSOFFSET_FNR)); // M3 back button (bottom right)
+			jc->handleButtonChange(ButtonID::MISC1, buttons & (1ULL << JSOFFSET_MISC1)); // C face button
+			jc->handleButtonChange(ButtonID::MISC2, buttons & (1ULL << JSOFFSET_MISC2)); // Z face button
+			break;
+		default:
+			jc->handleButtonChange(ButtonID::LSL, buttons & (1ULL << JSOFFSET_SL));
+			jc->handleButtonChange(ButtonID::RSR, buttons & (1ULL << JSOFFSET_SR));
+			jc->handleButtonChange(ButtonID::LSR, buttons & (1ULL << JSOFFSET_FNL));
+			jc->handleButtonChange(ButtonID::RSL, buttons & (1ULL << JSOFFSET_FNR));
+			jc->handleButtonChange(ButtonID::MISC1, buttons & (1ULL << JSOFFSET_MISC1));
+			jc->handleButtonChange(ButtonID::MISC2, buttons & (1ULL << JSOFFSET_MISC2));
+			jc->handleButtonChange(ButtonID::MISC3, buttons & (1ULL << JSOFFSET_MISC3));
+			jc->handleButtonChange(ButtonID::MISC4, buttons & (1ULL << JSOFFSET_MISC4));
+			jc->handleButtonChange(ButtonID::MISC5, buttons & (1ULL << JSOFFSET_MISC5));
+			jc->handleButtonChange(ButtonID::MISC6, buttons & (1ULL << JSOFFSET_MISC6));
+			break;
 		}
 	}
 	else // split type IS right
 	{
 		// Right joycon bumpers
-		jc->handleButtonChange(ButtonID::RSL, buttons & (1 << JSOFFSET_SL));
-		jc->handleButtonChange(ButtonID::RSR, buttons & (1 << JSOFFSET_SR));
+		jc->handleButtonChange(ButtonID::RSL, buttons & (1ULL << JSOFFSET_SL));
+		jc->handleButtonChange(ButtonID::RSR, buttons & (1ULL << JSOFFSET_SR));
 	}
 
 	if (jc->_splitType != JS_SPLIT_TYPE_LEFT)
 	{
-		jc->handleButtonChange(ButtonID::E, buttons & (1 << JSOFFSET_E));
-		jc->handleButtonChange(ButtonID::S, buttons & (1 << JSOFFSET_S));
-		jc->handleButtonChange(ButtonID::N, buttons & (1 << JSOFFSET_N));
-		jc->handleButtonChange(ButtonID::W, buttons & (1 << JSOFFSET_W));
-		jc->handleButtonChange(ButtonID::R, buttons & (1 << JSOFFSET_R));
-		jc->handleButtonChange(ButtonID::PLUS, buttons & (1 << JSOFFSET_PLUS));
-		jc->handleButtonChange(ButtonID::HOME, buttons & (1 << JSOFFSET_HOME));
-		jc->handleButtonChange(ButtonID::R3, buttons & (1 << JSOFFSET_RCLICK));
+		jc->handleButtonChange(ButtonID::E, buttons & (1ULL << JSOFFSET_E));
+		jc->handleButtonChange(ButtonID::S, buttons & (1ULL << JSOFFSET_S));
+		jc->handleButtonChange(ButtonID::N, buttons & (1ULL << JSOFFSET_N));
+		jc->handleButtonChange(ButtonID::W, buttons & (1ULL << JSOFFSET_W));
+		jc->handleButtonChange(ButtonID::R, buttons & (1ULL << JSOFFSET_R));
+		jc->handleButtonChange(ButtonID::PLUS, buttons & (1ULL << JSOFFSET_PLUS));
+		jc->handleButtonChange(ButtonID::HOME, buttons & (1ULL << JSOFFSET_HOME));
+		jc->handleButtonChange(ButtonID::R3, buttons & (1ULL << JSOFFSET_RCLICK));
 
 		float rTrigger = jsl->GetRightTrigger(jc->_handle);
 		jc->handleTriggerChange(ButtonID::ZR, ButtonID::ZRF, jc->getSetting<TriggerMode>(SettingID::ZR_MODE), rTrigger, jc->_rightEffect);
@@ -1458,8 +1535,8 @@ void joyShockPollCallback(int jcHandle, JOY_SHOCK_STATE state, JOY_SHOCK_STATE l
 	else
 	{
 		// Left joycon bumpers
-		jc->handleButtonChange(ButtonID::LSL, buttons & (1 << JSOFFSET_SL));
-		jc->handleButtonChange(ButtonID::LSR, buttons & (1 << JSOFFSET_SR));
+		jc->handleButtonChange(ButtonID::LSL, buttons & (1ULL << JSOFFSET_SL));
+		jc->handleButtonChange(ButtonID::LSR, buttons & (1ULL << JSOFFSET_SR));
 	}
 
 	auto at = jc->getSetting<Switch>(SettingID::ADAPTIVE_TRIGGER);
