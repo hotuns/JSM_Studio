@@ -1,0 +1,67 @@
+.telemetryBanner {
+  border: 1px solid var(--border-1);
+  border-radius: 12px;
+  padding: 1rem;
+  margin: 1rem 0 1.5rem;
+  background-color: var(--bg-input);
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.telemetryHeading {
+  margin: 0;
+  font-weight: 600;
+  color: var(--telemetry-green);
+}
+
+.telemetrySubheading {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--text-mid);
+}
+
+.telemetryReadouts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 0.8rem;
+  font-size: 0.95rem;
+}
+
+.telemetryNode {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.telemetryNode + .telemetryNode {
+  display: flex;
+}
+
+.telemetryLabel {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.telemetryValue {
+  font-weight: 600;
+  color: var(--text-strong);
+  font-variant-numeric: tabular-nums;
+}
+
+.telemetryInline {
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+}
+
+.telemetryInline :global(.telemetry-banner) {
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+}

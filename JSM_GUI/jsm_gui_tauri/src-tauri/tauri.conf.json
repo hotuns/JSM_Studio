@@ -1,0 +1,36 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "JoyShockMapper Custom Curve",
+  "version": "2.1.0",
+  "identifier": "com.evanmclean.jsmcustomcurve",
+  "build": {
+    "beforeDevCommand": "npm run dev:web",
+    "devUrl": "http://127.0.0.1:1420",
+    "beforeBuildCommand": "npm run build:web",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "JoyShockMapper Custom Curve",
+        "width": 1200,
+        "height": 900,
+        "resizable": true
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "icon": [
+      "icons/icon.ico"
+    ],
+    "resources": [
+      "../../jsm-gui-app/bin"
+    ],
+    "targets": "all"
+  }
+}

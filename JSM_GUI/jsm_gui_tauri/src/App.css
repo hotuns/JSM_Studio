@@ -1,0 +1,120 @@
+/* Global layout glue: responsive header / subnav / rail actions */
+
+.responsive-header {
+  display: none;
+}
+
+.mobile-header {
+  display: none;
+}
+
+.nav-brand {
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  color: var(--text-strong);
+}
+
+.subnav {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin: 0;
+  align-items: center;
+}
+
+.rail-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.rail-button {
+  width: 100%;
+  justify-content: center;
+  display: inline-flex;
+  align-items: center;
+  text-align: center;
+}
+
+@media (max-width: 1060px) {
+
+  .top-bar-left {
+    flex: 1 1 auto;
+    width: auto;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+  }
+
+  .top-bar-right {
+    width: auto;
+    flex: 0 0 auto;
+    justify-content: flex-end;
+  }
+
+  /* hide desktop top bar; responsive header provides its own */
+  .top-bar {
+    display: none;
+  }
+
+  /* narrow-width sticky header (sidebar buttons + subnav/version) */
+  .responsive-header {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    gap: 0;
+    padding: 0.5rem 1.75rem;
+    background: var(--bg-1-5);
+    border-bottom: 1px solid var(--border-1);
+  }
+
+.responsive-header-divider {
+  height: 1px;
+  background: var(--border-1);
+  margin: 0.35rem 0;
+  /* stretch to full content width by canceling header horizontal padding */
+    margin-left: -1.75rem;
+    margin-right: -1.75rem;
+  }
+
+  .responsive-header .subnav {
+    justify-content: flex-start;
+  }
+}
+
+.lazy-panel-fallback {
+  display: flex;
+  min-height: 13rem;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.45rem;
+  border: 1px solid var(--border-1);
+  border-radius: 18px;
+  padding: 1.1rem 1.2rem;
+  background:
+    radial-gradient(circle at top left, color-mix(in srgb, var(--accent-primary) 8%, transparent), transparent 48%),
+    linear-gradient(180deg, var(--bg-1), var(--bg-1-5));
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.08);
+}
+
+.lazy-panel-fallback.compact {
+  min-height: 9rem;
+  border-radius: 16px;
+  padding: 0.95rem 1rem;
+}
+
+.lazy-panel-fallback-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-strong);
+}
+
+.lazy-panel-fallback-text {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}

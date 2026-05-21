@@ -1,0 +1,158 @@
+.visualizer {
+  width: 100%;
+  padding: 0.5rem 0;
+}
+
+.controllerSvg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.interactive {
+  cursor: pointer;
+}
+
+.interactive:hover .control,
+.interactive:hover .triggerTrack,
+.interactive:hover .stickBase {
+  stroke: var(--accent);
+}
+
+.shell {
+  fill: rgba(255, 255, 255, 0.34);
+  stroke: var(--border-strong);
+  stroke-width: 3;
+  vector-effect: non-scaling-stroke;
+}
+
+.centerPanel {
+  fill: rgba(255, 255, 255, 0.18);
+  stroke: var(--border-strong);
+  stroke-width: 2.2;
+  vector-effect: non-scaling-stroke;
+}
+
+.triggerTrack {
+  fill: rgba(255, 255, 255, 0.28);
+  stroke: var(--border-strong);
+  stroke-width: 2;
+  transition: fill 120ms ease, stroke 120ms ease;
+  vector-effect: non-scaling-stroke;
+}
+
+.triggerTrackBound {
+  fill: rgba(88, 184, 138, 0.16);
+  stroke: rgba(88, 184, 138, 0.95);
+}
+
+.triggerTrackSelected {
+  fill: rgba(76, 125, 255, 0.2);
+  stroke: var(--accent);
+}
+
+.triggerFill {
+  fill: rgba(88, 184, 138, 0.88);
+}
+
+.triggerLabel,
+.controlText {
+  font-size: 17px;
+  font-weight: 700;
+  fill: var(--text-dim);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  text-anchor: middle;
+  dominant-baseline: central;
+  user-select: none;
+  pointer-events: none;
+}
+
+.triggerLabelSelected {
+  fill: var(--accent);
+}
+
+.controlTextCompact {
+  font-size: 13px;
+  letter-spacing: 0.04em;
+}
+
+.control {
+  fill: rgba(255, 255, 255, 0.32);
+  stroke: var(--border-strong);
+  stroke-width: 2.2;
+  transition: fill 120ms ease, stroke 120ms ease, filter 120ms ease;
+  vector-effect: non-scaling-stroke;
+}
+
+.controlCompact {
+  stroke-width: 1.8;
+}
+
+.controlBound {
+  fill: rgba(88, 184, 138, 0.12);
+  stroke: rgba(88, 184, 138, 0.95);
+}
+
+.controlSelected {
+  fill: rgba(76, 125, 255, 0.18);
+  stroke: var(--accent);
+  filter: drop-shadow(0 0 10px rgba(76, 125, 255, 0.2));
+}
+
+.controlPressed {
+  fill: rgba(76, 125, 255, 0.18);
+  stroke: var(--accent);
+  filter: drop-shadow(0 0 10px rgba(76, 125, 255, 0.2));
+}
+
+.controlTextSelected,
+.controlTextPressed {
+  fill: var(--accent);
+}
+
+.stickBase {
+  fill: rgba(255, 255, 255, 0.28);
+  stroke: var(--border-strong);
+  stroke-width: 2.5;
+  transition: fill 120ms ease, stroke 120ms ease;
+  vector-effect: non-scaling-stroke;
+}
+
+.stickBaseBound {
+  fill: rgba(88, 184, 138, 0.12);
+  stroke: rgba(88, 184, 138, 0.95);
+}
+
+.stickBaseSelected {
+  fill: rgba(76, 125, 255, 0.18);
+  stroke: var(--accent);
+}
+
+.stickRing {
+  fill: rgba(255, 255, 255, 0.12);
+  stroke: var(--border-1);
+  stroke-width: 1.6;
+  vector-effect: non-scaling-stroke;
+}
+
+.stickRingBound {
+  stroke: rgba(88, 184, 138, 0.75);
+}
+
+.stickKnob {
+  fill: rgba(255, 255, 255, 0.86);
+  stroke: var(--border-strong);
+  stroke-width: 2.2;
+  transition: cx 70ms linear, cy 70ms linear, fill 120ms ease, stroke 120ms ease;
+  vector-effect: non-scaling-stroke;
+}
+
+.stickKnobSelected,
+.stickKnobPressed {
+  fill: rgba(76, 125, 255, 0.18);
+  stroke: var(--accent);
+}
+
+.sideMuted {
+  opacity: 0.28;
+}

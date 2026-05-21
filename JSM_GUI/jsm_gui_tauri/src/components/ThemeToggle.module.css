@@ -1,0 +1,85 @@
+.themeToggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.35rem 0.65rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-1);
+  background: var(--bg-input);
+  color: var(--text-strong);
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: border-color 0.2s ease, background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.themeToggle:hover {
+  border-color: var(--border-strong);
+  background: var(--bg-btn-hover);
+}
+
+.labelGroup {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.switch {
+  position: relative;
+  width: 46px;
+  height: 24px;
+  border-radius: 999px;
+  background: var(--bg-btn-hover);
+  border: 1px solid var(--border-1);
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+  flex-shrink: 0;
+}
+
+.thumb {
+  position: absolute;
+  top: 50%;
+  left: 3px;
+  width: 19px;
+  height: 19px;
+  border-radius: 50%;
+  background: var(--bg-2);
+  border: 1px solid var(--border-1);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+  transform: translate(0, -50%);
+  transition: transform 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.on .switch {
+  background: color-mix(in srgb, var(--accent) 30%, var(--bg-btn-hover));
+  border-color: var(--accent);
+}
+
+.on .thumb {
+  transform: translate(22px, -50%);
+  border-color: var(--accent);
+}
+
+.icon {
+  width: 1.1rem;
+  text-align: center;
+  font-size: 1.05rem;
+  color: var(--text-mid);
+}
+
+.on .icon {
+  color: var(--accent);
+}
+
+.text {
+  white-space: nowrap;
+}
+
+.compact {
+  padding: 0.35rem 0.45rem;
+  gap: 0.5rem;
+}
+
+.compact .text {
+  display: none;
+}
