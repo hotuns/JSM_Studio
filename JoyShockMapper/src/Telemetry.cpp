@@ -114,8 +114,19 @@ public:
 				    << ",\"type\":" << dev.controllerType
 				    << ",\"split\":" << dev.splitType
 				    << ",\"vid\":" << dev.vendorId
-				    << ",\"pid\":" << dev.productId
-				    << "}";
+				    << ",\"pid\":" << dev.productId;
+				if (dev.status.has_value())
+				{
+					const auto &status = dev.status.value();
+					oss << ",\"status\":{"
+					    << "\"buttons\":" << status.buttons
+					    << ",\"leftStick\":{\"x\":" << status.leftStick.x << ",\"y\":" << status.leftStick.y << "}"
+					    << ",\"rightStick\":{\"x\":" << status.rightStick.x << ",\"y\":" << status.rightStick.y << "}"
+					    << ",\"triggers\":{\"left\":" << status.triggers.left << ",\"right\":" << status.triggers.right << "}"
+					    << ",\"gyro\":{\"x\":" << status.gyro.x << ",\"y\":" << status.gyro.y << ",\"z\":" << status.gyro.z << "}"
+					    << "}";
+				}
+				oss << "}";
 			}
 			oss << "]";
 		}

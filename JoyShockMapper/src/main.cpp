@@ -1239,6 +1239,27 @@ void joyShockPollCallback(int jcHandle, JOY_SHOCK_STATE state, JOY_SHOCK_STATE l
 		dev.splitType = device->_splitType;
 		dev.vendorId = jsl->GetControllerVendor(device->_handle);
 		dev.productId = jsl->GetControllerProduct(device->_handle);
+#ifdef SDL
+		TelemetryDeviceStatus status;
+		status.buttons = jsl->GetButtons(device->_handle);
+		if (device->_splitType != JS_SPLIT_TYPE_RIGHT)
+		{
+			status.leftStick.x = jsl->GetLeftX(device->_handle);
+			status.leftStick.y = jsl->GetLeftY(device->_handle);
+			status.triggers.left = jsl->GetLeftTrigger(device->_handle);
+		}
+		if (device->_splitType != JS_SPLIT_TYPE_LEFT)
+		{
+			status.rightStick.x = jsl->GetRightX(device->_handle);
+			status.rightStick.y = jsl->GetRightY(device->_handle);
+			status.triggers.right = jsl->GetRightTrigger(device->_handle);
+		}
+		const auto imu = jsl->GetIMUState(device->_handle);
+		status.gyro.x = imu.gyroX;
+		status.gyro.y = imu.gyroY;
+		status.gyro.z = imu.gyroZ;
+		dev.status = status;
+#endif
 		telemetrySample.devices.push_back(dev);
 	}
 	Telemetry::MaybeSend(telemetrySample);

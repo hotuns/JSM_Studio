@@ -98,16 +98,6 @@
   align-items: center;
 }
 
-.rowSpecialSelectWrapper {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.rowSpecialSelect {
-  width: 100%;
-}
-
 .rowModifierSelect {
   display: flex;
   flex-direction: column;
@@ -157,7 +147,30 @@
   display: flex;
   gap: 0.5rem;
   align-items: center;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
+}
+
+.primaryBindingRow .bindingInput {
+  flex: 1 1 16rem;
+  min-width: 0;
+  width: auto;
+}
+
+.rowSpecialInlineSelect {
+  flex: 0 1 12rem;
+  min-width: 7.5rem;
+  max-width: 12rem;
+  padding: 0.45rem 0.75rem;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--text-mid);
+  background: transparent;
+}
+
+.rowSpecialInlineSelectActive {
+  color: var(--text-strong);
+  border-color: var(--border-strong);
+  background: var(--bg-input);
 }
 
 .addBindingRow {
@@ -174,8 +187,6 @@
   color: var(--text-strong);
 }
 
-.rowSpecialSelectWrapper + .primaryBindingRow,
-.rowModifierSelect + .rowSpecialSelectWrapper,
 .rowModifierSelect + .primaryBindingRow {
   margin-top: -0.25rem;
 }

@@ -16,6 +16,7 @@ import { KeymapControls } from './components/KeymapControls'
 import { SectionActions } from './components/SectionActions'
 import { DEFAULT_HOLD_PRESS_TIME } from './constants/defaults'
 import { HelpDocsPage } from './components/HelpDocsPage'
+import { ControllerStatusPage } from './components/ControllerStatusPage'
 import { useProfileLibrary } from './hooks/useProfileLibrary'
 import { useKeymapConfig } from './hooks/useKeymapConfig'
 import { useCalibration } from './hooks/useCalibration'
@@ -27,7 +28,7 @@ import { showToast } from './utils/toast'
 import { LanguageSelect } from './components/LanguageSelect'
 
 
-type PrimaryTab = 'gyro' | 'keybinds' | 'touchpad' | 'sticks' | 'help'
+type PrimaryTab = 'gyro' | 'keybinds' | 'touchpad' | 'sticks' | 'controllerStatus' | 'help'
 type GyroSubTab = 'behavior' | 'sensitivity' | 'noise'
 type KeybindsSubTab = 'global' | 'face' | 'dpad' | 'bumpers' | 'triggers' | 'center' | 'paddles' | 'extra'
 type TouchpadSubTab = 'mode' | 'bind'
@@ -71,6 +72,12 @@ const PrimaryNav = ({ primaryTab, setPrimaryTab, includeHelp = false }: PrimaryN
         onClick={() => setPrimaryTab('sticks')}
       >
         {t('app.nav.sticks')}
+      </button>
+      <button
+        className={`${sideNavStyles.navItem} ${primaryTab === 'controllerStatus' ? sideNavStyles.active : ''}`}
+        onClick={() => setPrimaryTab('controllerStatus')}
+      >
+        {t('app.nav.controllerStatus')}
       </button>
       {includeHelp && (
         <button
@@ -466,11 +473,11 @@ function App() {
 
   const renderSticksNav = () => (
     <div className="subnav">
-      <button className={`pill-tab ${sticksSubTab === 'bindings' ? 'active' : ''}`} onClick={() => setSticksSubTab('bindings')}>
-        {t('app.tabs.bindings')}
-      </button>
       <button className={`pill-tab ${sticksSubTab === 'modes' ? 'active' : ''}`} onClick={() => setSticksSubTab('modes')}>
         {t('app.tabs.modesAndSettings')}
+      </button>
+      <button className={`pill-tab ${sticksSubTab === 'bindings' ? 'active' : ''}`} onClick={() => setSticksSubTab('bindings')}>
+        {t('app.tabs.bindings')}
       </button>
     </div>
   )
@@ -768,6 +775,16 @@ function App() {
             lockMessage={lockMessage}
           />
         </>
+      )
+    }
+
+    if (primaryTab === 'controllerStatus') {
+      return (
+        <ControllerStatusPage
+          backendChoice={backendChoice}
+          devices={sample?.devices}
+          ignoredDevices={ignoredGyroDevices}
+        />
       )
     }
 

@@ -1,5 +1,35 @@
 import { useEffect, useState } from 'react'
 
+export type TelemetryDeviceStatus = {
+  buttons: number
+  leftStick: {
+    x: number
+    y: number
+  }
+  rightStick: {
+    x: number
+    y: number
+  }
+  triggers: {
+    left: number
+    right: number
+  }
+  gyro: {
+    x: number
+    y: number
+    z: number
+  }
+}
+
+export type TelemetryDevice = {
+  handle: number
+  type: number
+  split?: number
+  vid?: number
+  pid?: number
+  status?: TelemetryDeviceStatus
+}
+
 export type TelemetrySample = {
   omega?: number
   t?: number
@@ -8,13 +38,7 @@ export type TelemetrySample = {
   sensY?: number
   curve?: string
   sampleHz?: number
-  devices?: {
-    handle: number
-    type: number
-    split?: number
-    vid?: number
-    pid?: number
-  }[]
+  devices?: TelemetryDevice[]
   [key: string]: unknown
 }
 

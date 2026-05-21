@@ -781,11 +781,11 @@ export function KeymapControls({
         <>
           {stickToggleVisible && (
             <div className={`mode-toggle ${stickStyles.stickSubtabs}`}>
-              <button className={`pill-tab ${currentStickView === 'bindings' ? 'active' : ''}`} onClick={() => setStickView('bindings')}>
-                {t('keymap.bindings')}
-              </button>
               <button className={`pill-tab ${currentStickView === 'modes' ? 'active' : ''}`} onClick={() => setStickView('modes')}>
                 {t('keymap.modesAndSettings')}
+              </button>
+              <button className={`pill-tab ${currentStickView === 'bindings' ? 'active' : ''}`} onClick={() => setStickView('bindings')}>
+                {t('keymap.bindings')}
               </button>
             </div>
           )}

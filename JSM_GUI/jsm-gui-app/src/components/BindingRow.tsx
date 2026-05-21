@@ -53,6 +53,9 @@ export function BindingRow({
   const { t } = useTranslation()
   const buttonLabel = isCapturing ? captureLabel : displayValue || t('keymap.clickToSetBinding')
   const clearLabel = isManual ? t('keymap.removeRow') : t('keymap.clearBinding')
+  const specialSelectLabel = specialValue
+    ? specialOptions?.find(option => option.value === specialValue)?.label ?? t('keymap.specialBinds')
+    : t('keymap.specialBinds')
 
   const handleClear = () => {
     onClear()
@@ -80,22 +83,6 @@ export function BindingRow({
           </select>
         </div>
       )}
-      {specialOptions && specialOptions.length > 0 && (
-        <div className={styles.rowSpecialSelectWrapper} data-capture-ignore="true">
-          <select
-            className={`${styles.rowSpecialSelect} app-select`}
-            value={specialValue ?? ''}
-            onChange={(event) => onSpecialChange?.(event.target.value)}
-          >
-            <option value="">{t('keymap.specialBinds')}</option>
-            {specialOptions.map(option => (
-              <option key={option.value || 'placeholder'} value={option.value} disabled={option.disabled}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </div>
-      )}
       <div className={styles.primaryBindingRow}>
         <button
           type="button"
@@ -104,6 +91,22 @@ export function BindingRow({
         >
           {buttonLabel}
         </button>
+        {specialOptions && specialOptions.length > 0 && (
+          <select
+            className={`${styles.rowSpecialInlineSelect} ${specialValue ? styles.rowSpecialInlineSelectActive : ''} app-select`}
+            value={specialValue ?? ''}
+            onChange={(event) => onSpecialChange?.(event.target.value)}
+            title={specialSelectLabel}
+            data-capture-ignore="true"
+          >
+            <option value="">{t('keymap.specialBinds')}</option>
+            {specialOptions.map(option => (
+              <option key={option.value || 'placeholder'} value={option.value} disabled={option.disabled}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        )}
         <button
           type="button"
           className={`${styles.clearBindingBtn}`}

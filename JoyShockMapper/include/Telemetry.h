@@ -1,8 +1,37 @@
 #pragma once
 
 #include <cstdint>
+#include <optional>
 #include <string>
 #include <vector>
+
+struct TelemetryStickState
+{
+	float x = 0.0f;
+	float y = 0.0f;
+};
+
+struct TelemetryTriggerState
+{
+	float left = 0.0f;
+	float right = 0.0f;
+};
+
+struct TelemetryGyroState
+{
+	float x = 0.0f;
+	float y = 0.0f;
+	float z = 0.0f;
+};
+
+struct TelemetryDeviceStatus
+{
+	uint64_t buttons = 0;
+	TelemetryStickState leftStick;
+	TelemetryStickState rightStick;
+	TelemetryTriggerState triggers;
+	TelemetryGyroState gyro;
+};
 
 struct TelemetryDevice
 {
@@ -11,6 +40,7 @@ struct TelemetryDevice
 	int splitType = 0;
 	int vendorId = 0;
 	int productId = 0;
+	std::optional<TelemetryDeviceStatus> status;
 };
 
 struct TelemetrySample
@@ -35,7 +65,7 @@ struct TelemetrySample
 namespace Telemetry
 {
 
-constexpr int kProtoVersion = 2;
+constexpr int kProtoVersion = 3;
 constexpr int kDefaultPort = 8974;
 constexpr int kMaxRateHz = 120;
 

@@ -9,6 +9,21 @@ const CONTROLLER_LABEL_KEYS: Record<number, string> = {
   6: 'controllers.xboxOne',
   7: 'controllers.xboxElite',
   8: 'controllers.xboxSeries',
+  9: 'controllers.horiSteam',
+  10: 'controllers.gameSirG7Pro8k',
+  11: 'controllers.eightBitDoSf30Pro',
+  12: 'controllers.eightBitDoSf30ProBt',
+  13: 'controllers.eightBitDoSn30Pro',
+  14: 'controllers.eightBitDoSn30ProBt',
+  15: 'controllers.eightBitDoPro2',
+  16: 'controllers.eightBitDoPro2Bt',
+  17: 'controllers.eightBitDoPro3',
+  18: 'controllers.eightBitDoUltimate2Wireless',
+  19: 'controllers.flydigiApex5',
+  20: 'controllers.flydigiVader3Pro',
+  21: 'controllers.flydigiVader4Pro',
+  22: 'controllers.flydigiVader5Pro',
+  23: 'controllers.switch2Pro',
 }
 
 export const controllerLabelKey = (type?: number) => CONTROLLER_LABEL_KEYS[type ?? -1] ?? 'controllers.unknown'
