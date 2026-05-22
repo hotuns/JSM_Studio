@@ -30,6 +30,8 @@
 .pill-tab.active {
   border: 1.7px solid var(--accent);
   color: var(--text-strong);
+  background: color-mix(in srgb, var(--accent) 14%, var(--bg-input));
+  box-shadow: 0 0 16px color-mix(in srgb, var(--accent) 18%, transparent);
 }
 
 .mode-toggle {
@@ -182,8 +184,9 @@ input[type=number] {
 }
 
 .secondary-btn:hover {
-  border-color: var(--border-strong);
-  background: var(--bg-btn-hover);
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, var(--bg-btn-hover));
+  box-shadow: 0 0 14px color-mix(in srgb, var(--accent) 12%, transparent);
 }
 
 .secondary-btn:disabled,

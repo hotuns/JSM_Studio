@@ -20,7 +20,7 @@ import { showToast } from './utils/toast'
 import { LanguageSelect } from './components/LanguageSelect'
 
 
-type PrimaryTab = 'gyro' | 'keybinds' | 'touchpad' | 'sticks' | 'controllerStatus' | 'help'
+type PrimaryTab = 'gyro' | 'keybinds' | 'touchpad' | 'sticks' | 'controllerStatus' | 'debugConsole' | 'help'
 type GyroSubTab = 'behavior' | 'sensitivity' | 'noise'
 type KeybindsSubTab = 'global' | 'face' | 'dpad' | 'bumpers' | 'triggers' | 'center' | 'paddles' | 'extra'
 type TouchpadSubTab = 'mode' | 'bind'
@@ -66,6 +66,11 @@ const HelpDocsPage = lazy(async () => {
   return { default: module.HelpDocsPage }
 })
 
+const MappingDebugPage = lazy(async () => {
+  const module = await import('./components/MappingDebugPage')
+  return { default: module.MappingDebugPage }
+})
+
 const UpdateBanner = lazy(async () => {
   const module = await import('./components/UpdateBanner')
   return { default: module.UpdateBanner }
@@ -99,36 +104,51 @@ const PrimaryNav = ({ primaryTab, setPrimaryTab, includeHelp = false }: PrimaryN
 
   return (
     <div className={sideNavStyles.navGroup}>
-      <button
-        className={`${sideNavStyles.navItem} ${primaryTab === 'controllerStatus' ? sideNavStyles.active : ''}`}
-        onClick={() => setPrimaryTab('controllerStatus')}
-      >
-        {t('app.nav.controllerStatus')}
-      </button>
-      <button
-        className={`${sideNavStyles.navItem} ${primaryTab === 'gyro' ? sideNavStyles.active : ''}`}
-        onClick={() => setPrimaryTab('gyro')}
-      >
-        {t('app.nav.gyroAndSensitivity')}
-      </button>
-      <button
-        className={`${sideNavStyles.navItem} ${primaryTab === 'keybinds' ? sideNavStyles.active : ''}`}
-        onClick={() => setPrimaryTab('keybinds')}
-      >
-        {t('app.nav.keybinds')}
-      </button>
-      <button
-        className={`${sideNavStyles.navItem} ${primaryTab === 'touchpad' ? sideNavStyles.active : ''}`}
-        onClick={() => setPrimaryTab('touchpad')}
-      >
-        {t('app.nav.touchpad')}
-      </button>
-      <button
-        className={`${sideNavStyles.navItem} ${primaryTab === 'sticks' ? sideNavStyles.active : ''}`}
-        onClick={() => setPrimaryTab('sticks')}
-      >
-        {t('app.nav.sticks')}
-      </button>
+      <div className={sideNavStyles.navSection}>
+        <div className={sideNavStyles.navSectionLabel}>{t('app.nav.dashboardGroup')}</div>
+        <button
+          className={`${sideNavStyles.navItem} ${primaryTab === 'controllerStatus' ? sideNavStyles.active : ''}`}
+          onClick={() => setPrimaryTab('controllerStatus')}
+        >
+          {t('app.nav.controllerStatus')}
+        </button>
+        <button
+          className={`${sideNavStyles.navItem} ${primaryTab === 'debugConsole' ? sideNavStyles.active : ''}`}
+          onClick={() => setPrimaryTab('debugConsole')}
+        >
+          {t('app.nav.debugConsole')}
+        </button>
+      </div>
+      <div className={sideNavStyles.navSection}>
+        <div className={sideNavStyles.navSectionLabel}>{t('app.nav.mappingGroup')}</div>
+        <button
+          className={`${sideNavStyles.navItem} ${primaryTab === 'keybinds' ? sideNavStyles.active : ''}`}
+          onClick={() => setPrimaryTab('keybinds')}
+        >
+          {t('app.nav.keybinds')}
+        </button>
+        <button
+          className={`${sideNavStyles.navItem} ${primaryTab === 'touchpad' ? sideNavStyles.active : ''}`}
+          onClick={() => setPrimaryTab('touchpad')}
+        >
+          {t('app.nav.touchpad')}
+        </button>
+      </div>
+      <div className={sideNavStyles.navSection}>
+        <div className={sideNavStyles.navSectionLabel}>{t('app.nav.tuningGroup')}</div>
+        <button
+          className={`${sideNavStyles.navItem} ${primaryTab === 'gyro' ? sideNavStyles.active : ''}`}
+          onClick={() => setPrimaryTab('gyro')}
+        >
+          {t('app.nav.gyroAndSensitivity')}
+        </button>
+        <button
+          className={`${sideNavStyles.navItem} ${primaryTab === 'sticks' ? sideNavStyles.active : ''}`}
+          onClick={() => setPrimaryTab('sticks')}
+        >
+          {t('app.nav.sticks')}
+        </button>
+      </div>
       {includeHelp && (
         <button
           className={`${sideNavStyles.navItem} ${primaryTab === 'help' ? sideNavStyles.active : ''}`}
@@ -216,13 +236,15 @@ function App() {
   const [recalibrating, setRecalibrating] = useState(false)
   const [isProfileModalOpen, setProfileModalOpen] = useState(false)
   const [isRwcGuideModalOpen, setIsRwcGuideModalOpen] = useState(false)
+  const [isConfigDrawerOpen, setConfigDrawerOpen] = useState(false)
   const [calibrationTurns, setCalibrationTurns] = useState('1')
   const [primaryTab, setPrimaryTab] = useState<PrimaryTab>('controllerStatus')
   const [gyroSubTab, setGyroSubTab] = useState<GyroSubTab>('behavior')
-  const [keybindsSubTab, setKeybindsSubTab] = useState<KeybindsSubTab>('global')
+  const [keybindsSubTab, setKeybindsSubTab] = useState<KeybindsSubTab>('face')
   const [touchpadSubTab, setTouchpadSubTab] = useState<TouchpadSubTab>('mode')
   const [sticksSubTab, setSticksSubTab] = useState<SticksSubTab>('bindings')
   const [controllerStatusSubTab, setControllerStatusSubTab] = useState<ControllerStatusSubTab>('status')
+  const [selectedMappingCommand, setSelectedMappingCommand] = useState<string | null>('N')
   const {
     configText,
     setConfigText,
@@ -502,7 +524,7 @@ function App() {
       {(['global', 'face', 'dpad', 'bumpers', 'triggers', 'center', 'paddles', 'extra'] as KeybindsSubTab[]).map(entry => (
         <button key={entry} className={`pill-tab ${keybindsSubTab === entry ? 'active' : ''}`} onClick={() => setKeybindsSubTab(entry)}>
           {entry === 'global' && t('app.tabs.globalSettings')}
-          {entry === 'face' && t('app.tabs.face')}
+          {entry === 'face' && t('app.tabs.visualMapping')}
           {entry === 'dpad' && t('app.tabs.dpad')}
           {entry === 'bumpers' && t('app.tabs.bumpers')}
           {entry === 'triggers' && t('app.tabs.triggers')}
@@ -550,6 +572,54 @@ function App() {
       >
         {t('app.tabs.bindingPreview')}
       </button>
+    </div>
+  )
+
+  const renderUtilityBar = () => (
+    <div className="utility-bar">
+      <div className="utility-profile-group">
+        <div className="utility-title">{t('app.profileSummary.title')}</div>
+        <label className="utility-profile-select">
+          <span>{t('app.profileSummary.quickSwitch')}</span>
+          <select
+            className="app-select"
+            disabled={isCalibrating}
+            value={currentLibraryProfile ?? ''}
+            onChange={event => {
+              const name = event.target.value
+              if (!name) return
+              handleLoadProfileFromLibrary(name)
+            }}
+          >
+            <option value="" disabled>
+              {t('app.profileSummary.selectProfile')}
+            </option>
+            {(libraryProfiles ?? []).map(name => (
+              <option key={name} value={name}>
+                {name}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+
+      <div className="utility-actions">
+        <button className="secondary-btn" onClick={() => setProfileModalOpen(true)}>
+          {t('app.profileSummary.manageProfiles')}
+        </button>
+        <button className="secondary-btn" onClick={() => setConfigDrawerOpen(true)}>
+          {t('app.profileSummary.openSourceConfig')}
+        </button>
+        {isCalibrating ? (
+          <span className="calibration-pill calibration-pill-inline utility-calibration-pill">
+            {t('app.recalibration.calibratingCountdown', { seconds: countdown ?? '-' })}
+          </span>
+        ) : (
+          <button className="secondary-btn" onClick={handleRecalibrate} disabled={recalibrating}>
+            {recalibrating ? t('app.recalibration.recalibrating') : t('app.recalibration.recalibrateGyro')}
+          </button>
+        )}
+      </div>
     </div>
   )
 
@@ -727,6 +797,9 @@ function App() {
             scrollSens={scrollSensValue}
             onScrollSensChange={handleScrollSensChange}
             lockMessage={lockMessage}
+            devices={sample?.devices}
+            selectedMappingCommand={selectedMappingCommand}
+            onSelectedMappingCommandChange={setSelectedMappingCommand}
             visibleSections={keybindsSubTab === 'global' ? ['global'] : [keybindsSubTab]}
           />
         </Suspense>
@@ -871,6 +944,18 @@ function App() {
       )
     }
 
+    if (primaryTab === 'debugConsole') {
+      return (
+        <Suspense fallback={<LazyPanelFallback title={t('app.nav.debugConsole')} />}>
+          <MappingDebugPage
+            configText={configText}
+            appliedConfig={appliedConfig}
+            hasPendingChanges={hasPendingChanges}
+          />
+        </Suspense>
+      )
+    }
+
     if (primaryTab === 'help') {
       return (
         <Suspense fallback={<LazyPanelFallback title={t('app.nav.documentation')} />}>
@@ -936,70 +1021,23 @@ function App() {
             renderSticksNav={renderSticksNav}
           />
         </div>
+        {renderUtilityBar()}
         <div className="shell-scroll"><div className="content-grid">
           <main className="main-pane">{renderPrimaryContent()}</main>
-          <aside className="right-rail">
-            <div className="recalibrate-card">
-              {isCalibrating ? (
-                <div className="recalibrate-row">
-                  <span className="calibration-pill calibration-pill-inline">
-                    {t('app.recalibration.calibratingCountdown', { seconds: countdown ?? '-' })}
-                  </span>
-                </div>
-              ) : (
-                <button className="secondary-btn rail-button" onClick={handleRecalibrate} disabled={recalibrating}>
-                  {recalibrating ? t('app.recalibration.recalibrating') : t('app.recalibration.recalibrateGyro')}
-                </button>
-              )}
-            </div>
-            <div className="profile-summary-card">
-              <div className="profile-summary-header">
-                <div className="profile-summary-title">{t('app.profileSummary.title')}</div>
+        </div></div>
+      </div>
+      {isConfigDrawerOpen && (
+        <div className="modal-overlay config-source-overlay" onMouseDown={() => setConfigDrawerOpen(false)}>
+          <div className="config-source-drawer" onMouseDown={event => event.stopPropagation()}>
+            <div className="modal-header">
+              <div>
+                <h3>{t('app.profileSummary.sourceConfigTitle')}</h3>
+                <p className="modal-description">{t('app.profileSummary.sourceConfigDescription')}</p>
               </div>
-              <label className="profile-summary-select">
-                {t('app.profileSummary.quickSwitch')}
-                <select
-                  className="app-select"
-                  disabled={isCalibrating}
-                  value={currentLibraryProfile ?? ''}
-                  onChange={event => {
-                    const name = event.target.value
-                    if (!name) return
-                    handleLoadProfileFromLibrary(name)
-                  }}
-                >
-                  <option value="" disabled>
-                    {t('app.profileSummary.selectProfile')}
-                  </option>
-                  {(libraryProfiles ?? []).map(name => (
-                    <option key={name} value={name}>
-                      {name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <div className="profile-summary-actions">
-                <button className="secondary-btn" onClick={() => setProfileModalOpen(true)}>
-                  {t('app.profileSummary.manageProfiles')}
-                </button>
-              </div>
+              <button type="button" className="secondary-btn" onClick={() => setConfigDrawerOpen(false)}>
+                {t('common.close')}
+              </button>
             </div>
-            <div className="config-editor-desktop">
-              <Suspense fallback={<LazyPanelFallback title={profileFileLabel} compact />}>
-                <ConfigEditor
-                  value={configText}
-                  label={profileFileLabel}
-                  disabled={isCalibrating}
-                  hasPendingChanges={hasPendingChanges}
-                  statusMessage={null}
-                  onChange={setConfigText}
-                  onApply={handleApplyWithFinalize}
-                  onCancel={handleCancel}
-                />
-              </Suspense>
-            </div>
-          </aside>
-          <div className="config-editor-mobile">
             <Suspense fallback={<LazyPanelFallback title={profileFileLabel} compact />}>
               <ConfigEditor
                 value={configText}
@@ -1013,8 +1051,8 @@ function App() {
               />
             </Suspense>
           </div>
-        </div></div>
-      </div>
+        </div>
+      )}
       {isCalibrationModalOpen && (
         <div className="modal-overlay">
           <div className="modal-card">

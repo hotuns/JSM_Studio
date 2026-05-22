@@ -1,10 +1,12 @@
 import { useMemo } from 'react'
 import {
   BindingSlot,
+  BindingWriteMode,
   getKeymapValue,
   isTrackballBindingPresent,
   removeComboBindingLine,
   removeKeymapEntry,
+  setBindingLine,
   setComboBindingLine,
   setDoubleBinding,
   setHoldBinding,
@@ -67,14 +69,14 @@ export function useBindingsConfig({ configText, setConfigText }: BindingArgs) {
     slot: BindingSlot,
     rowId: string,
     binding: string | null,
-    options?: { modifier?: string }
+    options?: { modifier?: string; writeMode?: BindingWriteMode }
   ) => {
     setConfigText(prev => {
       let next = clearSpecialAssignmentsForButton(prev, button)
       next = clearToggleAssignments(next, button)
       switch (slot) {
         case 'tap':
-          next = setTapBinding(next, button, binding)
+          next = options?.writeMode === 'line' ? setBindingLine(next, button, binding) : setTapBinding(next, button, binding)
           break
         case 'hold':
           next = setHoldBinding(next, button, binding)

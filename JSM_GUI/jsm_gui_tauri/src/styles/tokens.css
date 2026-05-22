@@ -5,29 +5,31 @@
   --bp-main: 1060px;
 
   /* Backgrounds */
-  --bg-0: #161618;      /* page backdrop */
-  --bg-1: #25262b;      /* side nav */
-  --bg-1-5: #232327;    /* top bar / tabs strip */
-  --bg-2: #1e1e20;      /* cards / panels */
-  --bg-btn: #1e1e20;    /* button + input base (match cards) */
-  --bg-btn-hover: #23252b;
-  --bg-btn-primary: #262933;
-  --bg-input: #111111;  /* config editor + inputs */
+  --bg-0: #0b0f16;      /* page backdrop */
+  --bg-1: #101722;      /* side nav */
+  --bg-1-5: #121a26;    /* top bar / tabs strip */
+  --bg-2: rgba(22, 31, 43, 0.82);      /* cards / panels */
+  --bg-btn: rgba(16, 24, 35, 0.9);    /* button + input base (match cards) */
+  --bg-btn-hover: rgba(28, 42, 58, 0.94);
+  --bg-btn-primary: rgba(21, 45, 52, 0.92);
+  --bg-input: rgba(8, 13, 20, 0.84);  /* config editor + inputs */
 
   /* Text */
-  --text-strong: #e8ecf3;
-  --text-mid: #bcc2cc;
-  --text-muted: #8f949e;
+  --text-strong: #f2f8ff;
+  --text-mid: #a9b8c8;
+  --text-muted: #708096;
+  --text-dim: #647188;
 
   /* Borders */
-  --border-1: #2a2c33;
-  --border-strong: #343741;
+  --border-1: rgba(126, 239, 255, 0.13);
+  --border-strong: rgba(126, 239, 255, 0.28);
 
   /* Accent */
-  --accent: #6fa7ff;
+  --accent: #35f2d0;
+  --accent-primary: #35f2d0;
 
   /* Specialty */
-  --telemetry-green: #9fe5c2;
+  --telemetry-green: #96ff83;
 
   /* Pills / alerts (dark) */
   --pill-warn-bg: rgba(255, 183, 77, 0.12);
@@ -91,6 +93,8 @@
   --border-strong: #b8c0ce;
 
   --accent: #3b74ff;
+  --accent-primary: #3b74ff;
+  --text-dim: #737a8a;
 
   /* Specialty */
   --telemetry-green: #3b8f6d;

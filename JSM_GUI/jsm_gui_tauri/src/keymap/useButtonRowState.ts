@@ -6,6 +6,9 @@ const isSingleSlot = (slot: BindingSlot) => slot === 'hold' || slot === 'double'
 export const useButtonRowState = () => {
   const [manualRows, setManualRows] = useState<Record<string, ManualRowState>>({})
   const [stickShiftDisplayModes, setStickShiftDisplayModes] = useState<Record<string, 'tap' | 'extra'>>({})
+  const [rowEditorModes, setRowEditorModes] = useState<Record<string, 'simple' | 'advanced'>>({})
+
+  const rowKey = (button: string, slot: BindingSlot, rowId: string) => `${button.toUpperCase()}::${slot}::${rowId}`
 
   const generateId = () => {
     if (typeof crypto !== 'undefined' && crypto.randomUUID) {
@@ -85,6 +88,25 @@ export const useButtonRowState = () => {
     })
   }, [])
 
+  const setRowEditorMode = useCallback((button: string, slot: BindingSlot, rowId: string, mode?: 'simple' | 'advanced') => {
+    const key = rowKey(button, slot, rowId)
+    setRowEditorModes(prev => {
+      if (!mode) {
+        if (!prev[key]) return prev
+        const next = { ...prev }
+        delete next[key]
+        return next
+      }
+      if (prev[key] === mode) return prev
+      return { ...prev, [key]: mode }
+    })
+  }, [])
+
+  const getRowEditorMode = useCallback(
+    (button: string, slot: BindingSlot, rowId: string) => rowEditorModes[rowKey(button, slot, rowId)],
+    [rowEditorModes]
+  )
+
   const replaceStickShiftDisplayModes = useCallback(
     (updater: (prev: Record<string, 'tap' | 'extra'>) => Record<string, 'tap' | 'extra'>) => {
       setStickShiftDisplayModes(prev => updater(prev))
@@ -100,5 +122,7 @@ export const useButtonRowState = () => {
     stickShiftDisplayModes,
     updateStickShiftDisplayMode,
     replaceStickShiftDisplayModes,
+    getRowEditorMode,
+    setRowEditorMode,
   }
 }

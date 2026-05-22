@@ -1,3 +1,4 @@
+import { Children, ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import styles from './Keymap.module.css'
 
@@ -28,6 +29,8 @@ type BindingRowProps = {
   modifierOptions?: ModifierOption[]
   modifierValue?: string
   onModifierChange?: (value: string) => void
+  children?: ReactNode
+  inlineActions?: ReactNode
 }
 
 export function BindingRow({
@@ -49,6 +52,8 @@ export function BindingRow({
   modifierOptions,
   modifierValue,
   onModifierChange,
+  children,
+  inlineActions,
 }: BindingRowProps) {
   const { t } = useTranslation()
   const buttonLabel = isCapturing ? captureLabel : displayValue || t('keymap.clickToSetBinding')
@@ -56,6 +61,7 @@ export function BindingRow({
   const specialSelectLabel = specialValue
     ? specialOptions?.find(option => option.value === specialValue)?.label ?? t('keymap.specialBinds')
     : t('keymap.specialBinds')
+  const hasCustomContent = Children.toArray(children).length > 0
 
   const handleClear = () => {
     onClear()
@@ -83,45 +89,48 @@ export function BindingRow({
           </select>
         </div>
       )}
-      <div className={styles.primaryBindingRow}>
-        <button
-          type="button"
-          className={`${styles.bindingInput} ${isCapturing ? styles.bindingInputRecording : ''}`}
-          onClick={onBeginCapture}
-        >
-          {buttonLabel}
-        </button>
-        {specialOptions && specialOptions.length > 0 && (
-          <select
-            className={`${styles.rowSpecialInlineSelect} ${specialValue ? styles.rowSpecialInlineSelectActive : ''} app-select`}
-            value={specialValue ?? ''}
-            onChange={(event) => onSpecialChange?.(event.target.value)}
-            title={specialSelectLabel}
+      {hasCustomContent ? children : (
+        <div className={styles.primaryBindingRow}>
+          <button
+            type="button"
+            className={`${styles.bindingInput} ${isCapturing ? styles.bindingInputRecording : ''}`}
+            onClick={onBeginCapture}
+          >
+            {buttonLabel}
+          </button>
+          {specialOptions && specialOptions.length > 0 && (
+            <select
+              className={`${styles.rowSpecialInlineSelect} ${specialValue ? styles.rowSpecialInlineSelectActive : ''} app-select`}
+              value={specialValue ?? ''}
+              onChange={(event) => onSpecialChange?.(event.target.value)}
+              title={specialSelectLabel}
+              data-capture-ignore="true"
+            >
+              <option value="">{t('keymap.specialBinds')}</option>
+              {specialOptions.map(option => (
+                <option key={option.value || 'placeholder'} value={option.value} disabled={option.disabled}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          )}
+          <button
+            type="button"
+            className={`${styles.clearBindingBtn}`}
+            onClick={handleClear}
+            disabled={!isManual && disableClear}
             data-capture-ignore="true"
           >
-            <option value="">{t('keymap.specialBinds')}</option>
-            {specialOptions.map(option => (
-              <option key={option.value || 'placeholder'} value={option.value} disabled={option.disabled}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        )}
-        <button
-          type="button"
-          className={`${styles.clearBindingBtn}`}
-          onClick={handleClear}
-          disabled={!isManual && disableClear}
-          data-capture-ignore="true"
-        >
-          {clearLabel}
-        </button>
-        {isCapturing && (
-          <button type="button" className="link-btn" onClick={onCancelCapture} data-capture-ignore="true">
-            {t('common.cancel')}
+            {clearLabel}
           </button>
-        )}
-      </div>
+          {inlineActions}
+          {isCapturing && (
+            <button type="button" className="link-btn" onClick={onCancelCapture} data-capture-ignore="true">
+              {t('common.cancel')}
+            </button>
+          )}
+        </div>
+      )}
     </div>
   )
 }

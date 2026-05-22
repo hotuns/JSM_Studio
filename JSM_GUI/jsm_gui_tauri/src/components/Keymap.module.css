@@ -4,6 +4,18 @@
   gap: 0.75rem;
 }
 
+.keymapTitleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.keymapTitleRow h2 {
+  margin: 0;
+}
+
 .keymapSection {
   display: flex;
   flex-direction: column;
@@ -24,6 +36,129 @@
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+}
+
+.mappingWorkbench {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(21rem, 0.9fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.mappingVisualPanel,
+.mappingDetailPanel {
+  border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--border-1));
+  border-radius: 18px;
+  background:
+    linear-gradient(145deg, color-mix(in srgb, var(--bg-2) 88%, transparent), color-mix(in srgb, var(--bg-input) 92%, transparent)),
+    radial-gradient(circle at top right, color-mix(in srgb, var(--accent) 12%, transparent), transparent 34%);
+  box-shadow: 0 18px 42px color-mix(in srgb, #000 38%, transparent);
+}
+
+.mappingVisualPanel {
+  padding: 1rem;
+  min-width: 0;
+}
+
+.mappingDetailPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  padding: 1rem;
+  position: sticky;
+  top: calc(var(--top-bar-height) + 1rem);
+}
+
+.mappingVisualHeader,
+.mappingDetailHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.mappingVisualHeader h3 {
+  margin: 0;
+}
+
+.mappingVisualHeader p {
+  margin: 0.25rem 0 0;
+  color: var(--text-mid);
+  font-size: 0.9rem;
+}
+
+.mappingModeBadge,
+.selected-binding-pill {
+  flex: 0 0 auto;
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
+  border-radius: 999px;
+  padding: 0.25rem 0.55rem;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 9%, transparent);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.mappingButtonStrip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 0.75rem;
+}
+
+.mappingButtonChip {
+  border: 1px solid var(--border-1);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--bg-input) 88%, transparent);
+  color: var(--text-mid);
+  padding: 0.42rem 0.68rem;
+  cursor: pointer;
+  font-size: 0.82rem;
+}
+
+.mappingButtonChip:hover {
+  border-color: var(--border-strong);
+  color: var(--text-strong);
+}
+
+.mappingButtonChipBound {
+  border-color: color-mix(in srgb, var(--telemetry-green) 58%, var(--border-1));
+  color: var(--telemetry-green);
+}
+
+.mappingButtonChipActive {
+  border-color: var(--accent);
+  color: var(--text-strong);
+  background: color-mix(in srgb, var(--accent) 18%, var(--bg-input));
+  box-shadow: 0 0 18px color-mix(in srgb, var(--accent) 24%, transparent);
+}
+
+.mappingDetailHeader {
+  color: var(--text-mid);
+  font-size: 0.85rem;
+}
+
+.mappingDetailHeader strong {
+  color: var(--text-strong);
+  font-size: 1.05rem;
+}
+
+.triggerModeInline {
+  display: grid;
+  gap: 0.7rem;
+  padding: 0.85rem;
+  border: 1px solid var(--border-1);
+  border-radius: 14px;
+  background: var(--bg-input);
+}
+
+.triggerModeInline label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  color: var(--text-mid);
+  font-size: 0.85rem;
+  font-weight: 600;
 }
 
 .keymapRow {
@@ -206,6 +341,357 @@
   color: var(--text-muted);
 }
 
+.commandList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.commandCard {
+  border: 1px solid var(--border-1);
+  border-radius: 8px;
+  background: var(--bg-input);
+  overflow: hidden;
+}
+
+.commandSummary {
+  display: flex;
+  align-items: stretch;
+  gap: 0.5rem;
+  padding: 0.55rem;
+}
+
+.commandSummaryMain {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem;
+  border: 0;
+  background: transparent;
+  color: var(--text-strong);
+  text-align: left;
+  cursor: pointer;
+}
+
+.commandTriggerBadge,
+.commandConditionBadge,
+.commandRawBadge {
+  flex: 0 0 auto;
+  padding: 0.18rem 0.45rem;
+  border: 1px solid var(--border-1);
+  border-radius: 999px;
+  color: var(--text-mid);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.commandConditionBadge {
+  color: var(--text-muted);
+}
+
+.commandRawBadge {
+  color: var(--text-mid);
+  border-color: var(--border-strong);
+}
+
+.commandArrow {
+  color: var(--text-muted);
+}
+
+.commandOutputSummary {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.commandActions {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.commandEditor {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: 0.65rem;
+  padding: 0.75rem;
+  border-top: 1px solid var(--border-1);
+  background: var(--bg-2);
+}
+
+.commandEditor label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  color: var(--text-mid);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.commandOutputValue input {
+  padding: 0.5rem 0.65rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-1);
+  background: var(--bg-input);
+  color: var(--text-strong);
+}
+
+.commandCaptureBtn {
+  align-self: end;
+  padding: 0.55rem 0.8rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-1);
+  background: transparent;
+  color: var(--text-strong);
+  cursor: pointer;
+}
+
+.addCommandRow {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  align-self: stretch;
+}
+
+.addCommandLabel {
+  color: var(--text-mid);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.addCommandButtons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.addCommandButtons button {
+  padding: 0.45rem 0.7rem;
+}
+
+.addCommandAdvanced {
+  color: var(--text-mid);
+  font-size: 0.85rem;
+}
+
+.addCommandAdvanced summary {
+  cursor: pointer;
+  margin-bottom: 0.5rem;
+}
+
+.quickComposer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  padding: 0.8rem;
+  border-top: 1px solid var(--border-1);
+  background: color-mix(in srgb, var(--bg-2) 86%, var(--bg-input));
+}
+
+.quickComposerGroup,
+.quickComposerField {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.quickComposerLabel,
+.quickComposerField span {
+  color: var(--text-mid);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.segmentedControl,
+.outputKindChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.segmentButton,
+.outputKindChip {
+  border: 1px solid var(--border-1);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--bg-input) 92%, transparent);
+  color: var(--text-mid);
+  padding: 0.48rem 0.72rem;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.segmentButtonActive,
+.outputKindChipActive {
+  border-color: var(--accent);
+  color: var(--text-strong);
+  background: color-mix(in srgb, var(--accent) 18%, var(--bg-input));
+  box-shadow: 0 0 16px color-mix(in srgb, var(--accent) 24%, transparent);
+}
+
+.quickComposerCaptureRow {
+  display: grid;
+  grid-template-columns: minmax(12rem, 1fr);
+  gap: 0.65rem;
+}
+
+.capturePad {
+  min-height: 5.8rem;
+  border: 1.5px dashed color-mix(in srgb, var(--accent) 45%, var(--border-strong));
+  border-radius: 16px;
+  background:
+    radial-gradient(circle at top, color-mix(in srgb, var(--accent) 14%, transparent), transparent 58%),
+    color-mix(in srgb, var(--bg-input) 86%, transparent);
+  color: var(--text-mid);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.4rem;
+  cursor: pointer;
+}
+
+.capturePad strong {
+  color: var(--text-strong);
+  font-size: 1.05rem;
+  letter-spacing: 0.04em;
+}
+
+.capturePad:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.quickComposerField input {
+  padding: 0.58rem 0.72rem;
+  border-radius: 10px;
+  border: 1px solid var(--border-1);
+  background: var(--bg-input);
+  color: var(--text-strong);
+}
+
+.quickAdvanced {
+  display: flex;
+  justify-content: flex-end;
+}
+
+@media (max-width: 1060px) {
+  .mappingWorkbench {
+    grid-template-columns: 1fr;
+  }
+
+  .mappingDetailPanel {
+    position: static;
+  }
+}
+
+.commandEmptyState {
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  padding: 0.5rem 0.25rem;
+}
+
+.mappingHelpModal {
+  width: min(860px, 92vw);
+}
+
+.mappingHelpIntro,
+.mappingHelpNote {
+  margin: 0.25rem 0 0;
+  color: var(--text-mid);
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+.mappingHelpModel {
+  display: flex;
+  align-items: stretch;
+  gap: 0.65rem;
+  margin: 1rem 0;
+  flex-wrap: wrap;
+}
+
+.mappingHelpStep {
+  flex: 1 1 11rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.75rem;
+  border: 1px solid var(--border-1);
+  border-radius: 12px;
+  background: var(--bg-input);
+}
+
+.mappingHelpStep span {
+  color: var(--text-mid);
+  font-size: 0.82rem;
+}
+
+.mappingHelpStep strong {
+  color: var(--text-strong);
+}
+
+.mappingHelpArrow {
+  display: flex;
+  align-items: center;
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
+.mappingHelpGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+  gap: 0.8rem;
+}
+
+.mappingHelpCard {
+  padding: 0.85rem;
+  border: 1px solid var(--border-1);
+  border-radius: 12px;
+  background: var(--bg-input);
+}
+
+.mappingHelpCard h4 {
+  margin: 0 0 0.65rem;
+  color: var(--text-strong);
+}
+
+.mappingHelpList,
+.mappingHelpExamples {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mappingHelpList li {
+  display: grid;
+  grid-template-columns: 5.5rem 1fr;
+  gap: 0.65rem;
+  color: var(--text-mid);
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.mappingHelpList strong {
+  color: var(--text-strong);
+}
+
+.mappingHelpExamples li {
+  color: var(--text-mid);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.mappingHelpNote {
+  margin-top: 0.9rem;
+}
+
 .paddleNote {
   display: block;
   margin-top: 0.75rem;
@@ -241,6 +727,89 @@
 
 .trackballInline input[type='range'] {
   width: 100%;
+}
+
+.advancedEditor {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border: 1px solid var(--border-1);
+  border-radius: 12px;
+  background: var(--bg-2);
+}
+
+.advancedEditorHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.advancedEditorBadge {
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-mid);
+}
+
+.advancedTokenList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.advancedTokenRow {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 0.7rem;
+  border: 1px solid var(--border-1);
+  border-radius: 10px;
+  background: var(--bg-input);
+}
+
+.advancedTokenToolbar,
+.advancedTokenValueRow,
+.advancedTokenActions,
+.advancedEditorFooter {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.advancedTokenToolbar select,
+.advancedTokenValueRow select,
+.advancedTokenValueRow input {
+  min-width: 0;
+  flex: 1 1 10rem;
+}
+
+.advancedTokenValueRow input {
+  padding: 0.5rem 0.65rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-1);
+  background: var(--bg-input);
+  color: var(--text-strong);
+}
+
+.advancedCaptureBtn,
+.advancedRemoveBtn {
+  padding: 0.45rem 0.8rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-1);
+  background: transparent;
+  color: var(--text-strong);
+  cursor: pointer;
+}
+
+.advancedRemoveBtn {
+  border-color: var(--danger-border);
+  color: var(--danger-text);
+  margin-left: auto;
 }
 
 .clearBindingBtn {

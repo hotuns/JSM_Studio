@@ -170,12 +170,47 @@ export function removeKeymapEntry(text: string, key: string) {
   return lines.join('\n')
 }
 
+function stripInlineComment(value?: string) {
+  if (!value) return ''
+  let quoted = false
+  for (let index = 0; index < value.length; index += 1) {
+    const char = value[index]
+    if (char === '"') {
+      quoted = !quoted
+      continue
+    }
+    if (char === '#' && !quoted) {
+      return value.slice(0, index).trim()
+    }
+  }
+  return value.trim()
+}
+
 export function getKeymapValue(text: string, key: string) {
   const match = text.match(LINE_REGEX(key))
-  return match?.[1]?.trim()
+  const value = stripInlineComment(match?.[1])
+  return value || undefined
 }
 
 export type BindingSlot = 'tap' | 'hold' | 'double' | 'chord' | 'simultaneous' | 'diagonal'
+export type BindingWriteMode = 'slot' | 'line'
+
+export type BindingActionModifier = '' | '^' | '!' | '-'
+export type BindingEventModifier = '' | '\\' | '/' | "'" | '_' | '+'
+export type BindingTokenKind = 'input' | 'mouse' | 'wheel' | 'special' | 'console_command' | 'raw_literal'
+
+export type BindingToken = {
+  kind: BindingTokenKind
+  value: string
+  raw: string
+  actionModifier: BindingActionModifier
+  eventModifier: BindingEventModifier
+}
+
+export type BindingExpression = {
+  raw: string
+  tokens: BindingToken[]
+}
 
 export type ButtonBindingSet = {
   tap?: string
@@ -188,13 +223,26 @@ export type ButtonBindingRow = {
   slot: BindingSlot
   label: string
   binding: string | null
+  expression: BindingExpression | null
+  editorMode: 'simple' | 'advanced'
+  writeMode: BindingWriteMode
+  supportsAdvancedEditor: boolean
+  canSwitchToSimple: boolean
   isManual: boolean
   modifierCommand?: string
+  manualTriggerKind?: string
+  manualOutputKind?: string
+  manualOutputBehavior?: string
+  manualOutputValue?: string
 }
 
 export type ManualRowInfo = {
   id: string
   modifierCommand?: string
+  manualTriggerKind?: string
+  manualOutputKind?: string
+  manualOutputBehavior?: string
+  manualOutputValue?: string
 }
 
 export type ManualRowState = Partial<Record<BindingSlot, ManualRowInfo[]>>
@@ -214,18 +262,235 @@ const SLOT_LABELS: Record<BindingSlot, string> = {
 }
 
 const FACE_BUTTONS = ['N', 'E', 'S', 'W'] as const
+const ACTION_MODIFIERS: BindingActionModifier[] = ['', '^', '!', '-']
+const EVENT_MODIFIERS: BindingEventModifier[] = ['', '\\', '/', "'", '_', '+']
+const ACTION_MODIFIER_SET = new Set(ACTION_MODIFIERS.filter(Boolean))
+const EVENT_MODIFIER_SET = new Set(EVENT_MODIFIERS.filter(Boolean))
+const MOUSE_BINDINGS = new Set(['LMOUSE', 'MMOUSE', 'RMOUSE', 'BMOUSE', 'FMOUSE'])
+const WHEEL_BINDINGS = new Set(['SCROLLUP', 'SCROLLDOWN'])
+const SPECIAL_BINDINGS = new Set([...bindingSpecialKeys, 'CALIBRATE', 'NONE', 'DEFAULT'].map(value => value.toUpperCase()))
 
-function parseBaseBinding(value?: string) {
-  const tapHold: { tap?: string; hold?: string } = {}
-  if (!value) return tapHold
-  const parts = value.trim().split(/\s+/)
-  if (parts[0] && parts[0].toUpperCase() !== 'NONE') {
-    tapHold.tap = parts[0]
+const defaultTokenValueForKind = (kind: BindingTokenKind) => {
+  switch (kind) {
+    case 'mouse':
+      return 'LMOUSE'
+    case 'wheel':
+      return 'SCROLLDOWN'
+    case 'special':
+      return 'NONE'
+    case 'console_command':
+      return 'GyroConfigs/example.txt'
+    case 'raw_literal':
+      return 'TOKEN'
+    case 'input':
+    default:
+      return 'SPACE'
   }
-  if (parts[1]) {
-    tapHold.hold = parts[1]
+}
+
+const classifyBindingTokenKind = (value: string): BindingTokenKind => {
+  const normalized = value.trim().toUpperCase()
+  if (!normalized) return 'raw_literal'
+  if (MOUSE_BINDINGS.has(normalized)) return 'mouse'
+  if (WHEEL_BINDINGS.has(normalized)) return 'wheel'
+  if (SPECIAL_BINDINGS.has(normalized)) return 'special'
+  if (/^[A-Z0-9_[\]`=;'",./\\-]+$/i.test(normalized)) return 'input'
+  return 'raw_literal'
+}
+
+const tokenizeBindingExpression = (value?: string) => {
+  const source = stripInlineComment(value)
+  if (!source) return []
+  const tokens: string[] = []
+  let current = ''
+  let quoted = false
+
+  for (let index = 0; index < source.length; index += 1) {
+    const char = source[index]
+    if (char === '"') {
+      quoted = !quoted
+      current += char
+      continue
+    }
+    if (/\s/.test(char) && !quoted) {
+      if (current.trim()) {
+        tokens.push(current.trim())
+      }
+      current = ''
+      continue
+    }
+    current += char
   }
-  return tapHold
+
+  if (current.trim()) {
+    tokens.push(current.trim())
+  }
+
+  return tokens
+}
+
+const parseBindingToken = (rawToken: string): BindingToken => {
+  let actionModifier: BindingActionModifier = ''
+  let eventModifier: BindingEventModifier = ''
+  let remaining = rawToken.trim()
+
+  if (remaining && ACTION_MODIFIER_SET.has(remaining[0] as BindingActionModifier)) {
+    actionModifier = remaining[0] as BindingActionModifier
+    remaining = remaining.slice(1)
+  }
+  if (remaining && EVENT_MODIFIER_SET.has(remaining[remaining.length - 1] as BindingEventModifier)) {
+    eventModifier = remaining[remaining.length - 1] as BindingEventModifier
+    remaining = remaining.slice(0, -1)
+  }
+
+  const trimmedValue = remaining.trim()
+  if (trimmedValue.startsWith('"') && trimmedValue.endsWith('"') && trimmedValue.length >= 2) {
+    const value = trimmedValue.slice(1, -1)
+    return {
+      kind: 'console_command',
+      value,
+      raw: rawToken.trim(),
+      actionModifier,
+      eventModifier,
+    }
+  }
+
+  const value = trimmedValue
+  return {
+    kind: classifyBindingTokenKind(value),
+    value,
+    raw: rawToken.trim(),
+    actionModifier,
+    eventModifier,
+  }
+}
+
+export function parseBindingExpression(value?: string | null): BindingExpression | null {
+  const raw = stripInlineComment(value ?? undefined)
+  if (!raw) return null
+  const tokens = tokenizeBindingExpression(raw).map(parseBindingToken)
+  return {
+    raw,
+    tokens,
+  }
+}
+
+const sanitizeConsoleCommandValue = (value: string) => value.trim().replace(/^"+|"+$/g, '')
+
+export function serializeBindingToken(token: BindingToken) {
+  const baseValue =
+    token.kind === 'console_command'
+      ? `"${sanitizeConsoleCommandValue(token.value)}"`
+      : token.value.trim()
+  return `${token.actionModifier}${baseValue}${token.eventModifier}`.trim()
+}
+
+export function serializeBindingExpression(expression: BindingExpression) {
+  return expression.tokens
+    .map(serializeBindingToken)
+    .filter(Boolean)
+    .join(' ')
+    .trim()
+}
+
+export function createBindingToken(kind: BindingTokenKind = 'input'): BindingToken {
+  return {
+    kind,
+    value: defaultTokenValueForKind(kind),
+    raw: '',
+    actionModifier: '',
+    eventModifier: '',
+  }
+}
+
+export function createBindingExpression(tokens?: BindingToken[]): BindingExpression {
+  const nextTokens = tokens && tokens.length > 0 ? tokens : [createBindingToken()]
+  const raw = nextTokens.map(serializeBindingToken).filter(Boolean).join(' ').trim()
+  return {
+    raw,
+    tokens: nextTokens.map(token => ({
+      ...token,
+      raw: serializeBindingToken(token),
+    })),
+  }
+}
+
+export function updateBindingExpressionToken(
+  expression: BindingExpression,
+  index: number,
+  patch: Partial<BindingToken>
+) {
+  const tokens = expression.tokens.map((token, tokenIndex) => {
+    if (tokenIndex !== index) return token
+    const nextKind = patch.kind ?? token.kind
+    const nextValue = patch.value ?? token.value
+    const updated: BindingToken = {
+      kind: nextKind,
+      value: nextKind === 'console_command' ? sanitizeConsoleCommandValue(nextValue) : nextValue.trim(),
+      raw: token.raw,
+      actionModifier: patch.actionModifier ?? token.actionModifier,
+      eventModifier: patch.eventModifier ?? token.eventModifier,
+    }
+    if (!updated.value) {
+      updated.value = defaultTokenValueForKind(nextKind)
+    }
+    return updated
+  })
+  return createBindingExpression(tokens)
+}
+
+export function addBindingExpressionToken(expression: BindingExpression, kind: BindingTokenKind = 'input') {
+  return createBindingExpression([...expression.tokens, createBindingToken(kind)])
+}
+
+export function removeBindingExpressionToken(expression: BindingExpression, index: number) {
+  const tokens = expression.tokens.filter((_, tokenIndex) => tokenIndex !== index)
+  return tokens.length > 0 ? createBindingExpression(tokens) : null
+}
+
+export function moveBindingExpressionToken(expression: BindingExpression, index: number, direction: -1 | 1) {
+  const nextIndex = index + direction
+  if (nextIndex < 0 || nextIndex >= expression.tokens.length) return expression
+  const tokens = [...expression.tokens]
+  const [token] = tokens.splice(index, 1)
+  tokens.splice(nextIndex, 0, token)
+  return createBindingExpression(tokens)
+}
+
+export function isSimpleBindingToken(token: BindingToken) {
+  return (
+    token.kind !== 'console_command' &&
+    token.kind !== 'raw_literal' &&
+    token.actionModifier === '' &&
+    token.eventModifier === ''
+  )
+}
+
+export function canUseSimpleSingleBindingEditor(expression: BindingExpression | null) {
+  return Boolean(expression && expression.tokens.length === 1 && isSimpleBindingToken(expression.tokens[0]))
+}
+
+export function canUseSimpleBaseBindingEditor(expression: BindingExpression | null) {
+  return Boolean(
+    expression &&
+      expression.tokens.length > 0 &&
+      expression.tokens.length <= 2 &&
+      expression.tokens.every(isSimpleBindingToken)
+  )
+}
+
+export function getSimpleBaseBindingParts(expression: BindingExpression | null) {
+  if (!canUseSimpleBaseBindingEditor(expression) || !expression) return null
+  return {
+    tap: expression.tokens[0]?.value || undefined,
+    hold: expression.tokens[1]?.value || undefined,
+  }
+}
+
+function parseBaseBinding(value?: string): { tap?: string; hold?: string } {
+  const parts = getSimpleBaseBindingParts(parseBindingExpression(value))
+  if (!parts) return {}
+  return parts
 }
 
 function writeBaseBinding(text: string, button: string, tap?: string, hold?: string) {
@@ -242,13 +507,21 @@ function writeBaseBinding(text: string, button: string, tap?: string, hold?: str
   return updateKeymapEntry(text, button, values)
 }
 
+export function setBindingLine(text: string, key: string, expression?: string | null) {
+  const trimmed = stripInlineComment(expression ?? undefined)
+  if (!trimmed) {
+    return removeKeymapEntry(text, key)
+  }
+  return updateKeymapEntry(text, key, [trimmed])
+}
+
 export function getButtonBindingSet(text: string, button: string): ButtonBindingSet {
   const base = parseBaseBinding(getKeymapValue(text, button))
-  const doubleValue = getKeymapValue(text, `${button},${button}`)?.split(/\s+/)[0]
+  const doubleExpression = parseBindingExpression(getKeymapValue(text, `${button},${button}`))
   return {
     tap: base.tap,
     hold: base.hold,
-    double: doubleValue,
+    double: canUseSimpleSingleBindingEditor(doubleExpression) ? doubleExpression?.tokens[0]?.value : doubleExpression?.raw,
   }
 }
 
@@ -277,6 +550,9 @@ type ComboBinding = {
   id: string
   modifier: string
   binding: string
+  expression: BindingExpression | null
+  editorMode: 'simple' | 'advanced'
+  canSwitchToSimple: boolean
   lineIndex: number
 }
 
@@ -305,12 +581,15 @@ function parseComboBindings(
     const [left, right] = parts.map(part => part.trim())
     if (right !== target) continue
     if (left.toUpperCase() === target) continue
-    const bindingValue = value.split(/\s+/)[0]
-    if (!bindingValue) continue
+    const expression = parseBindingExpression(value)
+    if (!expression) continue
     results.push({
       id: `combo-${slot}-${target}-${results.length}`,
       modifier: left,
-      binding: bindingValue,
+      binding: expression.raw,
+      expression,
+      editorMode: canUseSimpleSingleBindingEditor(expression) ? 'simple' : 'advanced',
+      canSwitchToSimple: canUseSimpleSingleBindingEditor(expression),
       lineIndex,
     })
   }
@@ -369,18 +648,67 @@ export function getButtonBindingRows(
   button: string,
   manualState: ManualRowState = {}
 ): ButtonBindingRow[] {
-  const bindings = getButtonBindingSet(text, button)
+  const baseExpression = parseBindingExpression(getKeymapValue(text, button))
+  const simpleBaseParts = getSimpleBaseBindingParts(baseExpression)
+  const baseEditorMode = !baseExpression || canUseSimpleBaseBindingEditor(baseExpression) ? 'simple' : 'advanced'
   const rows: ButtonBindingRow[] = [
     {
       id: `${button}-tap`,
       slot: 'tap',
       label: SLOT_LABELS.tap,
-      binding: bindings.tap ?? null,
+      binding: baseEditorMode === 'advanced' ? baseExpression?.raw ?? null : simpleBaseParts?.tap ?? null,
+      expression: baseExpression,
+      editorMode: baseEditorMode,
+      writeMode: baseEditorMode === 'advanced' ? 'line' : 'slot',
+      supportsAdvancedEditor: true,
+      canSwitchToSimple: !baseExpression || canUseSimpleBaseBindingEditor(baseExpression),
       isManual: false,
     },
   ]
-  ;(['hold', 'double'] as BindingSlot[]).forEach(slot => {
-    const bindingValue = slot === 'hold' ? bindings.hold : bindings.double
+  ;(manualState.tap ?? []).forEach(entry => {
+    rows.push({
+      id: entry.id,
+      slot: 'tap',
+      label: SLOT_LABELS.tap,
+      binding: entry.manualOutputValue ?? null,
+      expression: null,
+      editorMode: 'simple',
+      writeMode: 'line',
+      supportsAdvancedEditor: true,
+      canSwitchToSimple: true,
+      isManual: true,
+      modifierCommand: entry.modifierCommand,
+      manualTriggerKind: entry.manualTriggerKind,
+      manualOutputKind: entry.manualOutputKind,
+      manualOutputBehavior: entry.manualOutputBehavior,
+      manualOutputValue: entry.manualOutputValue,
+    })
+  })
+  const holdManualEntries = manualState.hold ?? []
+  const holdManualInfo = holdManualEntries[0]
+  if (baseEditorMode === 'simple' && (simpleBaseParts?.hold !== undefined || holdManualInfo)) {
+    rows.push({
+      id: holdManualInfo?.id ?? `${button}-hold`,
+      slot: 'hold',
+      label: SLOT_LABELS.hold,
+      binding: simpleBaseParts?.hold ?? null,
+      expression: baseExpression,
+      editorMode: 'simple',
+      writeMode: 'slot',
+      supportsAdvancedEditor: false,
+      canSwitchToSimple: true,
+      isManual: Boolean(holdManualInfo),
+      modifierCommand: holdManualInfo?.modifierCommand,
+      manualTriggerKind: holdManualInfo?.manualTriggerKind,
+      manualOutputKind: holdManualInfo?.manualOutputKind,
+      manualOutputBehavior: holdManualInfo?.manualOutputBehavior,
+      manualOutputValue: holdManualInfo?.manualOutputValue,
+    })
+  }
+  const doubleExpression = parseBindingExpression(getKeymapValue(text, `${button},${button}`))
+  const doubleEditorMode = !doubleExpression || canUseSimpleSingleBindingEditor(doubleExpression) ? 'simple' : 'advanced'
+  ;(['double'] as BindingSlot[]).forEach(slot => {
+    const bindingValue = doubleExpression?.raw ?? null
     const manualEntries = manualState[slot] ?? []
     const manualInfo = manualEntries[0]
     if (bindingValue || manualInfo) {
@@ -389,7 +717,17 @@ export function getButtonBindingRows(
         slot,
         label: SLOT_LABELS[slot],
         binding: bindingValue ?? null,
+        expression: doubleExpression,
+        editorMode: doubleEditorMode,
+        writeMode: doubleEditorMode === 'advanced' ? 'line' : 'slot',
+        supportsAdvancedEditor: true,
+        canSwitchToSimple: !doubleExpression || canUseSimpleSingleBindingEditor(doubleExpression),
         isManual: Boolean(manualInfo),
+        modifierCommand: manualInfo?.modifierCommand,
+        manualTriggerKind: manualInfo?.manualTriggerKind,
+        manualOutputKind: manualInfo?.manualOutputKind,
+        manualOutputBehavior: manualInfo?.manualOutputBehavior,
+        manualOutputValue: manualInfo?.manualOutputValue,
       })
     }
   })
@@ -403,6 +741,11 @@ export function getButtonBindingRows(
         slot,
         label: SLOT_LABELS[slot],
         binding: entry.binding ?? null,
+        expression: entry.expression,
+        editorMode: entry.editorMode,
+        writeMode: entry.editorMode === 'advanced' ? 'line' : 'slot',
+        supportsAdvancedEditor: true,
+        canSwitchToSimple: entry.canSwitchToSimple,
         isManual: false,
         modifierCommand: entry.modifier,
       })
@@ -414,8 +757,17 @@ export function getButtonBindingRows(
         slot,
         label: SLOT_LABELS[slot],
         binding: null,
+        expression: null,
+        editorMode: 'simple',
+        writeMode: 'slot',
+        supportsAdvancedEditor: true,
+        canSwitchToSimple: true,
         isManual: true,
         modifierCommand: entry.modifierCommand,
+        manualTriggerKind: entry.manualTriggerKind,
+        manualOutputKind: entry.manualOutputKind,
+        manualOutputBehavior: entry.manualOutputBehavior,
+        manualOutputValue: entry.manualOutputValue,
       })
     })
   })
@@ -463,7 +815,11 @@ export function isTrackballBindingPresent(text: string) {
   const hasSpecial = trackballSpecials.some(cmd => Boolean(getKeymapValue(text, cmd)))
   if (hasSpecial) return true
   return FACE_BUTTONS.some(button => {
-    const bindings = getButtonBindingSet(text, button)
-    return Boolean(bindings.tap?.toUpperCase().includes('TRACK') || bindings.hold?.toUpperCase().includes('TRACK') || bindings.double?.toUpperCase().includes('TRACK'))
+    const expression = parseBindingExpression(getKeymapValue(text, button))
+    const doubleExpression = parseBindingExpression(getKeymapValue(text, `${button},${button}`))
+    return Boolean(
+      expression?.tokens.some(token => token.value.toUpperCase().includes('TRACK')) ||
+        doubleExpression?.tokens.some(token => token.value.toUpperCase().includes('TRACK'))
+    )
   })
 }

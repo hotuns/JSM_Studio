@@ -1,8 +1,10 @@
 import { Fragment, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { DEFAULT_STICK_DEADZONE_INNER, DEFAULT_STICK_DEADZONE_OUTER } from '../constants/defaults'
+import type { TelemetryDevice } from '../hooks/useTelemetry'
 import {
   BindingSlot,
+  BindingWriteMode,
   ButtonBindingRow,
   getButtonBindingRows,
   getKeymapValue,
@@ -31,14 +33,17 @@ import { ButtonBindingsCard } from './keymap/ButtonBindingsCard'
 import { ButtonGridSection } from './keymap/ButtonGridSection'
 import { Card } from './Card'
 import keymapStyles from './Keymap.module.css'
-import { KeymapSection } from './KeymapSection'
 import { GlobalControlsSection } from './keymap/GlobalControlsSection'
+import { MappingRulesHelpModal } from './keymap/MappingRulesHelpModal'
 import { StickModesSection } from './keymap/StickModesSection'
 import stickStyles from './Sticks.module.css'
 import { TouchpadGridSection } from './keymap/TouchpadGridSection'
 import { TouchpadSettingsSection } from './keymap/TouchpadSettingsSection'
 import { TriggerControlsSection } from './keymap/TriggerControlsSection'
 import { SectionActions } from './SectionActions'
+import { ControllerStatusSvg } from './ControllerStatusSvg'
+import { controllerButtonLabel } from '../utils/controllerStatus'
+import { showToast } from '../utils/toast'
 
 type KeymapControlsProps = {
   configText: string
@@ -52,7 +57,7 @@ type KeymapControlsProps = {
     slot: BindingSlot,
     rowId: string,
     value: string | null,
-    options?: { modifier?: string }
+    options?: { modifier?: string; writeMode?: BindingWriteMode }
   ) => void
   onAssignSpecialAction: (special: string, buttonCommand: string) => void
   onClearSpecialAction: (special: string, buttonCommand: string) => void
@@ -144,6 +149,9 @@ type KeymapControlsProps = {
   zrModeValue?: string
   onZlModeChange?: (value: string) => void
   onZrModeChange?: (value: string) => void
+  devices?: TelemetryDevice[]
+  selectedMappingCommand?: string | null
+  onSelectedMappingCommandChange?: (command: string | null) => void
 }
 
 type StickAimSettingsProps = {
@@ -319,6 +327,53 @@ const StickFlickSettings = ({ values, handlers, disabled }: StickFlickSettingsPr
   )
 }
 
+const VIRTUAL_MAPPING_DEVICE: TelemetryDevice = {
+  handle: 0,
+  type: 6,
+  status: {
+    buttons: 0,
+    leftStick: { x: 0, y: 0 },
+    rightStick: { x: 0, y: 0 },
+    triggers: { left: 0, right: 0 },
+    gyro: { x: 0, y: 0, z: 0 },
+  },
+}
+
+const MAPPING_BUTTON_GROUPS: Record<string, ButtonDefinition[]> = {
+  face: FACE_BUTTONS,
+  dpad: DPAD_BUTTONS,
+  bumpers: [...BUMPER_BUTTONS, ...MINI_BUTTONS],
+  triggers: TRIGGER_BUTTONS,
+  center: CENTER_BUTTONS,
+  paddles: PADDLE_BUTTONS,
+  extra: MISC_BUTTONS,
+  sticks: [...LEFT_STICK_BUTTONS, ...RIGHT_STICK_BUTTONS],
+}
+
+const ACTION_PRESETS = [
+  { key: 'space', labelKey: 'app.actionRail.presetSpace', value: 'SPACE' },
+  { key: 'leftMouse', labelKey: 'app.actionRail.presetLeftMouse', value: 'LMOUSE' },
+  { key: 'rightMouse', labelKey: 'app.actionRail.presetRightMouse', value: 'RMOUSE' },
+  { key: 'wheelUp', labelKey: 'app.actionRail.presetWheelUp', value: 'SCROLLUP' },
+  { key: 'gyroOff', labelKey: 'app.actionRail.presetGyroOff', value: 'GYRO_OFF' },
+  { key: 'none', labelKey: 'app.actionRail.presetNone', value: 'NONE' },
+  { key: 'copy', labelKey: 'app.actionRail.presetCopy', value: '!LCTRL\\ !C\\ !C/ !LCTRL/' },
+  { key: 'paste', labelKey: 'app.actionRail.presetPaste', value: '!LCTRL\\ !V\\ !V/ !LCTRL/' },
+  { key: 'altTab', labelKey: 'app.actionRail.presetAltTab', value: '!LALT\\ !TAB\\ !TAB/ !LALT/' },
+]
+
+const allMappingButtons = () => {
+  const seen = new Set<string>()
+  return Object.values(MAPPING_BUTTON_GROUPS)
+    .flat()
+    .filter(button => {
+      const key = button.command.toUpperCase()
+      if (seen.has(key)) return false
+      seen.add(key)
+      return true
+    })
+}
+
 export function KeymapControls({
   configText,
   hasPendingChanges,
@@ -379,9 +434,13 @@ export function KeymapControls({
   zrModeValue = '',
   onZlModeChange = () => {},
   onZrModeChange = () => {},
+  devices,
+  selectedMappingCommand,
+  onSelectedMappingCommandChange,
 }: KeymapControlsProps) {
   const { t } = useTranslation()
   const [stickView, setStickView] = useState<'bindings' | 'modes'>('bindings')
+  const [mappingHelpOpen, setMappingHelpOpen] = useState(false)
   const {
     manualRows,
     ensureManualRow,
@@ -390,8 +449,10 @@ export function KeymapControls({
     stickShiftDisplayModes,
     updateStickShiftDisplayMode,
     replaceStickShiftDisplayModes,
+    getRowEditorMode,
+    setRowEditorMode,
   } = useButtonRowState()
-  const { captureLabel, beginCapture, cancelCapture, isCapturing } = useBindingCapture((button, slot, rowId, value, options) => {
+  const { captureLabel, beginCapture, beginValueCapture, cancelCapture, isCapturing, isCapturingValue } = useBindingCapture((button, slot, rowId, value, options) => {
     onBindingChange(button, slot, rowId, value, options)
     const isComboSlot = slot === 'chord' || slot === 'simultaneous' || slot === 'diagonal'
     if (value && isComboSlot && manualRows[button]?.[slot]?.some(entry => entry.id === rowId)) {
@@ -462,6 +523,25 @@ export function KeymapControls({
     return record
   }, [configText, manualRows, touchpadGridButtons])
 
+  const visualMappingButtons = useMemo(() => {
+    const focusedSections = visibleSections?.filter(section => section !== 'global') ?? []
+    if (focusedSections.length === 1 && focusedSections[0] === 'face') {
+      return allMappingButtons()
+    }
+    if (focusedSections.length === 1 && MAPPING_BUTTON_GROUPS[focusedSections[0]]) {
+      return MAPPING_BUTTON_GROUPS[focusedSections[0]]
+    }
+    return allMappingButtons()
+  }, [visibleSections])
+
+  const visualButtonByCommand = useMemo(() => {
+    const record: Record<string, ButtonDefinition> = {}
+    allMappingButtons().forEach(button => {
+      record[button.command.toUpperCase()] = button
+    })
+    return record
+  }, [])
+
   const specialsByButton = useMemo(() => {
     const assignments: Record<string, string | undefined> = {}
     getSpecialOptionList(t).forEach(binding => {
@@ -476,6 +556,33 @@ export function KeymapControls({
     })
     return assignments
   }, [configText, t])
+
+  const boundCommandSet = useMemo(() => {
+    const commands = new Set<string>()
+    allMappingButtons().forEach(button => {
+      const key = button.command.toUpperCase()
+      const rows = bindingRowsByButton[button.command] ?? bindingRowsByButton[key] ?? []
+      if (rows.length > 0 || specialsByButton[button.command] || specialsByButton[key] || stickModeShiftAssignments?.[key]?.length) {
+        commands.add(key)
+      }
+    })
+    return commands
+  }, [bindingRowsByButton, specialsByButton, stickModeShiftAssignments])
+
+  const selectedVisualCommand = selectedMappingCommand?.toUpperCase() ?? ''
+  const selectedVisualButton =
+    visualMappingButtons.find(button => button.command.toUpperCase() === selectedVisualCommand) ??
+    visualMappingButtons[0] ??
+    visualButtonByCommand[selectedVisualCommand] ??
+    allMappingButtons()[0]
+  const visualDevice = devices?.find(device => device.status) ?? devices?.[0] ?? VIRTUAL_MAPPING_DEVICE
+
+  useEffect(() => {
+    if (view !== 'full') return
+    if (!selectedVisualButton) return
+    if (selectedMappingCommand?.toUpperCase() === selectedVisualButton.command.toUpperCase()) return
+    onSelectedMappingCommandChange?.(selectedVisualButton.command)
+  }, [onSelectedMappingCommandChange, selectedMappingCommand, selectedVisualButton, view])
 
   const showFullLayout = view === 'full'
   const showStickLayout = view === 'sticks'
@@ -525,9 +632,13 @@ export function KeymapControls({
         ensureManualRow={ensureManualRow}
         updateManualRow={updateManualRow}
         removeManualRow={removeManualRow}
+        getRowEditorMode={getRowEditorMode}
+        setRowEditorMode={setRowEditorMode}
         captureLabel={captureLabel}
         isCapturing={isCapturing}
+        isCapturingValue={isCapturingValue}
         beginCapture={beginCapture}
+        beginValueCapture={beginValueCapture}
         cancelCapture={cancelCapture}
         onBindingChange={onBindingChange}
         onModifierChange={onModifierChange}
@@ -546,6 +657,12 @@ export function KeymapControls({
     onApply,
     onCancel,
     applyDisabled: isCalibrating,
+  }
+
+  const applyActionPreset = (value: string) => {
+    const buttonCommand = selectedVisualButton.command.toUpperCase()
+    onBindingChange(buttonCommand, 'tap', `${buttonCommand}-tap`, value, { writeMode: 'line' })
+    showToast(t('messages.actionPresetApplied', { button: buttonCommand, value }))
   }
 
   const stickModeExtras = (side: 'LEFT' | 'RIGHT') => {
@@ -607,175 +724,134 @@ export function KeymapControls({
   return (
     <Card className="control-panel" lockable locked={isCalibrating} lockMessage={lockMessage ?? t('messages.lockMessage')}>
       <div className={keymapStyles.keymapCardHeader}>
-        <h2>
-          {view === 'touchpad'
-            ? t('keymap.touchpadControlsTitle')
-            : view === 'sticks'
-              ? t('keymap.stickBindingsTitle')
-              : t('keymap.controlsTitle')}
-        </h2>
+        <div className={keymapStyles.keymapTitleRow}>
+          <h2>
+            {view === 'touchpad'
+              ? t('keymap.touchpadControlsTitle')
+              : view === 'sticks'
+                ? t('keymap.stickBindingsTitle')
+                : t('keymap.controlsTitle')}
+          </h2>
+          <button type="button" className="secondary-btn" onClick={() => setMappingHelpOpen(true)} data-capture-ignore="true">
+            {t('keymap.mappingHelpButton')}
+          </button>
+        </div>
       </div>
 
-      {showFullLayout &&
-        renderSections([
-          {
-            key: 'global',
-            shouldRender: isVisible('global'),
-            node: (
-              <GlobalControlsSection
-                holdPressTimeSeconds={holdPressTimeInputValue}
-                holdPressTimeIsCustom={holdPressTimeIsCustom}
-                holdPressTimeDefault={holdPressTimeDefault}
-                onHoldPressTimeChange={onHoldPressTimeChange}
-                doublePressWindowSeconds={doublePressInputValue}
-                doublePressWindowIsCustom={doublePressWindowIsCustom}
-                onDoublePressWindowChange={onDoublePressWindowChange}
-                simPressWindowSeconds={simPressInputValue}
-                simPressWindowIsCustom={simPressWindowIsCustom}
-                onSimPressWindowChange={onSimPressWindowChange}
-                lightBarColor={lightBarColor}
-                onLightBarChange={onLightBarChange}
-                {...actionsProps}
+      {showFullLayout && isVisible('global') && (
+        <GlobalControlsSection
+          holdPressTimeSeconds={holdPressTimeInputValue}
+          holdPressTimeIsCustom={holdPressTimeIsCustom}
+          holdPressTimeDefault={holdPressTimeDefault}
+          onHoldPressTimeChange={onHoldPressTimeChange}
+          doublePressWindowSeconds={doublePressInputValue}
+          doublePressWindowIsCustom={doublePressWindowIsCustom}
+          onDoublePressWindowChange={onDoublePressWindowChange}
+          simPressWindowSeconds={simPressInputValue}
+          simPressWindowIsCustom={simPressWindowIsCustom}
+          onSimPressWindowChange={onSimPressWindowChange}
+          lightBarColor={lightBarColor}
+          onLightBarChange={onLightBarChange}
+          {...actionsProps}
+        />
+      )}
+
+      {showFullLayout && !isVisible('global') && (
+        <>
+          {isVisible('triggers') && (
+            <TriggerControlsSection
+              adaptiveTriggerValue={adaptiveTriggerValue}
+              onAdaptiveTriggerChange={onAdaptiveTriggerChange}
+              triggerThreshold={triggerThreshold}
+              onTriggerThresholdChange={onTriggerThresholdChange}
+              {...actionsProps}
+            />
+          )}
+          <section className={keymapStyles.mappingWorkbench}>
+            <div className={keymapStyles.mappingVisualPanel}>
+              <div className={keymapStyles.mappingVisualHeader}>
+                <div>
+                  <h3>{t('keymap.visualMappingTitle')}</h3>
+                  <p>{t('keymap.visualMappingDescription')}</p>
+                </div>
+                {!devices?.length && <span className={keymapStyles.mappingModeBadge}>{t('keymap.virtualControllerMode')}</span>}
+              </div>
+              <ControllerStatusSvg
+                device={visualDevice}
+                boundCommands={boundCommandSet}
+                selectedCommand={selectedVisualButton.command.toUpperCase()}
+                onSelectCommand={command => onSelectedMappingCommandChange?.(command.toUpperCase())}
               />
-            ),
-          },
-          {
-            key: 'face',
-            shouldRender: isVisible('face'),
-            node: (
-              <ButtonGridSection
-                title={t('keymap.faceButtonsTitle')}
-                description={t('keymap.faceButtonsDescription')}
-                buttons={FACE_BUTTONS}
-                renderButton={renderButtonCard}
-                {...actionsProps}
-              />
-            ),
-          },
-          {
-            key: 'dpad',
-            shouldRender: isVisible('dpad'),
-            node: (
-              <ButtonGridSection
-                title={t('keymap.dpadTitle')}
-                description={t('keymap.dpadDescription')}
-                buttons={DPAD_BUTTONS}
-                renderButton={renderButtonCard}
-                {...actionsProps}
-              />
-            ),
-          },
-          {
-            key: 'bumpers',
-            shouldRender: isVisible('bumpers'),
-            node: (
-              <ButtonGridSection
-                title={t('keymap.bumpersTitle')}
-                description={t('keymap.bumpersDescription')}
-                buttons={[...BUMPER_BUTTONS, ...MINI_BUTTONS]}
-                renderButton={renderButtonCard}
-                extraContent={<small className={keymapStyles.paddleNote}>{t('keymap.bumpersNote')}</small>}
-                {...actionsProps}
-              />
-            ),
-          },
-          {
-            key: 'trigger-controls',
-            shouldRender: isVisible('triggers'),
-            node: (
-              <TriggerControlsSection
-                adaptiveTriggerValue={adaptiveTriggerValue}
-                onAdaptiveTriggerChange={onAdaptiveTriggerChange}
-                triggerThreshold={triggerThreshold}
-                onTriggerThresholdChange={onTriggerThresholdChange}
-                {...actionsProps}
-              />
-            ),
-          },
-          {
-            key: 'triggers',
-            shouldRender: isVisible('triggers'),
-            node: (() => {
-              const zlActive = !!zlModeValue && zlModeValue !== 'NO_FULL'
-              const zrActive = !!zrModeValue && zrModeValue !== 'NO_FULL'
-              const modeOptions = ['NO_FULL', 'NO_SKIP', 'NO_SKIP_EXCLUSIVE', 'MUST_SKIP', 'MAY_SKIP', 'MUST_SKIP_R', 'MAY_SKIP_R']
-              return (
-                <>
-                  <KeymapSection title={t('keymap.triggersTitle')} description={t('keymap.triggersDescription')}>
-                    <div className={keymapStyles.keymapGrid}>
-                      {TRIGGER_BUTTONS.filter(b => b.command === 'ZL').map(b => <div key={b.command}>{renderButtonCard(b)}</div>)}
-                      <div className={keymapStyles.globalControlRow} data-capture-ignore="true">
-                        <span className={keymapStyles.globalControlTitle}>{t('keymap.l2FullPullMode')}</span>
-                        <select className="app-select" value={zlModeValue || 'NO_FULL'} onChange={e => onZlModeChange(e.target.value)} disabled={actionsProps.applyDisabled}>
-                          {modeOptions.map(m => (
-                            <option key={m} value={m}>
-                              {m === 'NO_FULL' ? t('common.defaultValue', { value: m }) : m}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                      {zlActive && TRIGGER_BUTTONS.filter(b => b.command === 'ZLF').map(b => <div key={b.command}>{renderButtonCard(b)}</div>)}
-                      {TRIGGER_BUTTONS.filter(b => b.command === 'ZR').map(b => <div key={b.command}>{renderButtonCard(b)}</div>)}
-                      <div className={keymapStyles.globalControlRow} data-capture-ignore="true">
-                        <span className={keymapStyles.globalControlTitle}>{t('keymap.r2FullPullMode')}</span>
-                        <select className="app-select" value={zrModeValue || 'NO_FULL'} onChange={e => onZrModeChange(e.target.value)} disabled={actionsProps.applyDisabled}>
-                          {modeOptions.map(m => (
-                            <option key={m} value={m}>
-                              {m === 'NO_FULL' ? t('common.defaultValue', { value: m }) : m}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                      {zrActive && TRIGGER_BUTTONS.filter(b => b.command === 'ZRF').map(b => <div key={b.command}>{renderButtonCard(b)}</div>)}
-                    </div>
-                  </KeymapSection>
-                  <SectionActions className={keymapStyles.keymapSectionActions} {...actionsProps} />
-                </>
-              )
-            })(),
-          },
-          {
-            key: 'center',
-            shouldRender: isVisible('center'),
-            node: (
-              <ButtonGridSection
-                title={t('keymap.centerButtonsTitle')}
-                description={t('keymap.centerButtonsDescription')}
-                buttons={CENTER_BUTTONS}
-                renderButton={renderButtonCard}
-                {...actionsProps}
-              />
-            ),
-          },
-          {
-            key: 'paddles',
-            shouldRender: isVisible('paddles'),
-            node: (
-              <ButtonGridSection
-                title={t('keymap.paddlesTitle')}
-                description={t('keymap.paddlesDescription')}
-                buttons={PADDLE_BUTTONS}
-                renderButton={renderButtonCard}
-                extraContent={<small className={keymapStyles.paddleNote}>{t('keymap.paddlesNote')}</small>}
-                {...actionsProps}
-              />
-            ),
-          },
-          {
-            key: 'extra',
-            shouldRender: isVisible('extra'),
-            node: (
-              <ButtonGridSection
-                title={t('keymap.extraButtonsTitle')}
-                description={t('keymap.extraButtonsDescription')}
-                buttons={MISC_BUTTONS}
-                renderButton={renderButtonCard}
-                extraContent={<small className={keymapStyles.paddleNote}>{t('keymap.extraButtonsNote')}</small>}
-                {...actionsProps}
-              />
-            ),
-          },
-        ])}
+              <div className={keymapStyles.mappingButtonStrip} data-capture-ignore="true">
+                {visualMappingButtons.map(button => {
+                  const command = button.command.toUpperCase()
+                  return (
+                    <button
+                      key={command}
+                      type="button"
+                      className={`${keymapStyles.mappingButtonChip} ${selectedVisualButton.command.toUpperCase() === command ? keymapStyles.mappingButtonChipActive : ''} ${boundCommandSet.has(command) ? keymapStyles.mappingButtonChipBound : ''}`}
+                      onClick={() => onSelectedMappingCommandChange?.(command)}
+                    >
+                      {controllerButtonLabel(button)}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+            <aside className={keymapStyles.mappingDetailPanel}>
+              <div className={keymapStyles.mappingDetailHeader}>
+                <span>{t('keymap.selectedButton')}</span>
+                <strong>{controllerButtonLabel(selectedVisualButton)}</strong>
+              </div>
+              {renderButtonCard(selectedVisualButton)}
+              {isVisible('triggers') && (
+                <div className={keymapStyles.triggerModeInline} data-capture-ignore="true">
+                  <label>
+                    {t('keymap.l2FullPullMode')}
+                    <select className="app-select" value={zlModeValue || 'NO_FULL'} onChange={e => onZlModeChange(e.target.value)} disabled={actionsProps.applyDisabled}>
+                      {['NO_FULL', 'NO_SKIP', 'NO_SKIP_EXCLUSIVE', 'MUST_SKIP', 'MAY_SKIP', 'MUST_SKIP_R', 'MAY_SKIP_R'].map(mode => (
+                        <option key={mode} value={mode}>{mode === 'NO_FULL' ? t('common.defaultValue', { value: mode }) : mode}</option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    {t('keymap.r2FullPullMode')}
+                    <select className="app-select" value={zrModeValue || 'NO_FULL'} onChange={e => onZrModeChange(e.target.value)} disabled={actionsProps.applyDisabled}>
+                      {['NO_FULL', 'NO_SKIP', 'NO_SKIP_EXCLUSIVE', 'MUST_SKIP', 'MAY_SKIP', 'MUST_SKIP_R', 'MAY_SKIP_R'].map(mode => (
+                        <option key={mode} value={mode}>{mode === 'NO_FULL' ? t('common.defaultValue', { value: mode }) : mode}</option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+              )}
+              <div className="action-library-card mapping-action-library" data-capture-ignore="true">
+                <div className="action-library-header">
+                  <div>
+                    <div className="profile-summary-title">{t('app.actionRail.title')}</div>
+                    <p>{t('app.actionRail.description')}</p>
+                  </div>
+                  <span className="selected-binding-pill">{selectedVisualButton.command.toUpperCase()}</span>
+                </div>
+                <div className="action-preset-grid">
+                  {ACTION_PRESETS.map(preset => (
+                    <button
+                      key={preset.key}
+                      type="button"
+                      className="action-preset-card"
+                      disabled={isCalibrating}
+                      onClick={() => applyActionPreset(preset.value)}
+                    >
+                      <span>{t(preset.labelKey)}</span>
+                      <code>{preset.value}</code>
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <SectionActions className={keymapStyles.keymapSectionActions} {...actionsProps} />
+            </aside>
+          </section>
+        </>
+      )}
 
       {showStickLayout && (
         <>
@@ -883,6 +959,8 @@ export function KeymapControls({
           ])}
         </>
       )}
+
+      <MappingRulesHelpModal isOpen={mappingHelpOpen} onClose={() => setMappingHelpOpen(false)} />
     </Card>
   )
 }

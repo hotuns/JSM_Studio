@@ -1,9 +1,9 @@
 .recalibrate-card {
   border: 1px solid var(--border-1);
-  border-radius: 12px;
+  border-radius: 16px;
   padding: 0.85rem;
   background: var(--bg-2);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35), 0 1px 0 rgba(255, 255, 255, 0.02) inset;
+  box-shadow: 0 18px 38px color-mix(in srgb, #000 32%, transparent), 0 1px 0 rgba(255, 255, 255, 0.04) inset;
   display: flex;
   flex-direction: column;
   gap: 0.6rem;
@@ -33,10 +33,10 @@
 
 .profile-summary-card {
   border: 1px solid var(--border-1);
-  border-radius: 12px;
+  border-radius: 16px;
   padding: 1rem;
   background: var(--bg-2);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35), 0 1px 0 rgba(255, 255, 255, 0.02) inset;
+  box-shadow: 0 18px 38px color-mix(in srgb, #000 32%, transparent), 0 1px 0 rgba(255, 255, 255, 0.04) inset;
   display: flex;
   flex-direction: column;
   gap: 0.65rem;
@@ -74,6 +74,93 @@
   flex-wrap: wrap;
 }
 
+.action-library-card {
+  border: 1px solid var(--border-1);
+  border-radius: 16px;
+  padding: 1rem;
+  background:
+    radial-gradient(circle at top right, color-mix(in srgb, var(--accent) 10%, transparent), transparent 42%),
+    var(--bg-2);
+  box-shadow: 0 18px 38px color-mix(in srgb, #000 32%, transparent), 0 1px 0 rgba(255, 255, 255, 0.04) inset;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.mapping-action-library {
+  box-shadow: none;
+  border-radius: 14px;
+}
+
+.action-library-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  align-items: flex-start;
+}
+
+.action-library-header p {
+  margin: 0.25rem 0 0;
+  color: var(--text-mid);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.selected-binding-pill {
+  flex: 0 0 auto;
+  border: 1px solid color-mix(in srgb, var(--accent) 48%, transparent);
+  border-radius: 999px;
+  padding: 0.2rem 0.52rem;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.action-preset-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.55rem;
+}
+
+.action-preset-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.65rem;
+  width: 100%;
+  border: 1px solid var(--border-1);
+  border-radius: 12px;
+  padding: 0.65rem 0.7rem;
+  background: color-mix(in srgb, var(--bg-input) 88%, transparent);
+  color: var(--text-strong);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
+}
+
+.action-preset-card:hover:not(:disabled) {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 13%, var(--bg-input));
+  box-shadow: 0 0 16px color-mix(in srgb, var(--accent) 15%, transparent);
+}
+
+.action-preset-card:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.action-preset-card code {
+  color: var(--text-mid);
+  font-size: 0.72rem;
+  white-space: nowrap;
+}
+
+.rail-muted-note {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
 .profile-modal .modal-header {
   justify-content: space-between;
   align-items: center;
@@ -82,10 +169,10 @@
 
 .app-card {
   border: 1px solid var(--border-1);
-  border-radius: 12px;
+  border-radius: 18px;
   padding: 1.25rem;
   background: var(--bg-2);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35), 0 1px 0 rgba(255, 255, 255, 0.02) inset;
+  box-shadow: 0 18px 38px color-mix(in srgb, #000 30%, transparent), 0 1px 0 rgba(255, 255, 255, 0.04) inset;
   display: flex;
   flex-direction: column;
   gap: 1rem;

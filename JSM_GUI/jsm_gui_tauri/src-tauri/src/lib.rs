@@ -6,6 +6,7 @@ use tauri::{Manager, RunEvent};
 
 use services::{
   app_state::AppState,
+  input_debug,
   jsm_process,
   telemetry,
 };
@@ -50,6 +51,9 @@ pub fn run() {
       commands::set_backend_choice,
       commands::get_latest_telemetry_sample,
       commands::open_external,
+      commands::start_input_debug_hook,
+      commands::stop_input_debug_hook,
+      commands::get_input_debug_hook_status,
     ])
     .build(tauri::generate_context!())
     .expect("error while building tauri application");
@@ -59,6 +63,9 @@ pub fn run() {
       let state = app_handle.state::<AppState>();
       if let Err(error) = jsm_process::terminate_jsm(app_handle, state.inner()) {
         eprintln!("Failed to terminate JoyShockMapper during Tauri shutdown: {error}");
+      }
+      if let Err(error) = input_debug::stop() {
+        eprintln!("Failed to stop input debug hook during Tauri shutdown: {error}");
       }
     }
   });

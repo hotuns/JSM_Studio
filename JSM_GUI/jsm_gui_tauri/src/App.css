@@ -1,4 +1,4 @@
-/* Global layout glue: responsive header / subnav / rail actions */
+/* Global layout glue: responsive header / subnav / utility actions */
 
 .responsive-header {
   display: none;
@@ -22,18 +22,59 @@
   align-items: center;
 }
 
-.rail-actions {
+.utility-bar {
   display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 1rem 1.75rem 0;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--border-1);
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at top left, color-mix(in srgb, var(--accent) 9%, transparent), transparent 36%),
+    var(--bg-2);
+  box-shadow: 0 18px 38px color-mix(in srgb, #000 28%, transparent), 0 1px 0 rgba(255, 255, 255, 0.04) inset;
+  backdrop-filter: blur(18px);
 }
 
-.rail-button {
-  width: 100%;
-  justify-content: center;
-  display: inline-flex;
+.utility-profile-group {
+  display: flex;
   align-items: center;
-  text-align: center;
+  gap: 0.85rem;
+  min-width: 0;
+}
+
+.utility-title {
+  flex: 0 0 auto;
+  color: var(--text-strong);
+  font-weight: 800;
+}
+
+.utility-profile-select {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  color: var(--text-mid);
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.utility-profile-select select {
+  min-width: 180px;
+}
+
+.utility-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+}
+
+.utility-calibration-pill {
+  width: auto;
+  min-width: 10rem;
 }
 
 @media (max-width: 1060px) {
@@ -69,7 +110,9 @@
     width: 100%;
     gap: 0;
     padding: 0.5rem 1.75rem;
-    background: var(--bg-1-5);
+    background:
+      linear-gradient(180deg, color-mix(in srgb, var(--bg-1-5) 96%, transparent), color-mix(in srgb, var(--bg-0) 90%, transparent));
+    backdrop-filter: blur(18px);
     border-bottom: 1px solid var(--border-1);
   }
 
@@ -83,6 +126,28 @@
   }
 
   .responsive-header .subnav {
+    justify-content: flex-start;
+  }
+
+  .utility-bar {
+    margin: 1rem 1.75rem 0;
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .utility-profile-group,
+  .utility-profile-select {
+    width: 100%;
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .utility-profile-select select {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .utility-actions {
     justify-content: flex-start;
   }
 }

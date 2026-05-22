@@ -1,32 +1,38 @@
-import { Fragment } from 'react'
+import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
+import {
+  BindingCommand,
+  BindingCommandPatch,
+  BindingCommandPreset,
+  BindingTriggerKind,
+  bindingCommandToToken,
+  commandTokenPreview,
+  createBindingCommandPreset,
+  inferOutputKindFromBindingValue,
+  parseRowsToCommands,
+  updateCommandExpression,
+} from '../../utils/bindingCommands'
 import {
   BindingSlot,
   ButtonBindingRow,
   ManualRowInfo,
   ManualRowState,
+  createBindingExpression,
+  parseBindingExpression,
+  removeBindingExpressionToken,
+  serializeBindingExpression,
+  serializeBindingToken,
 } from '../../utils/keymap'
-import { formatStickModeLabel } from '../../constants/sticks'
-import { BindingRow } from '../BindingRow'
 import keymapStyles from '../Keymap.module.css'
-import stickStyles from '../Sticks.module.css'
 import {
-  EXTRA_BINDING_SLOTS,
   MODIFIER_SLOT_TYPES,
-  buildStickShiftValue,
-  getAllSpecialLabelKeys,
   getButtonDescription,
   getDefaultModifierForButton,
-  getSpecialLabel,
   getSpecialOptionList,
-  getSpecialOptionManualList,
-  getStickShiftHeaderOption,
-  getStickShiftLeftHeader,
-  getStickShiftRightHeader,
-  getStickShiftSpecialOptions,
-  parseStickShiftSelection,
   type ButtonDefinition,
 } from '../../keymap/schema'
+import { BindingCommandCard } from './BindingCommandCard'
+import { ButtonMappingCard } from './ButtonMappingCard'
 
 type ButtonBindingsCardProps = {
   button: ButtonDefinition
@@ -40,16 +46,27 @@ type ButtonBindingsCardProps = {
   ensureManualRow: (button: string, slot: BindingSlot, defaults?: Partial<ManualRowInfo>) => string
   updateManualRow: (button: string, slot: BindingSlot, rowId: string, info: Omit<ManualRowInfo, 'id'>) => void
   removeManualRow: (button: string, slot: BindingSlot, rowId?: string) => void
+  getRowEditorMode: (button: string, slot: BindingSlot, rowId: string) => 'simple' | 'advanced' | undefined
+  setRowEditorMode: (button: string, slot: BindingSlot, rowId: string, mode?: 'simple' | 'advanced') => void
   captureLabel: string
   isCapturing: (button: string, slot: BindingSlot, rowId?: string) => boolean
-  beginCapture: (button: string, slot: BindingSlot, rowId: string, label: string, modifier?: string) => void
+  isCapturingValue: (key: string) => boolean
+  beginCapture: (
+    button: string,
+    slot: BindingSlot,
+    rowId: string,
+    label: string,
+    modifier?: string,
+    writeMode?: 'slot' | 'line'
+  ) => void
+  beginValueCapture: (key: string, label: string, onCaptured: (value: string) => void) => void
   cancelCapture: () => void
   onBindingChange: (
     button: string,
     slot: BindingSlot,
     rowId: string,
     value: string | null,
-    options?: { modifier?: string }
+    options?: { modifier?: string; writeMode?: 'slot' | 'line' }
   ) => void
   onModifierChange: (
     button: string,
@@ -66,24 +83,48 @@ type ButtonBindingsCardProps = {
   onTrackballDecayChange: (value: string) => void
 }
 
+const triggerToSlot = (trigger: BindingTriggerKind): BindingSlot => {
+  switch (trigger) {
+    case 'hold':
+      return 'hold'
+    case 'double':
+      return 'double'
+    case 'chord':
+      return 'chord'
+    case 'simultaneous':
+      return 'simultaneous'
+    case 'diagonal':
+      return 'diagonal'
+    case 'regular':
+    case 'tap':
+    case 'release':
+    case 'turbo':
+    case 'stickShift':
+    default:
+      return 'tap'
+  }
+}
+
+const triggerUsesBaseLine = (trigger: BindingTriggerKind) =>
+  trigger === 'regular' || trigger === 'tap' || trigger === 'hold' || trigger === 'release' || trigger === 'turbo'
+
+const hasOutputValue = (command: Pick<BindingCommandPreset, 'outputValue'>) => command.outputValue.trim().length > 0
+
 export const ButtonBindingsCard = ({
   button,
   rows,
   modifierOptions,
   specialsByButton,
   stickModeShiftAssignments,
-  stickShiftDisplayModes,
   updateStickShiftDisplayMode,
-  manualRows,
   ensureManualRow,
   updateManualRow,
   removeManualRow,
   captureLabel,
   isCapturing,
-  beginCapture,
-  cancelCapture,
+  isCapturingValue,
+  beginValueCapture,
   onBindingChange,
-  onModifierChange,
   onAssignSpecialAction,
   onClearSpecialAction,
   onStickModeShiftChange,
@@ -91,371 +132,320 @@ export const ButtonBindingsCard = ({
   onTrackballDecayChange,
 }: ButtonBindingsCardProps) => {
   const { t } = useTranslation()
-  const specialLabelKeys = getAllSpecialLabelKeys()
-  const specialOptionList = getSpecialOptionList(t)
-  const specialOptionManualList = getSpecialOptionManualList(t)
-  const stickShiftHeaderOption = getStickShiftHeaderOption(t)
-  const stickShiftLeftHeader = getStickShiftLeftHeader(t)
-  const stickShiftRightHeader = getStickShiftRightHeader(t)
-  const stickShiftSpecialOptions = getStickShiftSpecialOptions(t)
-
   const buttonKey = button.command.toUpperCase()
   const specialKey = specialsByButton[button.command]
-  const tapSpecialLabel = specialKey ? getSpecialLabel(specialKey, t) : ''
-  const stickShiftEntries = stickModeShiftAssignments?.[buttonKey] ?? []
-  const shiftDisplayMode = stickShiftDisplayModes[buttonKey] ?? 'tap'
-  const tapStickShiftEntry = shiftDisplayMode === 'tap' ? stickShiftEntries[0] : undefined
-  const buttonHasTrackball = Boolean(
-    rows.some(row => {
-      const binding = row.binding?.toUpperCase()
-      return binding ? binding.includes('TRACK') : false
-    }) || (specialKey && new Set(['GYRO_TRACKBALL', 'GYRO_TRACK_X', 'GYRO_TRACK_Y']).has(specialKey))
+  const stickShiftEntries = useMemo(
+    () => stickModeShiftAssignments?.[buttonKey] ?? [],
+    [buttonKey, stickModeShiftAssignments]
   )
+  const specialOptionList = useMemo(
+    () => [
+      { value: 'NONE', label: 'NONE' },
+      { value: 'DEFAULT', label: 'DEFAULT' },
+      { value: 'CALIBRATE', label: 'CALIBRATE' },
+      ...getSpecialOptionList(t),
+    ].filter((option, index, source) => source.findIndex(candidate => candidate.value === option.value) === index),
+    [t]
+  )
+  const commands = useMemo(
+    () => parseRowsToCommands(rows, button.command, { specialKey, stickShiftAssignments: stickShiftEntries }),
+    [button.command, rows, specialKey, stickShiftEntries]
+  )
+  const rowCapturing = rows.some(row => isCapturing(button.command, row.slot, row.id)) || commands.some(command => isCapturingValue(command.id))
+  const buttonHasTrackball = commands.some(command => command.outputValue.toUpperCase().includes('TRACK'))
   const trackballSliderValue = trackballDecay && !Number.isNaN(Number(trackballDecay)) ? Number(trackballDecay) : 1
+  const defaultModifier = getDefaultModifierForButton(button.command, modifierOptions)
 
-  const rowCapturing = rows.some(row => isCapturing(button.command, row.slot, row.id))
+  const addCommandToBaseLine = (preset: BindingCommandPreset) => {
+    if (!hasOutputValue(preset)) return
+    const baseRow = rows.find(row => row.slot === 'tap')
+    const existingTokens = baseRow?.expression?.tokens ?? []
+    const token = bindingCommandToToken(preset)
+    const expression = createBindingExpression([...existingTokens, token])
+    onBindingChange(button.command, 'tap', baseRow?.id ?? `${button.command}-tap`, serializeBindingExpression(expression), { writeMode: 'line' })
+  }
+
+  const commandSlot = (trigger: BindingTriggerKind) => (triggerUsesBaseLine(trigger) ? 'tap' : triggerToSlot(trigger))
+
+  const manualInfoForCommand = (command: BindingCommandPreset, modifier?: string): Omit<ManualRowInfo, 'id'> => ({
+    modifierCommand: modifier,
+    manualTriggerKind: command.triggerKind,
+    manualOutputKind: command.outputKind,
+    manualOutputBehavior: command.outputBehavior,
+    manualOutputValue: command.outputValue,
+  })
+
+  const addDraftCommand = (preset: BindingCommandPreset) => {
+    if (preset.triggerKind === 'stickShift') {
+      onStickModeShiftChange?.(button.command, 'RIGHT', 'NO_MOUSE')
+      updateStickShiftDisplayMode(buttonKey, 'extra')
+      return
+    }
+    const slot = commandSlot(preset.triggerKind)
+    const modifier = MODIFIER_SLOT_TYPES.includes(slot) ? preset.conditionInput || defaultModifier : preset.conditionInput
+    ensureManualRow(button.command, slot, manualInfoForCommand({ ...preset, conditionInput: modifier }, modifier))
+  }
+
+  const writeCommand = (preset: BindingCommandPreset) => {
+    if (preset.triggerKind === 'stickShift') {
+      onStickModeShiftChange?.(button.command, 'RIGHT', 'NO_MOUSE')
+      updateStickShiftDisplayMode(buttonKey, 'extra')
+      return
+    }
+    if (!hasOutputValue(preset)) {
+      addDraftCommand(preset)
+      return
+    }
+    if (triggerUsesBaseLine(preset.triggerKind)) {
+      addCommandToBaseLine(preset)
+      return
+    }
+    const slot = triggerToSlot(preset.triggerKind)
+    const modifier = MODIFIER_SLOT_TYPES.includes(slot) ? preset.conditionInput || defaultModifier : undefined
+    const rowId = ensureManualRow(button.command, slot, modifier ? { modifierCommand: modifier } : undefined)
+    onBindingChange(button.command, slot, rowId, serializeBindingToken(bindingCommandToToken(preset)), modifier ? { modifier } : undefined)
+  }
+
+  const removeCommand = (command: BindingCommand) => {
+    if (command.source.kind === 'special') {
+      onClearSpecialAction(command.source.specialKey, button.command)
+      return
+    }
+    if (command.source.kind === 'stickShift') {
+      onStickModeShiftChange?.(button.command, command.source.target)
+      updateStickShiftDisplayMode(buttonKey, undefined)
+      return
+    }
+    if (command.source.isManual && !command.source.expression) {
+      removeManualRow(button.command, command.source.slot, command.source.rowId)
+      return
+    }
+    if (command.source.writeMode === 'line' && command.source.expression && command.source.expression.tokens.length > 1) {
+      const expression = removeBindingExpressionToken(command.source.expression, command.source.tokenIndex)
+      onBindingChange(
+        button.command,
+        command.source.slot,
+        command.source.rowId,
+        expression ? serializeBindingExpression(expression) : null,
+        { modifier: command.conditionInput, writeMode: 'line' }
+      )
+      return
+    }
+    onBindingChange(
+      button.command,
+      command.source.slot,
+      command.source.rowId,
+      null,
+      command.conditionInput ? { modifier: command.conditionInput, writeMode: command.source.writeMode } : { writeMode: command.source.writeMode }
+    )
+    if (command.source.isManual) {
+      removeManualRow(button.command, command.source.slot, command.source.rowId)
+    }
+  }
+
+  const updateDraftCommand = (command: BindingCommand, nextCommand: BindingCommand) => {
+    if (command.source.kind !== 'row') return
+    const slot = commandSlot(nextCommand.triggerKind)
+    const modifier = MODIFIER_SLOT_TYPES.includes(slot) ? nextCommand.conditionInput || defaultModifier : nextCommand.conditionInput
+    const info = manualInfoForCommand({ ...nextCommand, conditionInput: modifier }, modifier)
+    if (slot !== command.source.slot) {
+      removeManualRow(button.command, command.source.slot, command.source.rowId)
+      ensureManualRow(button.command, slot, { id: command.source.rowId, ...info })
+      return
+    }
+    updateManualRow(button.command, command.source.slot, command.source.rowId, info)
+  }
+
+  const updateCommand = (command: BindingCommand, patch: BindingCommandPatch) => {
+    const nextCommand = { ...command, ...patch }
+    if (command.source.kind === 'special') {
+      if (nextCommand.outputKind === 'special') {
+        onAssignSpecialAction(nextCommand.outputValue, button.command)
+      }
+      return
+    }
+    if (command.source.kind === 'stickShift') return
+
+    if (command.source.isManual && !command.source.expression) {
+      if (!hasOutputValue(nextCommand)) {
+        updateDraftCommand(command, nextCommand)
+        return
+      }
+      writeCommand({
+        triggerKind: nextCommand.triggerKind,
+        outputKind: nextCommand.outputKind,
+        outputValue: nextCommand.outputValue,
+        outputBehavior: nextCommand.outputBehavior,
+        conditionInput: nextCommand.conditionInput,
+      })
+      removeManualRow(button.command, command.source.slot, command.source.rowId)
+      return
+    }
+
+    const expression = updateCommandExpression(command, patch)
+    if (!expression) return
+    const nextValue = serializeBindingExpression(expression)
+    const targetSlot = commandSlot(nextCommand.triggerKind)
+    const shouldWriteLine =
+      command.source.writeMode === 'line' ||
+      triggerUsesBaseLine(nextCommand.triggerKind) ||
+      command.source.slot !== targetSlot
+
+    if (shouldWriteLine) {
+      if (command.source.slot !== 'tap' && targetSlot !== command.source.slot) {
+        removeCommand(command)
+        writeCommand({
+          triggerKind: nextCommand.triggerKind,
+          outputKind: nextCommand.outputKind,
+          outputValue: nextCommand.outputValue,
+          outputBehavior: nextCommand.outputBehavior,
+          conditionInput: nextCommand.conditionInput,
+        })
+        return
+      }
+      onBindingChange(button.command, command.source.slot, command.source.rowId, nextValue, {
+        modifier: nextCommand.conditionInput,
+        writeMode: 'line',
+      })
+      return
+    }
+
+    if (command.source.slot !== targetSlot) {
+      removeCommand(command)
+      writeCommand({
+        triggerKind: nextCommand.triggerKind,
+        outputKind: nextCommand.outputKind,
+        outputValue: nextCommand.outputValue,
+        outputBehavior: nextCommand.outputBehavior,
+        conditionInput: nextCommand.conditionInput,
+      })
+      return
+    }
+
+    if (nextCommand.conditionInput && command.source.modifierCommand && nextCommand.conditionInput !== command.source.modifierCommand) {
+      updateManualRow(button.command, command.source.slot, command.source.rowId, { modifierCommand: nextCommand.conditionInput })
+    }
+    onBindingChange(button.command, command.source.slot, command.source.rowId, commandTokenPreview(nextCommand), {
+      modifier: nextCommand.conditionInput,
+      writeMode: command.source.writeMode,
+    })
+  }
+
+  const duplicateCommand = (command: BindingCommand) => {
+    writeCommand({
+      triggerKind: command.triggerKind,
+      outputKind: command.outputKind,
+      outputValue: command.outputValue,
+      outputBehavior: command.outputBehavior,
+      conditionInput: command.conditionInput,
+    })
+  }
+
+  const captureCommand = (command: BindingCommand) => {
+    beginValueCapture(command.id, t('keymap.anyBindingPrompt'), value => {
+      const token = parseBindingExpression(value)?.tokens[0]
+      updateCommand(command, {
+        outputKind:
+          token?.kind === 'mouse'
+            ? 'mouse'
+            : token?.kind === 'wheel'
+              ? 'wheel'
+              : token?.kind === 'special'
+                ? 'special'
+                : inferOutputKindFromBindingValue(token?.value ?? value),
+        outputValue: token?.value ?? value,
+      })
+    })
+  }
+
+  const handleAddCommand = (trigger: BindingTriggerKind | 'script') => {
+    if (trigger === 'script') {
+      addDraftCommand(createBindingCommandPreset('regular', { outputKind: 'command', outputValue: '' }))
+      return
+    }
+    addDraftCommand(createBindingCommandPreset(trigger, trigger === 'chord' || trigger === 'simultaneous' || trigger === 'diagonal'
+      ? { conditionInput: defaultModifier }
+      : undefined))
+  }
+
+  const addControl = (
+    <div className={keymapStyles.addCommandRow} data-capture-ignore="true">
+      <div className={keymapStyles.addCommandLabel}>{t('keymap.addCommand')}</div>
+      <div className={keymapStyles.addCommandButtons}>
+        <button type="button" className="secondary-btn" onClick={() => handleAddCommand('regular')}>{t('keymap.commandTriggerRegular')}</button>
+        <button type="button" className="secondary-btn" onClick={() => handleAddCommand('tap')}>{t('keymap.commandTriggerTap')}</button>
+        <button type="button" className="secondary-btn" onClick={() => handleAddCommand('hold')}>{t('keymap.commandTriggerHold')}</button>
+        <button type="button" className="secondary-btn" onClick={() => handleAddCommand('double')}>{t('keymap.commandTriggerDouble')}</button>
+        <button type="button" className="secondary-btn" onClick={() => handleAddCommand('chord')}>{t('keymap.commandTriggerChord')}</button>
+      </div>
+      <details className={keymapStyles.addCommandAdvanced}>
+        <summary>{t('keymap.quickShowAdvanced')}</summary>
+        <div className={keymapStyles.addCommandButtons}>
+          <button type="button" className="secondary-btn" onClick={() => handleAddCommand('simultaneous')}>{t('keymap.commandTriggerSimultaneous')}</button>
+          <button type="button" className="secondary-btn" onClick={() => handleAddCommand('diagonal')}>{t('keymap.commandTriggerDiagonal')}</button>
+          {onStickModeShiftChange && <button type="button" className="secondary-btn" onClick={() => handleAddCommand('stickShift')}>{t('keymap.commandAddStickShift')}</button>}
+          <button type="button" className="secondary-btn" onClick={() => handleAddCommand('script')}>{t('keymap.commandAddScript')}</button>
+        </div>
+      </details>
+    </div>
+  )
+
+  const extras = (
+    <>
+      {buttonHasTrackball && (
+        <div className={keymapStyles.trackballInline} data-capture-ignore="true">
+          <label>
+            {t('keymap.trackballDecay')}
+            <input
+              type="number"
+              min="0"
+              max="5"
+              step="0.1"
+              value={trackballDecay}
+              onChange={(event) => onTrackballDecayChange(event.target.value)}
+              placeholder={t('common.defaultValue', { value: '1.0' })}
+            />
+          </label>
+          <input
+            type="range"
+            min="0"
+            max="10"
+            step="0.1"
+            value={trackballSliderValue}
+            onChange={(event) => onTrackballDecayChange(event.target.value)}
+          />
+        </div>
+      )}
+    </>
+  )
 
   return (
-    <div className={`${keymapStyles.keymapRow} ${rowCapturing ? keymapStyles.keymapRowCapturing : ''}`} key={button.command}>
-      <div className={keymapStyles.keymapLabel}>
-        <span className={keymapStyles.buttonName}>
-          {button.playstation === button.xbox ? button.playstation : `${button.playstation} / ${button.xbox}`}
-        </span>
-        <span className={keymapStyles.buttonMeta}>{getButtonDescription(button, t)}</span>
-      </div>
-      <div className={keymapStyles.keymapBindingControls}>
-        {rows.map(row => {
-          const isRowCapturing = isCapturing(button.command, row.slot, row.id)
-          const hasExtraRows = rows.length > 1
-          const isSpecialValue = Boolean(row.binding && specialLabelKeys[row.binding])
-          const displayValue = (() => {
-            if (row.slot === 'tap') {
-              if (row.binding) return row.binding
-              if (tapSpecialLabel) return tapSpecialLabel
-              if (tapStickShiftEntry) {
-                return tapStickShiftEntry.target === 'LEFT'
-                  ? t('keymap.leftStickArrow', { mode: formatStickModeLabel(tapStickShiftEntry.mode, t) })
-                  : t('keymap.rightStickArrow', { mode: formatStickModeLabel(tapStickShiftEntry.mode, t) })
-              }
-              return ''
-            }
-            if (isSpecialValue && row.binding) {
-              return getSpecialLabel(row.binding, t)
-            }
-            return row.binding || ''
-          })()
-          const showHeader = row.slot !== 'tap' || hasExtraRows
-          const headerLabel = row.slot === 'tap' && hasExtraRows ? t('keymap.buttonRegularPress') : row.label
-          let rowSpecialOptions = MODIFIER_SLOT_TYPES.includes(row.slot as BindingSlot) ? specialOptionManualList : specialOptionList
-          if (row.slot === 'tap' && onStickModeShiftChange) {
-            rowSpecialOptions = [
-              ...rowSpecialOptions,
-              stickShiftHeaderOption,
-              stickShiftRightHeader,
-              ...stickShiftSpecialOptions.filter(o => o.value.includes(':RIGHT:')),
-              stickShiftLeftHeader,
-              ...stickShiftSpecialOptions.filter(o => o.value.includes(':LEFT:')),
-            ]
-          }
-          const specialValue = (() => {
-            if (row.slot === 'tap') {
-              if (tapStickShiftEntry) {
-                return buildStickShiftValue(tapStickShiftEntry.target, tapStickShiftEntry.mode)
-              }
-              if (row.binding && specialLabelKeys[row.binding]) {
-                return row.binding
-              }
-              return specialKey ?? ''
-            }
-            if (isSpecialValue && row.binding) {
-              return row.binding
-            }
-            return ''
-          })()
-          const clearTapSpecialBinding = () => {
-            if (row.slot !== 'tap') return
-            if (row.binding && specialLabelKeys[row.binding]) {
-              onBindingChange(button.command, row.slot, row.id, null)
-            }
-          }
-          const clearAllStickShiftAssignments = () => {
-            if (!stickShiftEntries.length || !onStickModeShiftChange) return
-            stickShiftEntries.forEach(entry => onStickModeShiftChange(button.command, entry.target))
-            updateStickShiftDisplayMode(buttonKey, undefined)
-          }
-          const needsModifier = MODIFIER_SLOT_TYPES.includes(row.slot as BindingSlot)
-          const manualEntries = manualRows[button.command]?.[row.slot] ?? []
-          const manualInfo = manualEntries.find(entry => entry.id === row.id)
-          const modifierValue = needsModifier
-            ? row.modifierCommand ?? manualInfo?.modifierCommand ?? getDefaultModifierForButton(button.command, modifierOptions)
-            : undefined
-          const modifierLabel =
-            row.slot === 'simultaneous'
-              ? t('keymap.combineWith')
-              : row.slot === 'diagonal'
-                ? t('keymap.diagonalWith')
-                : t('keymap.modifierButton')
-          let rowModifierOptions = modifierOptions
-          if (needsModifier && modifierValue && !modifierOptions.some(option => option.value === modifierValue)) {
-            rowModifierOptions = [...modifierOptions, { value: modifierValue, label: modifierValue }]
-          }
-          const isLegacyFileCall = Boolean(row.binding && /"\s*[^"]+\.(txt|cfg|ini)"/i.test(row.binding))
-
-          return (
-            <Fragment key={`${button.command}-${row.slot}-${row.id}-wrapper`}>
-              <BindingRow
-                key={row.id}
-                label={headerLabel}
-                showHeader={showHeader}
-                displayValue={displayValue}
-                isManual={row.isManual}
-                isCapturing={isRowCapturing}
-                captureLabel={captureLabel}
-                onBeginCapture={() =>
-                  beginCapture(
-                    button.command,
-                    row.slot,
-                    row.id,
-                    row.slot === 'hold' ? t('keymap.holdBindingPrompt') : t('keymap.anyBindingPrompt'),
-                    needsModifier ? modifierValue : undefined
-                  )
-                }
-                onCancelCapture={cancelCapture}
-                onClear={() => {
-                  if (row.slot === 'tap') {
-                    if (row.binding) {
-                      onBindingChange(button.command, row.slot, row.id, null)
-                    } else if (specialKey) {
-                      onClearSpecialAction(specialKey, button.command)
-                    } else if (tapStickShiftEntry) {
-                      onStickModeShiftChange?.(button.command, tapStickShiftEntry.target)
-                    }
-                  } else {
-                    const options = needsModifier ? { modifier: modifierValue } : undefined
-                    onBindingChange(button.command, row.slot, row.id, null, options)
-                  }
-                }}
-                onRemoveRow={row.isManual ? () => removeManualRow(button.command, row.slot, row.id) : undefined}
-                disableClear={!displayValue && !row.isManual}
-                specialOptions={rowSpecialOptions}
-                specialValue={specialValue}
-                modifierOptions={needsModifier ? rowModifierOptions : undefined}
-                modifierValue={modifierValue}
-                modifierLabel={needsModifier ? modifierLabel : undefined}
-                onModifierChange={
-                  needsModifier
-                    ? (selected) => {
-                        if (!selected) return
-                        if (row.isManual) {
-                          updateManualRow(button.command, row.slot, row.id, { modifierCommand: selected })
-                        }
-                        onModifierChange(button.command, row.slot, row.id, row.modifierCommand, selected, row.binding ?? null)
-                      }
-                    : undefined
-                }
-                onSpecialChange={
-                  row.slot === 'tap'
-                    ? (selected) => {
-                        if (!selected) {
-                          if (specialKey) {
-                            onClearSpecialAction(specialKey, button.command)
-                          }
-                          if (tapStickShiftEntry) {
-                            clearAllStickShiftAssignments()
-                          }
-                          clearTapSpecialBinding()
-                          return
-                        }
-                        if (selected === stickShiftHeaderOption.value) {
-                          return
-                        }
-                        const parsedShift = parseStickShiftSelection(selected)
-                        if (parsedShift && onStickModeShiftChange) {
-                          if (specialKey) {
-                            onClearSpecialAction(specialKey, button.command)
-                          }
-                          clearTapSpecialBinding()
-                          stickShiftEntries.forEach(entry => onStickModeShiftChange(button.command, entry.target))
-                          onStickModeShiftChange(button.command, parsedShift.target, parsedShift.mode)
-                          updateStickShiftDisplayMode(buttonKey, 'tap')
-                          return
-                        }
-                        if (tapStickShiftEntry) {
-                          clearAllStickShiftAssignments()
-                        }
-                        onAssignSpecialAction(selected, button.command)
-                      }
-                    : (selected) => {
-                        if (!selected) {
-                          if (isSpecialValue) {
-                            const options = needsModifier ? { modifier: modifierValue } : undefined
-                            onBindingChange(button.command, row.slot, row.id, null, options)
-                          }
-                          return
-                        }
-                        onBindingChange(button.command, row.slot, row.id, selected, needsModifier ? { modifier: modifierValue } : undefined)
-                        if (row.isManual) {
-                          removeManualRow(button.command, row.slot, row.id)
-                        }
-                      }
-                }
-              />
-              {isLegacyFileCall && <div className="legacy-binding-warning">{t('keymap.legacyScriptDetected')}</div>}
-            </Fragment>
-          )
-        })}
-        {(() => {
-          const hasHold = rows.some(row => row.slot === 'hold')
-          const hasDouble = rows.some(row => row.slot === 'double')
-          const availableSlots = EXTRA_BINDING_SLOTS.filter(slot => {
-            if (slot === 'hold') return !hasHold
-            if (slot === 'double') return !hasDouble
-            return true
-          })
-          return (
-            <div className={`${keymapStyles.bindingRow} ${keymapStyles.addBindingRow}`} data-capture-ignore="true">
-              <select
-                className="app-select"
-                value=""
-                onChange={(event) => {
-                  const selectedValue = event.target.value
-                  if (selectedValue === stickShiftHeaderOption.value) {
-                    event.target.value = ''
-                    return
-                  }
-                  const parsedShift = parseStickShiftSelection(selectedValue)
-                  if (parsedShift && onStickModeShiftChange) {
-                    onStickModeShiftChange(button.command, parsedShift.target, parsedShift.mode)
-                    updateStickShiftDisplayMode(buttonKey, 'extra')
-                    event.target.value = ''
-                    return
-                  }
-                  const selected = selectedValue as BindingSlot
-                  if (selected) {
-                    const isComboSlot = MODIFIER_SLOT_TYPES.includes(selected)
-                    if (isComboSlot) {
-                      ensureManualRow(button.command, selected, {
-                        modifierCommand: getDefaultModifierForButton(button.command, modifierOptions),
-                      })
-                    } else {
-                      ensureManualRow(button.command, selected)
-                    }
-                  }
-                  event.target.value = ''
-                }}
-              >
-                <option value="">{t('keymap.addExtraBinding')}</option>
-                {availableSlots.map(slot => (
-                  <option key={`${button.command}-${slot}-opt`} value={slot}>
-                    {slot === 'hold'
-                      ? t('keymap.holdPressAndHold')
-                      : slot === 'double'
-                        ? t('keymap.doublePress')
-                        : slot === 'chord'
-                          ? t('keymap.chordedPress')
-                          : slot === 'simultaneous'
-                            ? t('keymap.simultaneousPress')
-                            : t('keymap.diagonalPress')}
-                  </option>
-                ))}
-                {onStickModeShiftChange && (
-                  <>
-                    <option value={stickShiftHeaderOption.value} disabled>
-                      {t('keymap.stickModeShifts')}
-                    </option>
-                    <option value={stickShiftRightHeader.value} disabled>
-                      {stickShiftRightHeader.label}
-                    </option>
-                    {stickShiftSpecialOptions.filter(o => o.value.includes(':RIGHT:')).map(option => (
-                      <option key={`${button.command}-${option.value}`} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                    <option value={stickShiftLeftHeader.value} disabled>
-                      {stickShiftLeftHeader.label}
-                    </option>
-                    {stickShiftSpecialOptions.filter(o => o.value.includes(':LEFT:')).map(option => (
-                      <option key={`${button.command}-${option.value}`} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </>
-                )}
-              </select>
-            </div>
-          )
-        })()}
-        {stickShiftEntries.length > 0 && (
-          <div className={stickStyles.stickShiftRows}>
-            {stickShiftEntries.map(entry => {
-              const tapDisplaysShift =
-                rows.length === 1 &&
-                rows[0].slot === 'tap' &&
-                !rows[0].binding &&
-                !tapSpecialLabel &&
-                stickShiftEntries.length === 1 &&
-                shiftDisplayMode !== 'extra'
-              if (tapDisplaysShift) {
-                return null
-              }
-              const label = entry.target === 'LEFT' ? t('keymap.leftStickModeShift') : t('keymap.rightStickModeShift')
-              const buttonLabel =
-                entry.target === 'LEFT'
-                  ? t('keymap.leftStickArrow', { mode: formatStickModeLabel(entry.mode, t) })
-                  : t('keymap.rightStickArrow', { mode: formatStickModeLabel(entry.mode, t) })
-              return (
-                <div className={`${keymapStyles.bindingRow} ${keymapStyles.manualStickShift}`} key={`${button.command}-${entry.target}`}>
-                  <div className={keymapStyles.bindingRowHeader}>
-                    <span>{label}</span>
-                  </div>
-                  <div className={keymapStyles.primaryBindingRow}>
-                    <button type="button" className={keymapStyles.bindingInput} disabled>
-                      {buttonLabel}
-                    </button>
-                    <button
-                      type="button"
-                      className={keymapStyles.clearBindingBtn}
-                      onClick={() => {
-                        onStickModeShiftChange?.(button.command, entry.target)
-                        if (stickShiftEntries.length === 1) {
-                          updateStickShiftDisplayMode(buttonKey, undefined)
-                        }
-                      }}
-                      data-capture-ignore="true"
-                    >
-                      {t('keymap.clearBinding')}
-                    </button>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        )}
-        {buttonHasTrackball && (
-          <div className={keymapStyles.trackballInline} data-capture-ignore="true">
-            <label>
-              {t('keymap.trackballDecay')}
-              <input
-                type="number"
-                min="0"
-                max="5"
-                step="0.1"
-                value={trackballDecay}
-                onChange={(event) => onTrackballDecayChange(event.target.value)}
-                placeholder={t('common.defaultValue', { value: '1.0' })}
-              />
-            </label>
-            <input
-              type="range"
-              min="0"
-              max="10"
-              step="0.1"
-              value={trackballSliderValue}
-              onChange={(event) => onTrackballDecayChange(event.target.value)}
+    <ButtonMappingCard
+      title={button.playstation === button.xbox ? button.playstation : `${button.playstation} / ${button.xbox}`}
+      description={getButtonDescription(button, t)}
+      isCapturing={rowCapturing}
+      addControl={addControl}
+      extras={extras}
+      commands={
+        commands.length > 0 ? (
+          commands.map(command => (
+            <BindingCommandCard
+              key={command.id}
+              command={command}
+              modifierOptions={modifierOptions}
+              specialOptions={specialOptionList}
+              isCapturing={isCapturingValue(command.id)}
+              captureLabel={captureLabel}
+              onUpdate={updateCommand}
+              onRemove={removeCommand}
+              onDuplicate={duplicateCommand}
+              onCapture={captureCommand}
             />
-          </div>
-        )}
-      </div>
-    </div>
+          ))
+        ) : (
+          <div className={keymapStyles.commandEmptyState}>{t('keymap.commandEmptyState')}</div>
+        )
+      }
+    />
   )
 }

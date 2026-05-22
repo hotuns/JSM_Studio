@@ -5,7 +5,10 @@
   gap: 0.5rem;
   padding: 0.8rem 1.75rem 0.8rem;
   border-bottom: 1px solid var(--border-1);
-  background: var(--bg-1-5);
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--bg-1-5) 92%, transparent), color-mix(in srgb, var(--bg-0) 82%, transparent)),
+    radial-gradient(circle at 0% 0%, color-mix(in srgb, var(--accent) 8%, transparent), transparent 35%);
+  backdrop-filter: blur(18px);
   position: sticky;
   top: 0;
   z-index: 10;

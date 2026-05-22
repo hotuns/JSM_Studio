@@ -54,3 +54,32 @@
 .modal-card .flex-inputs + .flex-inputs {
   margin-top: 0.6rem;
 }
+
+.config-source-overlay {
+  align-items: stretch;
+  justify-content: flex-end;
+  background: rgba(0, 0, 0, 0.68);
+}
+
+.config-source-drawer {
+  width: min(720px, 92vw);
+  height: 100vh;
+  overflow-y: auto;
+  padding: 1.25rem;
+  box-sizing: border-box;
+  border-left: 1px solid var(--border-strong);
+  background:
+    radial-gradient(circle at top right, color-mix(in srgb, var(--accent) 10%, transparent), transparent 42%),
+    var(--bg-2);
+  box-shadow: -24px 0 54px color-mix(in srgb, #000 48%, transparent);
+}
+
+.config-source-drawer .config-panel textarea {
+  min-height: 58vh;
+}
+
+@media (max-width: 760px) {
+  .config-source-drawer {
+    width: 100vw;
+  }
+}

@@ -1,6 +1,8 @@
 .sideNav {
   border-right: 1px solid var(--border-1);
-  background: var(--bg-1);
+  background:
+    radial-gradient(circle at 20% 0%, color-mix(in srgb, var(--accent) 11%, transparent), transparent 32%),
+    linear-gradient(180deg, var(--bg-1), color-mix(in srgb, var(--bg-0) 82%, var(--bg-1)));
   padding: 1.5rem 1.25rem;
   display: flex;
   flex-direction: column;
@@ -20,7 +22,22 @@
 .navGroup {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 1rem;
+}
+
+.navSection {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.navSectionLabel {
+  padding: 0 0.25rem;
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 
 .navHeaderRow {
@@ -54,9 +71,9 @@
 
 .navItem {
   text-align: left;
-  border-radius: 10px;
+  border-radius: 12px;
   border: 1px solid var(--border-1);
-  background: var(--bg-input);
+  background: color-mix(in srgb, var(--bg-input) 86%, transparent);
   color: var(--text-strong);
   padding: 0.65rem 0.8rem;
   cursor: pointer;
@@ -74,7 +91,9 @@
 
 .active {
   border: 1.7px solid var(--accent);
-  background: var(--bg-btn-hover);
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--accent) 18%, var(--bg-btn-hover)), var(--bg-btn-hover));
+  box-shadow: 0 0 18px color-mix(in srgb, var(--accent) 18%, transparent);
 }
 
 @media (max-width: 1060px) {
@@ -87,6 +106,17 @@
     flex-wrap: wrap;
     justify-content: center;
     gap: 0.75rem;
+  }
+
+  .navSection {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.75rem;
+  }
+
+  .navSectionLabel {
+    display: none;
   }
 
   .navItem {

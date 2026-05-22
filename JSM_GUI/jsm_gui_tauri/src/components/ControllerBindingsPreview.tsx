@@ -26,10 +26,14 @@ import {
   getButtonSpecialAssignments,
   getKeymapValue,
   getStickModeShiftAssignmentMap,
-  type BindingSlot,
   type ButtonBindingRow,
   type StickModeShiftAssignment,
 } from '../utils/keymap'
+import {
+  BindingCommand,
+  BindingTriggerKind,
+  parseRowsToCommands,
+} from '../utils/bindingCommands'
 import { buildModifierOptions, resolveModifierOptionLabel } from '../utils/modifierOptions'
 import { controllerButtonLabel } from '../utils/controllerStatus'
 import { controllerLabel, formatVidPid } from '../utils/controllers'
@@ -49,7 +53,7 @@ type ControllerBindingDeviceCardProps = {
   ignoredDevices?: string[]
 }
 
-type BindingLayer = BindingSlot | 'special' | 'stickShift'
+type BindingLayer = BindingTriggerKind | 'special'
 
 type BindingDetailEntry = {
   id: string
@@ -75,23 +79,31 @@ type BoundButtonCard = {
 const SPECIAL_LABEL_KEYS = getAllSpecialLabelKeys()
 
 const BINDING_LAYER_ORDER: BindingLayer[] = [
+  'regular',
   'tap',
   'hold',
   'double',
+  'release',
+  'turbo',
   'chord',
   'simultaneous',
   'diagonal',
-  'special',
   'stickShift',
+  'special',
 ]
 
-const SLOT_LABEL_KEYS: Record<BindingSlot, string> = {
-  tap: 'keymap.buttonRegularPress',
-  hold: 'keymap.holdPressAndHold',
-  double: 'keymap.doublePress',
-  chord: 'keymap.chordedPress',
-  simultaneous: 'keymap.simultaneousPress',
-  diagonal: 'keymap.diagonalPress',
+const LAYER_LABEL_KEYS: Record<BindingLayer, string> = {
+  regular: 'keymap.commandTriggerRegular',
+  tap: 'keymap.commandTriggerTap',
+  hold: 'keymap.commandTriggerHold',
+  double: 'keymap.commandTriggerDouble',
+  release: 'keymap.commandTriggerRelease',
+  turbo: 'keymap.commandTriggerTurbo',
+  chord: 'keymap.commandTriggerChord',
+  simultaneous: 'keymap.commandTriggerSimultaneous',
+  diagonal: 'keymap.commandTriggerDiagonal',
+  stickShift: 'keymap.stickModeShifts',
+  special: 'keymap.specialBinds',
 }
 
 const MAX_TOUCHPAD_GRID_BUTTONS = 25
@@ -108,12 +120,6 @@ const parseNumberTokens = (value?: string) =>
     .map(token => Number(token))
     .filter(num => Number.isFinite(num))
 
-const formatBindingValue = (value: string, t: TFunction) => {
-  const trimmed = value.trim()
-  const normalized = trimmed.toUpperCase()
-  return SPECIAL_LABEL_KEYS[normalized] ? getSpecialLabel(normalized, t) : trimmed
-}
-
 const formatStickShiftValue = (assignment: StickModeShiftAssignment, t: TFunction) =>
   assignment.target === 'LEFT'
     ? t('specialBindings.stickShiftLeft', { mode: formatStickModeLabel(assignment.mode, t) })
@@ -129,46 +135,32 @@ const dedupeEntries = (entries: BindingDetailEntry[]) => {
   })
 }
 
-const slotLabel = (slot: BindingSlot, t: TFunction) => t(SLOT_LABEL_KEYS[slot])
+const layerLabel = (layer: BindingLayer, t: TFunction) => t(LAYER_LABEL_KEYS[layer])
 
-const comboMetaLabel = (
-  slot: Extract<BindingSlot, 'chord' | 'simultaneous' | 'diagonal'>,
-  modifier: string | undefined,
-  modifierLabelMap: Record<string, string>,
-  t: TFunction
-) => {
-  if (!modifier) return undefined
-  const modifierLabel = modifierLabelMap[modifier.toUpperCase()] ?? modifier
-  const prefix =
-    slot === 'simultaneous'
-      ? t('keymap.combineWith')
-      : slot === 'diagonal'
-        ? t('keymap.diagonalWith')
-        : t('keymap.modifierButton')
-  return { detail: `${prefix}: ${modifierLabel}`, summary: modifierLabel }
+const commandBehaviorLabel = (command: BindingCommand, t: TFunction) => {
+  if (command.outputBehavior === 'normal') return ''
+  const key =
+    command.outputBehavior === 'tapOnce'
+      ? 'keymap.commandBehaviorTapOnce'
+      : command.outputBehavior === 'toggle'
+        ? 'keymap.commandBehaviorToggle'
+        : 'keymap.commandBehaviorReleaseOnly'
+  return t(key)
 }
 
-const actionEntriesForRows = (
-  rows: ButtonBindingRow[],
-  modifierLabelMap: Record<string, string>,
-  t: TFunction
-) =>
-  rows.flatMap(row => {
-    if (!row.binding) return []
-    const comboMeta =
-      row.slot === 'chord' || row.slot === 'simultaneous' || row.slot === 'diagonal'
-        ? comboMetaLabel(row.slot, row.modifierCommand, modifierLabelMap, t)
-        : undefined
-    return [
-      {
-        id: row.id,
-        label: slotLabel(row.slot, t),
-        value: formatBindingValue(row.binding, t),
-        meta: comboMeta?.detail,
-        summaryPrefix: comboMeta?.summary,
-      },
-    ]
-  })
+const commandEntry = (command: BindingCommand, modifierLabelMap: Record<string, string>, t: TFunction): BindingDetailEntry => {
+  const condition = command.conditionInput ? modifierLabelMap[command.conditionInput.toUpperCase()] ?? command.conditionInput : undefined
+  const normalized = command.outputValue.trim().toUpperCase()
+  const output = SPECIAL_LABEL_KEYS[normalized] ? getSpecialLabel(normalized, t) : command.outputValue
+  const behavior = commandBehaviorLabel(command, t)
+  return {
+    id: command.id,
+    label: layerLabel(command.triggerKind, t),
+    value: behavior ? `${behavior} ${output}` : output,
+    meta: condition ? `${t('keymap.commandCondition')}: ${condition}` : command.outputKind === 'raw' ? t('keymap.commandRawSyntax') : undefined,
+    summaryPrefix: condition,
+  }
+}
 
 const specialEntries = (values: string[], t: TFunction) =>
   values.map((value, index) => ({
@@ -190,34 +182,18 @@ const layerEntries = (
   specials: string[],
   shifts: StickModeShiftAssignment[],
   modifierLabelMap: Record<string, string>,
+  buttonCommand: string,
   t: TFunction
 ) => {
-  switch (layer) {
-    case 'tap': {
-      const tapRow = rows.find(row => row.slot === 'tap' && row.binding)
-      if (tapRow) {
-        return actionEntriesForRows([tapRow], modifierLabelMap, t)
-      }
-      const fallbackEntries = [
-        ...specialEntries(specials, t).map(entry => ({ ...entry, label: slotLabel('tap', t) })),
-        ...stickShiftEntries(shifts, t).map(entry => ({ ...entry, label: slotLabel('tap', t) })),
-      ]
-      return dedupeEntries(fallbackEntries)
-    }
-    case 'hold':
-    case 'double':
-      return actionEntriesForRows(rows.filter(row => row.slot === layer), modifierLabelMap, t)
-    case 'chord':
-    case 'simultaneous':
-    case 'diagonal':
-      return actionEntriesForRows(rows.filter(row => row.slot === layer), modifierLabelMap, t)
-    case 'special':
-      return dedupeEntries(specialEntries(specials, t))
-    case 'stickShift':
-      return stickShiftEntries(shifts, t)
-    default:
-      return []
+  if (layer === 'special') {
+    return dedupeEntries(specialEntries(specials, t))
   }
+  if (layer === 'stickShift') {
+    return stickShiftEntries(shifts, t)
+  }
+  return parseRowsToCommands(rows, buttonCommand)
+    .filter(command => command.triggerKind === layer)
+    .map(command => commandEntry(command, modifierLabelMap, t))
 }
 
 const touchpadGridLayout = (configText: string) => {
@@ -347,7 +323,7 @@ function ControllerBindingDeviceCard({
   ignoredDevices,
 }: ControllerBindingDeviceCardProps) {
   const { t } = useTranslation()
-  const [activeLayer, setActiveLayer] = useState<BindingLayer>('tap')
+  const [activeLayer, setActiveLayer] = useState<BindingLayer>('regular')
   const [selectedCommand, setSelectedCommand] = useState<string | null>(null)
   const bindingCardRefs = useRef<Record<string, HTMLButtonElement | null>>({})
 
@@ -412,6 +388,7 @@ function ControllerBindingDeviceCard({
         specialAssignmentsByButton[command] ?? [],
         stickModeShiftAssignments[command] ?? [],
         modifierLabelMap,
+        button.command,
         t
       )
     })
@@ -495,11 +472,7 @@ function ControllerBindingDeviceCard({
           <div className={styles.visualPanelHeader}>
             <div className={styles.panelTitle}>{t('app.tabs.bindingPreview')}</div>
             <span className={styles.visualLayerTag}>
-              {activeLayer === 'special'
-                ? t('keymap.specialBinds')
-                : activeLayer === 'stickShift'
-                  ? t('keymap.stickModeShifts')
-                  : slotLabel(activeLayer, t)}
+              {layerLabel(activeLayer, t)}
             </span>
           </div>
           <ControllerStatusSvg
@@ -515,12 +488,7 @@ function ControllerBindingDeviceCard({
             <div className={styles.panelTitle}>{t('controllerStatus.boundButtons')}</div>
             <div className={styles.layerTabs}>
               {BINDING_LAYER_ORDER.map(layer => {
-                const label =
-                  layer === 'special'
-                    ? t('keymap.specialBinds')
-                    : layer === 'stickShift'
-                      ? t('keymap.stickModeShifts')
-                      : slotLabel(layer, t)
+                const label = layerLabel(layer, t)
                 return (
                   <button
                     key={layer}

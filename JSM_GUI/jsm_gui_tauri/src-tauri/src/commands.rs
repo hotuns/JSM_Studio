@@ -6,6 +6,7 @@ use crate::{
   runtime,
   services::{
     app_state::AppState,
+    input_debug,
     jsm_process,
     telemetry,
   },
@@ -315,6 +316,21 @@ pub fn get_latest_telemetry_sample(state: State<'_, AppState>) -> CommandResult<
 pub fn open_external(url: String) -> CommandResult<()> {
   open::that(url).map_err(|error| format!("Failed to open external link: {error}"))?;
   Ok(())
+}
+
+#[tauri::command]
+pub fn start_input_debug_hook(app: AppHandle) -> CommandResult<input_debug::InputDebugHookStatus> {
+  input_debug::start(app)
+}
+
+#[tauri::command]
+pub fn stop_input_debug_hook() -> CommandResult<input_debug::InputDebugHookStatus> {
+  input_debug::stop()
+}
+
+#[tauri::command]
+pub fn get_input_debug_hook_status() -> CommandResult<input_debug::InputDebugHookStatus> {
+  input_debug::status()
 }
 
 fn named_profile(path: String, content: String) -> NamedProfile {

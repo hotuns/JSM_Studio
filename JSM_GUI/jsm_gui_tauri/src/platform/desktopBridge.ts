@@ -38,6 +38,30 @@ export type CalibrationCommandResult = {
   output: string
 }
 
+export type InputDebugHookStatus = {
+  supported: boolean
+  running: boolean
+  platform: string
+  message?: string
+}
+
+export type InputDebugEvent = {
+  id: number
+  timestamp: number
+  source: 'keyboard' | 'mouse' | 'wheel'
+  action: 'down' | 'up' | 'wheel'
+  keyCode?: number
+  scanCode?: number
+  keyLabel?: string
+  mouseButton?: 'left' | 'right' | 'middle' | 'x1' | 'x2' | 'x'
+  wheelDelta?: number
+  position?: { x: number; y: number }
+  injected: boolean
+  lowerIntegrityInjected?: boolean
+  captureSource: 'globalHook' | 'appWindow'
+  summary: string
+}
+
 type Unsubscribe = () => void
 
 export interface DesktopBridge {
@@ -71,6 +95,10 @@ export interface DesktopBridge {
   downloadUpdate: () => Promise<void>
   installUpdate: () => Promise<void>
   onTelemetrySample: (callback: (payload: unknown) => void) => Unsubscribe
+  startInputDebugHook: () => Promise<InputDebugHookStatus>
+  stopInputDebugHook: () => Promise<InputDebugHookStatus>
+  getInputDebugHookStatus: () => Promise<InputDebugHookStatus>
+  onInputDebugEvent: (callback: (payload: InputDebugEvent) => void) => Unsubscribe
 }
 
 type TauriEventPayload<T> = { payload: T }
@@ -88,6 +116,13 @@ const invokeTauri = async <T>(command: string, args?: Record<string, unknown>) =
 
 const getLatestTauriTelemetrySample = () =>
   invokeTauri<unknown | null>('get_latest_telemetry_sample').catch(() => null)
+
+const unsupportedInputDebugStatus = (): InputDebugHookStatus => ({
+  supported: false,
+  running: false,
+  platform: typeof navigator === 'undefined' ? 'unknown' : navigator.platform,
+  message: 'Global input debug hook is only supported in the Tauri desktop app on Windows.',
+})
 
 const listenTauri = <T>(eventName: string, callback: (payload: T) => void): Unsubscribe => {
   let disposed = false
@@ -314,5 +349,29 @@ export const desktopBridge: DesktopBridge = {
       }
     }
     return getTelemetryAPI()?.onSample?.(callback) ?? noop
+  },
+  async startInputDebugHook() {
+    if (isTauriWindow()) {
+      return invokeTauri<InputDebugHookStatus>('start_input_debug_hook')
+    }
+    return unsupportedInputDebugStatus()
+  },
+  async stopInputDebugHook() {
+    if (isTauriWindow()) {
+      return invokeTauri<InputDebugHookStatus>('stop_input_debug_hook')
+    }
+    return unsupportedInputDebugStatus()
+  },
+  async getInputDebugHookStatus() {
+    if (isTauriWindow()) {
+      return invokeTauri<InputDebugHookStatus>('get_input_debug_hook_status')
+    }
+    return unsupportedInputDebugStatus()
+  },
+  onInputDebugEvent(callback) {
+    if (isTauriWindow()) {
+      return listenTauri<InputDebugEvent>('input-debug-event', callback)
+    }
+    return noop
   },
 }
