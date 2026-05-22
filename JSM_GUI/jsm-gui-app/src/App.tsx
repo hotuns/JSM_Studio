@@ -23,6 +23,7 @@ import { useCalibration } from './hooks/useCalibration'
 import { ToastHost } from './components/ToastHost'
 import { UpdateBanner } from './components/UpdateBanner'
 import { RwcGuideModal } from './components/RwcGuideModal'
+import { desktopBridge } from './platform/desktopBridge'
 import { updateKeymapEntry } from './utils/keymap'
 import { showToast } from './utils/toast'
 import { LanguageSelect } from './components/LanguageSelect'
@@ -33,6 +34,7 @@ type GyroSubTab = 'behavior' | 'sensitivity' | 'noise'
 type KeybindsSubTab = 'global' | 'face' | 'dpad' | 'bumpers' | 'triggers' | 'center' | 'paddles' | 'extra'
 type TouchpadSubTab = 'mode' | 'bind'
 type SticksSubTab = 'bindings' | 'modes'
+type ControllerStatusSubTab = 'status' | 'bindings'
 
 const asNumber = (value: unknown) => (typeof value === 'number' ? value : undefined)
 const formatNumber = (value: number | undefined, digits = 2) =>
@@ -49,6 +51,12 @@ const PrimaryNav = ({ primaryTab, setPrimaryTab, includeHelp = false }: PrimaryN
 
   return (
     <div className={sideNavStyles.navGroup}>
+      <button
+        className={`${sideNavStyles.navItem} ${primaryTab === 'controllerStatus' ? sideNavStyles.active : ''}`}
+        onClick={() => setPrimaryTab('controllerStatus')}
+      >
+        {t('app.nav.controllerStatus')}
+      </button>
       <button
         className={`${sideNavStyles.navItem} ${primaryTab === 'gyro' ? sideNavStyles.active : ''}`}
         onClick={() => setPrimaryTab('gyro')}
@@ -72,12 +80,6 @@ const PrimaryNav = ({ primaryTab, setPrimaryTab, includeHelp = false }: PrimaryN
         onClick={() => setPrimaryTab('sticks')}
       >
         {t('app.nav.sticks')}
-      </button>
-      <button
-        className={`${sideNavStyles.navItem} ${primaryTab === 'controllerStatus' ? sideNavStyles.active : ''}`}
-        onClick={() => setPrimaryTab('controllerStatus')}
-      >
-        {t('app.nav.controllerStatus')}
       </button>
       {includeHelp && (
         <button
@@ -113,6 +115,7 @@ type TopBarContentProps = {
   primaryTab: PrimaryTab
   backendChoice: 'SDL' | 'legacy'
   onBackendChange: (choice: 'SDL' | 'legacy') => void
+  renderControllerStatusNav: () => JSX.Element
   renderGyroNav: () => JSX.Element
   renderKeybindsNav: () => JSX.Element
   renderTouchpadNav: () => JSX.Element
@@ -123,6 +126,7 @@ const TopBarContent = ({
   primaryTab,
   backendChoice,
   onBackendChange,
+  renderControllerStatusNav,
   renderGyroNav,
   renderKeybindsNav,
   renderTouchpadNav,
@@ -133,6 +137,7 @@ const TopBarContent = ({
   return (
     <>
       <div className={topBarStyles.topBarLeft}>
+        {primaryTab === 'controllerStatus' && renderControllerStatusNav()}
         {primaryTab === 'gyro' && renderGyroNav()}
         {primaryTab === 'keybinds' && renderKeybindsNav()}
         {primaryTab === 'touchpad' && renderTouchpadNav()}
@@ -164,11 +169,12 @@ function App() {
   const [isProfileModalOpen, setProfileModalOpen] = useState(false)
   const [isRwcGuideModalOpen, setIsRwcGuideModalOpen] = useState(false)
   const [calibrationTurns, setCalibrationTurns] = useState('1')
-  const [primaryTab, setPrimaryTab] = useState<PrimaryTab>('gyro')
+  const [primaryTab, setPrimaryTab] = useState<PrimaryTab>('controllerStatus')
   const [gyroSubTab, setGyroSubTab] = useState<GyroSubTab>('behavior')
   const [keybindsSubTab, setKeybindsSubTab] = useState<KeybindsSubTab>('global')
   const [touchpadSubTab, setTouchpadSubTab] = useState<TouchpadSubTab>('mode')
   const [sticksSubTab, setSticksSubTab] = useState<SticksSubTab>('bindings')
+  const [controllerStatusSubTab, setControllerStatusSubTab] = useState<ControllerStatusSubTab>('status')
   const {
     configText,
     setConfigText,
@@ -317,7 +323,7 @@ function App() {
     if (isCalibrating || recalibrating) return
     setRecalibrating(true)
     try {
-      const result = await window.electronAPI?.recalibrateGyro?.()
+      const result = await desktopBridge.recalibrateGyro()
       if (result?.success) {
         setStatusMessage(t('messages.recalibrationStarted'))
       } else {
@@ -362,7 +368,7 @@ function App() {
   const [backendChoice, setBackendChoice] = useState<'SDL' | 'legacy'>('SDL')
 
   useEffect(() => {
-    window.electronAPI?.getBackendChoice?.().then(choice => {
+    desktopBridge.getBackendChoice().then(choice => {
       if (choice === 'SDL' || choice === 'legacy') {
         setBackendChoice(choice)
       }
@@ -415,7 +421,7 @@ function App() {
 
   const handleBackendChange = (choice: 'SDL' | 'legacy') => {
     setBackendChoice(choice)
-    window.electronAPI?.setBackendChoice?.(choice)
+    desktopBridge.setBackendChoice(choice)
       .then(() => refreshActiveProfile())
       .catch(() => {})
   }
@@ -478,6 +484,23 @@ function App() {
       </button>
       <button className={`pill-tab ${sticksSubTab === 'bindings' ? 'active' : ''}`} onClick={() => setSticksSubTab('bindings')}>
         {t('app.tabs.bindings')}
+      </button>
+    </div>
+  )
+
+  const renderControllerStatusNav = () => (
+    <div className="subnav">
+      <button
+        className={`pill-tab ${controllerStatusSubTab === 'status' ? 'active' : ''}`}
+        onClick={() => setControllerStatusSubTab('status')}
+      >
+        {t('app.tabs.status')}
+      </button>
+      <button
+        className={`pill-tab ${controllerStatusSubTab === 'bindings' ? 'active' : ''}`}
+        onClick={() => setControllerStatusSubTab('bindings')}
+      >
+        {t('app.tabs.bindingPreview')}
       </button>
     </div>
   )
@@ -782,8 +805,10 @@ function App() {
       return (
         <ControllerStatusPage
           backendChoice={backendChoice}
+          configText={configText}
           devices={sample?.devices}
           ignoredDevices={ignoredGyroDevices}
+          view={controllerStatusSubTab}
         />
       )
     }
@@ -826,6 +851,7 @@ function App() {
             primaryTab={primaryTab}
             backendChoice={backendChoice}
             onBackendChange={handleBackendChange}
+            renderControllerStatusNav={renderControllerStatusNav}
             renderGyroNav={renderGyroNav}
             renderKeybindsNav={renderKeybindsNav}
             renderTouchpadNav={renderTouchpadNav}
@@ -839,6 +865,7 @@ function App() {
             primaryTab={primaryTab}
             backendChoice={backendChoice}
             onBackendChange={handleBackendChange}
+            renderControllerStatusNav={renderControllerStatusNav}
             renderGyroNav={renderGyroNav}
             renderKeybindsNav={renderKeybindsNav}
             renderTouchpadNav={renderTouchpadNav}

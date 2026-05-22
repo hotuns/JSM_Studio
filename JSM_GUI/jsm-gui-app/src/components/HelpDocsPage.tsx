@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { Card } from './Card'
 import styles from './HelpDocsPage.module.css'
 import docsMarkdown from '../assets/docs/JSM-docs.md?raw'
+import { desktopBridge } from '../platform/desktopBridge'
 
 function slugifyBase(value: string) {
   const slug = value
@@ -351,7 +352,7 @@ export function HelpDocsPage() {
               href={href}
               onClick={(event) => {
                 event.preventDefault()
-                window.electronAPI?.openExternal?.(href)
+                void desktopBridge.openExternal(href)
               }}
             >
               {children}

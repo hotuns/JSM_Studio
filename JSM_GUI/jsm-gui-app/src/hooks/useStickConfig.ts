@@ -1,5 +1,10 @@
 import { useCallback, useMemo } from 'react'
-import { getKeymapValue, removeKeymapEntry, updateKeymapEntry } from '../utils/keymap'
+import {
+  getKeymapValue,
+  getStickModeShiftAssignmentMap,
+  removeKeymapEntry,
+  updateKeymapEntry,
+} from '../utils/keymap'
 import { DEFAULT_STICK_DEADZONE_INNER, DEFAULT_STICK_DEADZONE_OUTER } from '../constants/defaults'
 import { formatVidPid } from '../utils/controllers'
 import { keyName } from '../constants/configKeys'
@@ -279,22 +284,7 @@ export function useStickConfig({ configText, setConfigText }: StickArgs) {
       },
     }
   }, [configText])
-  const stickModeShiftAssignments = useMemo(() => {
-    const result: Record<string, { target: 'LEFT' | 'RIGHT'; mode: string }[]> = {}
-    const lines = configText.split(/\r?\n/)
-    lines.forEach(line => {
-      const match = line.match(/^\s*([^,]+)\s*,\s*((LEFT|RIGHT)_STICK_MODE)\s*=\s*([^\s#]+)/i)
-      if (!match) return
-      const button = match[1].trim().toUpperCase()
-      const target = match[3].toUpperCase() === 'LEFT' ? 'LEFT' : 'RIGHT'
-      const mode = match[4].trim().toUpperCase()
-      if (!button || !mode) return
-      const existing = result[button] ?? []
-      const filtered = existing.filter(entry => entry.target !== target)
-      result[button] = [...filtered, { target, mode }]
-    })
-    return result
-  }, [configText])
+  const stickModeShiftAssignments = useMemo(() => getStickModeShiftAssignmentMap(configText), [configText])
   const stickAimSettings = useMemo(() => {
     const rawSens = getKeymapValue(configText, keyName.STICK_SENS)
     const tokens = rawSens ? rawSens.trim().split(/\s+/).filter(Boolean) : []

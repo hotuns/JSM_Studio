@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { desktopBridge } from '../platform/desktopBridge'
 import styles from './Misc.module.css'
 
 type UpdateState =
@@ -15,14 +16,14 @@ export function UpdateBanner() {
   const [progress, setProgress] = useState(0)
 
   useEffect(() => {
-    const removeAvailable = window.electronAPI?.onUpdateAvailable?.((version) => {
+    const removeAvailable = desktopBridge.onUpdateAvailable((version) => {
       setUpdate({ phase: 'available', version })
       setDismissed(false)
     })
-    const removeProgress = window.electronAPI?.onUpdateDownloadProgress?.((percent) => {
+    const removeProgress = desktopBridge.onUpdateDownloadProgress((percent) => {
       setProgress(percent)
     })
-    const removeDownloaded = window.electronAPI?.onUpdateDownloaded?.(() => {
+    const removeDownloaded = desktopBridge.onUpdateDownloaded(() => {
       setUpdate({ phase: 'ready' })
     })
     return () => {
@@ -45,7 +46,7 @@ export function UpdateBanner() {
               className="secondary-btn"
               onClick={() => {
                 setUpdate({ phase: 'downloading' })
-                window.electronAPI?.downloadUpdate?.()
+                void desktopBridge.downloadUpdate()
               }}
             >
               {t('update.downloadNow')}
@@ -60,7 +61,7 @@ export function UpdateBanner() {
       {update.phase === 'ready' && (
         <>
           <span>{t('update.ready')}</span>
-          <button type="button" className="secondary-btn" onClick={() => window.electronAPI?.installUpdate?.()}>
+          <button type="button" className="secondary-btn" onClick={() => void desktopBridge.installUpdate()}>
             {t('update.restartNow')}
           </button>
         </>

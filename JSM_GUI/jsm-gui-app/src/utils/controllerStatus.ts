@@ -13,7 +13,10 @@ import {
 } from '../keymap/schema'
 import type { TelemetryDevice } from '../hooks/useTelemetry'
 
+export type ControllerVisualFamily = 'playstation' | 'xbox' | 'nintendo' | 'generic'
+
 const CONTROLLER_TYPES = {
+  XBOXONE: 6,
   JOYCON_LEFT: 1,
   JOYCON_RIGHT: 2,
   PRO_CONTROLLER: 3,
@@ -110,10 +113,99 @@ const addIfPressed = (commands: Set<string>, buttons: number, command: string, b
 export const controllerButtonLabel = (button: ButtonDefinition) =>
   button.playstation === button.xbox ? button.playstation : `${button.playstation} / ${button.xbox}`
 
-export const getPressedControllerButtons = (device?: TelemetryDevice) => {
+export const controllerVisualFamily = (type?: number): ControllerVisualFamily => {
+  switch (type) {
+    case CONTROLLER_TYPES.DS4:
+    case CONTROLLER_TYPES.DS:
+      return 'playstation'
+    case CONTROLLER_TYPES.JOYCON_LEFT:
+    case CONTROLLER_TYPES.JOYCON_RIGHT:
+    case CONTROLLER_TYPES.PRO_CONTROLLER:
+    case CONTROLLER_TYPES.EIGHTBITDO_PRO_2:
+    case CONTROLLER_TYPES.EIGHTBITDO_PRO_2_BT:
+    case CONTROLLER_TYPES.EIGHTBITDO_PRO_3:
+    case CONTROLLER_TYPES.EIGHTBITDO_ULTIMATE2_WIRELESS:
+    case CONTROLLER_TYPES.SWITCH2_PRO_CONTROLLER:
+      return 'nintendo'
+    case CONTROLLER_TYPES.XBOXONE:
+    case CONTROLLER_TYPES.XBOXONE_ELITE:
+    case CONTROLLER_TYPES.XBOX_SERIES:
+    case CONTROLLER_TYPES.G7_PRO_8K:
+    case CONTROLLER_TYPES.HORI_STEAM:
+    case CONTROLLER_TYPES.FLYDIGI_APEX5:
+    case CONTROLLER_TYPES.FLYDIGI_VADER3_PRO:
+    case CONTROLLER_TYPES.FLYDIGI_VADER4_PRO:
+    case CONTROLLER_TYPES.FLYDIGI_VADER5_PRO:
+      return 'xbox'
+    default:
+      return 'generic'
+  }
+}
+
+const BUTTON_GLYPHS: Record<ControllerVisualFamily, Partial<Record<string, string>>> = {
+  playstation: {
+    N: '△',
+    E: '○',
+    S: '×',
+    W: '□',
+    HOME: 'PS',
+    '+': '+',
+    '-': '-',
+    CAPTURE: 'TP',
+    MIC: 'MIC',
+    L: 'L1',
+    R: 'R1',
+  },
+  xbox: {
+    N: 'Y',
+    E: 'B',
+    S: 'A',
+    W: 'X',
+    HOME: 'G',
+    '+': 'M',
+    '-': 'V',
+    CAPTURE: 'SH',
+    MIC: 'MIC',
+    L: 'LB',
+    R: 'RB',
+  },
+  nintendo: {
+    N: 'X',
+    E: 'A',
+    S: 'B',
+    W: 'Y',
+    HOME: '⌂',
+    '+': '+',
+    '-': '-',
+    CAPTURE: 'CAP',
+    MIC: 'MIC',
+    L: 'L',
+    R: 'R',
+  },
+  generic: {
+    N: 'N',
+    E: 'E',
+    S: 'S',
+    W: 'W',
+    HOME: 'H',
+    '+': '+',
+    '-': '-',
+    CAPTURE: 'CAP',
+    MIC: 'MIC',
+    L: 'L',
+    R: 'R',
+  },
+}
+
+export const controllerButtonGlyph = (type: number | undefined, command: string) => {
+  const family = controllerVisualFamily(type)
+  return BUTTON_GLYPHS[family][command] ?? command
+}
+
+export const getPressedControllerCommandSet = (device?: TelemetryDevice) => {
   const buttons = device?.status?.buttons
   if (typeof buttons !== 'number' || !Number.isFinite(buttons) || buttons <= 0) {
-    return []
+    return new Set<string>()
   }
 
   const commands = new Set<string>()
@@ -252,5 +344,10 @@ export const getPressedControllerButtons = (device?: TelemetryDevice) => {
     addIfPressed(commands, buttons, 'LSR', RAW_BUTTONS.SR)
   }
 
+  return commands
+}
+
+export const getPressedControllerButtons = (device?: TelemetryDevice) => {
+  const commands = getPressedControllerCommandSet(device)
   return BUTTON_ORDER.filter(button => commands.has(button.command))
 }

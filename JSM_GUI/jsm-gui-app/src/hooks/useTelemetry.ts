@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { desktopBridge, type CalibrationStatus } from '../platform/desktopBridge'
 
 export type TelemetryDeviceStatus = {
   buttons: number
@@ -48,10 +49,10 @@ export function useTelemetry() {
   const [countdown, setCountdown] = useState<number | null>(null)
 
   useEffect(() => {
-    const dispose = window.telemetry?.onSample?.((payload) => {
+    const dispose = desktopBridge.onTelemetrySample((payload) => {
       setSample(payload as TelemetrySample)
     })
-    const statusDispose = window.electronAPI?.onCalibrationStatus?.((state: { calibrating: boolean; seconds?: number }) => {
+    const statusDispose = desktopBridge.onCalibrationStatus((state: CalibrationStatus) => {
       setIsCalibrating(state.calibrating)
       if (state.calibrating && state.seconds)
         setCountdown(state.seconds)

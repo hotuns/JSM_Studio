@@ -11,6 +11,10 @@
   gap: 1rem;
 }
 
+.deviceCard {
+  container-type: inline-size;
+}
+
 .emptyState {
   border: 1px dashed var(--border-strong);
   border-radius: 14px;
@@ -80,7 +84,43 @@
   color: var(--toast-warn-text);
 }
 
-.sectionGrid {
+.statusLayout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.95fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.bindingPreviewLayout {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.visualPanel {
+  min-height: 100%;
+}
+
+.visualPanelHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.visualLayerTag {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  border: 1px solid var(--border-strong);
+  background: var(--bg-input);
+  color: var(--text-strong);
+  padding: 0.3rem 0.7rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.detailPanels {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.9rem;
@@ -96,7 +136,10 @@
   gap: 0.8rem;
 }
 
-.buttonsPanel {
+.bindingPanel,
+.selectedPanel,
+.buttonsPanel,
+.boundButtonsPanel {
   grid-column: 1 / -1;
 }
 
@@ -104,6 +147,262 @@
   font-size: 0.9rem;
   font-weight: 700;
   color: var(--text-strong);
+}
+
+.bindingPanelHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.layerTabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.layerTab {
+  appearance: none;
+  border: 1px solid var(--border-1);
+  background: var(--bg-input);
+  color: var(--text-mid);
+  border-radius: 999px;
+  padding: 0.35rem 0.8rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 120ms ease, color 120ms ease, background 120ms ease;
+}
+
+.layerTab:hover {
+  border-color: var(--border-strong);
+  color: var(--text-strong);
+}
+
+.layerTabActive {
+  border-color: var(--accent);
+  background: rgba(76, 125, 255, 0.12);
+  color: var(--accent);
+}
+
+.bindingCategoryGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.8rem;
+  max-height: 31rem;
+  overflow: auto;
+  padding-right: 0.15rem;
+}
+
+.bindingCategory {
+  border: 1px solid var(--border-1);
+  border-radius: 12px;
+  background: var(--bg-input);
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.bindingCategoryTitle {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+.bindingItems {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.bindingItem {
+  appearance: none;
+  border: 1px solid var(--border-1);
+  border-radius: 10px;
+  background: var(--bg-1);
+  text-align: left;
+  padding: 0.55rem 0.65rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  cursor: pointer;
+  transition: border-color 120ms ease, background 120ms ease, transform 120ms ease;
+}
+
+.bindingItem:hover {
+  border-color: var(--border-strong);
+  transform: translateY(-1px);
+}
+
+.bindingItemSelected {
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+.bindingItemBound {
+  background: rgba(76, 125, 255, 0.08);
+}
+
+.bindingItemHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.bindingItemTitle {
+  display: flex;
+  flex-direction: column;
+  gap: 0.18rem;
+  min-width: 0;
+}
+
+.bindingItemLabel {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-strong);
+}
+
+.bindingItemCategory {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+}
+
+.bindingItemCode {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.76rem;
+  color: var(--text-dim);
+}
+
+.bindingItemValue {
+  font-size: 0.8rem;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.bindingItemValueBound {
+  color: var(--text-strong);
+}
+
+.bindingItemValueEmpty {
+  color: var(--text-dim);
+}
+
+.boundButtonGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 0.75rem;
+}
+
+.boundButtonCard {
+  appearance: none;
+  border: 1px solid var(--border-1);
+  border-radius: 12px;
+  background: rgba(76, 125, 255, 0.08);
+  text-align: left;
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  cursor: pointer;
+  transition: border-color 120ms ease, background 120ms ease, transform 120ms ease;
+}
+
+.boundButtonCard:hover {
+  border-color: var(--border-strong);
+  transform: translateY(-1px);
+}
+
+.selectedHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.selectedTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+}
+
+.selectedButtonName {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+.selectedButtonCode {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  border: 1px solid var(--border-strong);
+  background: var(--bg-input);
+  color: var(--text-dim);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.74rem;
+  padding: 0.15rem 0.55rem;
+}
+
+.selectedDescription {
+  margin: 0;
+  font-size: 0.84rem;
+  color: var(--text-dim);
+}
+
+.detailSection {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.detailSectionTitle {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.detailList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.detailRow {
+  border: 1px solid var(--border-1);
+  border-radius: 10px;
+  background: var(--bg-input);
+  padding: 0.55rem 0.7rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.22rem;
+}
+
+.detailRowHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
+.detailLabel {
+  font-size: 0.78rem;
+  color: var(--text-dim);
+}
+
+.detailMeta {
+  font-size: 0.76rem;
+  color: var(--text-dim);
+}
+
+.detailValue {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.86rem;
+  color: var(--text-strong);
+  overflow-wrap: anywhere;
 }
 
 .buttonList {
@@ -194,11 +493,23 @@
   background: linear-gradient(90deg, rgba(88, 184, 138, 0.55), rgba(88, 184, 138, 0.95));
 }
 
-@media (max-width: 860px) {
-  .sectionGrid {
+@container (max-width: 1120px) {
+  .statusLayout {
     grid-template-columns: 1fr;
   }
 
+  .detailPanels {
+    grid-template-columns: 1fr;
+  }
+}
+
+@container (max-width: 840px) {
+  .bindingCategoryGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 860px) {
   .deviceHeader {
     flex-direction: column;
   }

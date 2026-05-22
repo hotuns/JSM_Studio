@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { keyName } from '../constants/configKeys'
+import { desktopBridge } from '../platform/desktopBridge'
 import { upsertFlagCommand } from '../utils/config'
 import { getKeymapValue, removeKeymapEntry, updateKeymapEntry } from '../utils/keymap'
 
@@ -42,12 +43,12 @@ export function useCalibration({ configText, counterOsMouseSpeedEnabled, sensiti
     setCalibrationInGameSens(sensitivityInGame?.toString() ?? '')
     setCalibrationModalOpen(true)
     try {
-      const result = await window.electronAPI?.loadCalibrationPreset?.()
+      const result = await desktopBridge.loadCalibrationPreset()
       if (result?.activeProfile) {
         setCalibrationRestorePath(result.activeProfile)
       }
       setCalibrationLoadMessage(result?.success ? t('messages.calibrationPresetLoaded') : t('messages.calibrationPresetFailed'))
-      const preset = await window.electronAPI?.readCalibrationPreset?.()
+      const preset = await desktopBridge.readCalibrationPreset()
       if (preset?.success && preset.content !== undefined) {
         setCalibrationText(preset.content)
         const presetSens = getKeymapValue(preset.content, keyName.IN_GAME_SENS) ?? sensitivityInGame?.toString() ?? ''
@@ -68,7 +69,7 @@ export function useCalibration({ configText, counterOsMouseSpeedEnabled, sensiti
     setCalibrationOutput('')
     if (calibrationRestorePath) {
       try {
-        await window.electronAPI?.applyProfile?.(calibrationRestorePath, configText)
+        await desktopBridge.applyProfile(calibrationRestorePath, configText)
       } catch (err) {
         console.error('Failed to restore profile after calibration', err)
       } finally {
@@ -96,14 +97,14 @@ export function useCalibration({ configText, counterOsMouseSpeedEnabled, sensiti
     const nextText = buildCalibrationPreset()
     setCalibrationText(nextText)
     setCalibrationDirty(false)
-    await window.electronAPI?.saveCalibrationPreset?.(nextText)
+    await desktopBridge.saveCalibrationPreset(nextText)
   }, [buildCalibrationPreset])
 
   const handleRunCalibration = useCallback(
     async (turns: number) => {
       try {
         const command = turns !== 1 ? `CALCULATE_REAL_WORLD_CALIBRATION ${turns}` : 'CALCULATE_REAL_WORLD_CALIBRATION'
-        const result = await window.electronAPI?.runCalibrationCommand?.(command)
+        const result = await desktopBridge.runCalibrationCommand(command)
         const output = result && typeof result.output === 'string' ? result.output : ''
         if (output.length > 0) {
           setCalibrationOutput(output)

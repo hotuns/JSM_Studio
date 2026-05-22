@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import rwcGuideImage from '../assets/docs/mouse-sensitivity_guide.png'
+import { desktopBridge } from '../platform/desktopBridge'
 import { SectionActions } from './SectionActions'
 
 const MOUSE_SENSITIVITY_URL = 'https://www.mouse-sensitivity.com'
@@ -41,7 +42,7 @@ export function RwcGuideModal({ isOpen, inGameSens, onClose, onApplyRwc }: RwcGu
 
   function handleLinkClick(e: React.MouseEvent) {
     e.preventDefault()
-    window.electronAPI?.openExternal?.(MOUSE_SENSITIVITY_URL)
+    void desktopBridge.openExternal(MOUSE_SENSITIVITY_URL)
   }
 
   return (

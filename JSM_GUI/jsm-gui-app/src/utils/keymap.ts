@@ -1,3 +1,5 @@
+import { bindingSpecialKeys } from '../constants/configKeys'
+
 export interface SensitivityValues {
   inGameSens?: number
   realWorldCalibration?: number
@@ -196,6 +198,11 @@ export type ManualRowInfo = {
 }
 
 export type ManualRowState = Partial<Record<BindingSlot, ManualRowInfo[]>>
+
+export type StickModeShiftAssignment = {
+  target: 'LEFT' | 'RIGHT'
+  mode: string
+}
 
 const SLOT_LABELS: Record<BindingSlot, string> = {
   tap: 'Tap',
@@ -413,6 +420,42 @@ export function getButtonBindingRows(
     })
   })
   return rows
+}
+
+export function getButtonSpecialAssignments(text: string) {
+  const assignments: Record<string, string[]> = {}
+  bindingSpecialKeys.forEach(special => {
+    const assignment = getKeymapValue(text, special)
+    if (!assignment) return
+    assignment
+      .split(/\s+/)
+      .map(token => token.trim().toUpperCase())
+      .filter(Boolean)
+      .forEach(button => {
+        const existing = assignments[button] ?? []
+        if (!existing.includes(special)) {
+          assignments[button] = [...existing, special]
+        }
+      })
+  })
+  return assignments
+}
+
+export function getStickModeShiftAssignmentMap(text: string) {
+  const result: Record<string, StickModeShiftAssignment[]> = {}
+  const lines = text.split(/\r?\n/)
+  lines.forEach(line => {
+    const match = line.match(/^\s*([^,]+)\s*,\s*((LEFT|RIGHT)_STICK_MODE)\s*=\s*([^\s#]+)/i)
+    if (!match) return
+    const button = match[1].trim().toUpperCase()
+    const target = match[3].toUpperCase() === 'LEFT' ? 'LEFT' : 'RIGHT'
+    const mode = match[4].trim().toUpperCase()
+    if (!button || !mode) return
+    const existing = result[button] ?? []
+    const filtered = existing.filter(entry => entry.target !== target)
+    result[button] = [...filtered, { target, mode }]
+  })
+  return result
 }
 
 export function isTrackballBindingPresent(text: string) {

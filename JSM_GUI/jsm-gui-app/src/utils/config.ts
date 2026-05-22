@@ -1,11 +1,13 @@
 const REQUIRED_HEADER_LINES = [
   { pattern: /^RESET_MAPPINGS\b/i, value: 'RESET_MAPPINGS' },
+  { pattern: /^AUTOCONNECT\b/i, value: 'AUTOCONNECT = ON' },
   { pattern: /^TELEMETRY_ENABLED\b/i, value: 'TELEMETRY_ENABLED = ON' },
   { pattern: /^TELEMETRY_PORT\b/i, value: 'TELEMETRY_PORT = 8974' },
 ]
 
 const CALIBRATION_PATTERNS = [
   /^RESET_MAPPINGS\b/i,
+  /^AUTOCONNECT\b/i,
   /^TELEMETRY_ENABLED\b/i,
   /^TELEMETRY_PORT\b/i,
   /^RESTART_GYRO_CALIBRATION\b/i,

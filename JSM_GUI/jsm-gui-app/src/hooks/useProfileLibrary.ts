@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { desktopBridge } from '../platform/desktopBridge'
 import { ensureHeaderLines, sanitizeImportedConfig } from '../utils/config'
 import { parseConfigText, serializeConfig } from '../utils/configSerializer'
 import { showToast } from '../utils/toast'
@@ -39,9 +40,8 @@ export function useProfileLibrary({
   }, [setStatusMessage])
 
   const refreshActiveProfile = useCallback(async () => {
-    if (!window.electronAPI?.getActiveProfile) return
     try {
-      const result = await window.electronAPI.getActiveProfile()
+      const result = await desktopBridge.getActiveProfile()
       if (result) {
         resetPendingSensitivityChanges()
         setConfigText(result.content ?? '')
@@ -55,14 +55,9 @@ export function useProfileLibrary({
   }, [resetPendingSensitivityChanges, setAppliedConfig, setConfigText])
 
   const refreshLibraryProfiles = useCallback(async (): Promise<string[]> => {
-    if (!window.electronAPI?.listLibraryProfiles) {
-      setLibraryProfiles([])
-      setEditedLibraryNames({})
-      return []
-    }
     setIsLibraryLoading(true)
     try {
-      const entries = await window.electronAPI.listLibraryProfiles()
+      const entries = await desktopBridge.listLibraryProfiles()
       const sorted = entries ?? []
       setLibraryProfiles(sorted)
       setEditedLibraryNames(prev => {
@@ -104,7 +99,7 @@ export function useProfileLibrary({
       }
       try {
         const targetPath = options?.profilePathOverride ?? activeProfilePath
-        const result = await window.electronAPI?.applyProfile?.(targetPath, normalizedConfig)
+        const result = await desktopBridge.applyProfile(targetPath, normalizedConfig)
         if (result?.path) {
           setActiveProfilePath(result.path)
         }
@@ -138,9 +133,8 @@ export function useProfileLibrary({
 
   const handleLoadProfileFromLibrary = useCallback(
     async (name: string): Promise<string | null> => {
-      if (!window.electronAPI?.activateLibraryProfile) return null
       try {
-        const result = await window.electronAPI.activateLibraryProfile(name)
+        const result = await desktopBridge.activateLibraryProfile(name)
         if (result?.content !== undefined) {
           const profileContent = result.content ?? ''
           const profileName = result.name ?? name
@@ -187,9 +181,8 @@ export function useProfileLibrary({
   }, [])
 
   const handleCreateProfile = useCallback(async () => {
-    if (!window.electronAPI?.createLibraryProfile) return
     try {
-      const result = await window.electronAPI.createLibraryProfile(t('profiles.defaultProfileBaseName'))
+      const result = await desktopBridge.createLibraryProfile(t('profiles.defaultProfileBaseName'))
       if (result) {
         const profileContent = result.content ?? ''
         const profileName = result.name ?? null
@@ -230,7 +223,6 @@ export function useProfileLibrary({
 
   const handleRenameProfile = useCallback(
     async (originalName: string) => {
-      if (!window.electronAPI?.renameLibraryProfile) return
       const pendingName = (editedLibraryNames[originalName] ?? originalName).trim()
       if (!pendingName) {
         const message = t('messages.emptyProfileName')
@@ -240,7 +232,7 @@ export function useProfileLibrary({
         return
       }
       try {
-        const result = await window.electronAPI.renameLibraryProfile(originalName, pendingName)
+        const result = await desktopBridge.renameLibraryProfile(originalName, pendingName)
         if (result) {
           if (currentLibraryProfile === originalName) {
             setCurrentLibraryProfile(result.name ?? originalName)
@@ -283,9 +275,8 @@ export function useProfileLibrary({
 
   const handleDeleteLibraryProfile = useCallback(
     async (name: string) => {
-      if (!window.electronAPI?.deleteLibraryProfile) return
       try {
-        const response = (await window.electronAPI.deleteLibraryProfile(name)) ?? { success: true }
+        const response = await desktopBridge.deleteLibraryProfile(name)
         const entries = (await refreshLibraryProfiles()) ?? []
         setEditedLibraryNames(prev => {
           const next = { ...prev }
@@ -364,7 +355,7 @@ export function useProfileLibrary({
       const baseName = fileName.replace(/\.[^/.]+$/, '') || fileName || t('profiles.defaultProfileBaseName')
       try {
         const sanitized = sanitizeImportedConfig(fileContent)
-        const result = await window.electronAPI?.saveLibraryProfile?.(baseName, sanitized)
+        const result = await desktopBridge.saveLibraryProfile(baseName, sanitized)
         const savedName = result?.name ?? baseName
         resetPendingSensitivityChanges()
         await handleLoadProfileFromLibrary(savedName)
@@ -385,9 +376,8 @@ export function useProfileLibrary({
   )
 
   const handleCopyActiveProfile = useCallback(async () => {
-    if (!window.electronAPI?.copyActiveProfile) return null
     try {
-      const result = await window.electronAPI.copyActiveProfile()
+      const result = await desktopBridge.copyActiveProfile()
       if (result) {
         const profileName = result.name ?? t('profiles.defaultProfileBaseName')
         resetPendingSensitivityChanges()

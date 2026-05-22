@@ -27,44 +27,56 @@ export const RENDERER_DIST = path.join(APP_ROOT, 'dist')
 process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, 'public') : RENDERER_DIST
 const DATA_DIR = app.getPath('userData')
 const BACKEND_FILE = path.join(DATA_DIR, 'backend.json')
+const RUNTIME_DIR = path.join(DATA_DIR, 'jsm-runtime')
+const PROFILE_LIBRARY_DIR = path.join(RUNTIME_DIR, 'profiles-library')
+const CALIBRATION_DIR = path.join(RUNTIME_DIR, 'GyroConfigs')
+const AUTOLOAD_DIR = path.join(RUNTIME_DIR, 'AutoLoad')
+const STARTUP_FILE = path.join(RUNTIME_DIR, 'OnStartUp.txt')
+const CALIBRATION_COMMAND_FILE = path.join(RUNTIME_DIR, 'RecalibrateGyro.txt')
+const LOG_FILE = path.join(DATA_DIR, 'jsm-gui.log')
+const WINDOW_STATE_FILE = path.join(DATA_DIR, 'window-state.json')
+const BUNDLED_SHARED_DIR = app.isPackaged ? path.join(process.resourcesPath, 'bin') : path.join(APP_ROOT, 'bin')
+const DEFAULT_PROFILE_NAME = 'Profile 1'
+const PROFILE_LIBRARY_RELATIVE = 'profiles-library'
+const DEFAULT_PROFILE_RELATIVE = `${PROFILE_LIBRARY_RELATIVE}/${DEFAULT_PROFILE_NAME}.txt`
+const CALIBRATION_PROFILE_RELATIVE = path.posix.join('GyroConfigs', '_3Dcalibrate.txt')
+const PROFILE_TEMPLATE_LINES = ['RESET_MAPPINGS', 'AUTOCONNECT = ON', 'TELEMETRY_ENABLED = ON', 'TELEMETRY_PORT = 8974']
+const SUPPORT_FILE_NAMES = ['OnReset.txt', 'OnReconnect.txt'] as const
 
 let win: BrowserWindow | null
 let telemetrySocket: dgram.Socket | null = null
 let latestTelemetryPacket: Record<string, unknown> | null = null
+let latestTelemetryPacketReceivedAt = 0
 let jsmProcess: ChildProcess | null = null
 let calibrationTimer: NodeJS.Timeout | null = null
+let telemetryHealthTimer: NodeJS.Timeout | null = null
+let controllerReconnectTimer: NodeJS.Timeout | null = null
+let controllerReconnectInFlight = false
 let calibrationSecondsSetting = 5
 let pendingUpdateVersion: string | null = null
 let updateReadyToInstall = false
 
 type BackendChoice = 'SDL' | 'legacy'
 const TELEMETRY_PORT = 8974
+const TELEMETRY_STALE_MS = 1500
+const TELEMETRY_HEALTH_CHECK_MS = 500
+const CONTROLLER_RESCAN_INTERVAL_MS = 2500
 let backendChoice: BackendChoice = 'SDL'
 let BIN_DIR = app.isPackaged ? path.join(process.resourcesPath, 'bin', backendChoice) : path.join(APP_ROOT, 'bin', backendChoice)
-let STARTUP_FILE = path.join(BIN_DIR, 'OnStartUp.txt')
-const STARTUP_COMMAND = 'OnStartUp.txt'
+const CALIBRATION_COMMAND = 'RecalibrateGyro.txt'
 let JSM_EXECUTABLE = path.join(BIN_DIR, process.platform === 'win32' ? 'JoyShockMapper.exe' : 'JoyShockMapper')
 let CONSOLE_INJECTOR = path.join(BIN_DIR, process.platform === 'win32' ? 'jsm-console-injector.exe' : 'jsm-console-injector')
-const LOG_FILE = path.join(DATA_DIR, 'jsm-gui.log')
-const WINDOW_STATE_FILE = path.join(DATA_DIR, 'window-state.json')
-
-const PROFILE_LIBRARY_DIR = app.isPackaged
-  ? path.join(process.resourcesPath, 'bin', 'profiles-library')
-  : path.join(APP_ROOT, 'bin', 'profiles-library')
-const CALIBRATION_DIR = app.isPackaged
-  ? path.join(process.resourcesPath, 'bin', 'GyroConfigs')
-  : path.join(APP_ROOT, 'bin', 'GyroConfigs')
-const DEFAULT_PROFILE_NAME = 'Profile 1'
-const PROFILE_LIBRARY_RELATIVE = path.posix.join('..', 'profiles-library')
-const DEFAULT_PROFILE_RELATIVE = `${PROFILE_LIBRARY_RELATIVE}/${DEFAULT_PROFILE_NAME}.txt`
-const PROFILE_TEMPLATE_LINES = ['RESET_MAPPINGS', 'TELEMETRY_ENABLED = ON', 'TELEMETRY_PORT = 8974']
 const getStartupHeaderLines = () => [
   'TELEMETRY_ENABLED = ON',
   'TELEMETRY_PORT = 8974',
-  'RESTART_GYRO_CALIBRATION',
-  `SLEEP ${calibrationSecondsSetting}`,
-  'FINISH_GYRO_CALIBRATION',
 ]
+const getCalibrationCommandLines = () => ['RESTART_GYRO_CALIBRATION', `SLEEP ${calibrationSecondsSetting}`, 'FINISH_GYRO_CALIBRATION']
+
+function refreshBackendPaths() {
+  BIN_DIR = app.isPackaged ? path.join(process.resourcesPath, 'bin', backendChoice) : path.join(APP_ROOT, 'bin', backendChoice)
+  JSM_EXECUTABLE = path.join(BIN_DIR, process.platform === 'win32' ? 'JoyShockMapper.exe' : 'JoyShockMapper')
+  CONSOLE_INJECTOR = path.join(BIN_DIR, process.platform === 'win32' ? 'jsm-console-injector.exe' : 'jsm-console-injector')
+}
 
 async function writeLog(message: string) {
   const line = `[${new Date().toISOString()}] ${message}\n`
@@ -84,9 +96,71 @@ async function ensureFileExists(filePath: string, defaultContent = '') {
   }
 }
 
+async function copyFileIfMissing(sourcePath: string, targetPath: string) {
+  try {
+    await fs.access(targetPath)
+    return
+  } catch {
+    // Target missing, continue.
+  }
+
+  try {
+    await fs.mkdir(path.dirname(targetPath), { recursive: true })
+    await fs.copyFile(sourcePath, targetPath)
+  } catch {
+    // Source may not exist for every backend; ignore.
+  }
+}
+
+async function copyDirectoryFilesIfMissing(
+  sourceDir: string,
+  targetDir: string,
+  includeFile?: (fileName: string) => boolean,
+) {
+  const entries = await fs.readdir(sourceDir, { withFileTypes: true }).catch(() => [])
+  if (entries.length === 0) {
+    return
+  }
+  await fs.mkdir(targetDir, { recursive: true })
+  for (const entry of entries) {
+    if (!entry.isFile()) {
+      continue
+    }
+    if (includeFile && !includeFile(entry.name)) {
+      continue
+    }
+    await copyFileIfMissing(path.join(sourceDir, entry.name), path.join(targetDir, entry.name))
+  }
+}
+
+async function migrateBundledRuntimeData() {
+  await copyFileIfMissing(path.join(BIN_DIR, 'OnStartUp.txt'), STARTUP_FILE)
+  await copyFileIfMissing(path.join(BIN_DIR, 'RecalibrateGyro.txt'), CALIBRATION_COMMAND_FILE)
+  await copyDirectoryFilesIfMissing(
+    path.join(BUNDLED_SHARED_DIR, 'profiles-library'),
+    PROFILE_LIBRARY_DIR,
+    file => file.toLowerCase().endsWith('.txt'),
+  )
+  await copyDirectoryFilesIfMissing(path.join(BUNDLED_SHARED_DIR, 'GyroConfigs'), CALIBRATION_DIR)
+  await copyDirectoryFilesIfMissing(path.join(BUNDLED_SHARED_DIR, 'AutoLoad'), AUTOLOAD_DIR)
+}
+
+async function ensureRuntimeSupportFiles() {
+  for (const fileName of SUPPORT_FILE_NAMES) {
+    await copyFileIfMissing(path.join(BIN_DIR, fileName), path.join(RUNTIME_DIR, fileName))
+  }
+}
+
 async function ensureRequiredFiles() {
-  await fs.mkdir(BIN_DIR, { recursive: true })
+  if (!app.isPackaged) {
+    await fs.mkdir(BIN_DIR, { recursive: true })
+  }
+  await fs.mkdir(RUNTIME_DIR, { recursive: true })
+  await fs.mkdir(AUTOLOAD_DIR, { recursive: true })
+  await migrateBundledRuntimeData()
+  await ensureRuntimeSupportFiles()
   await ensureLibraryDir()
+  await ensureCalibrationCommandFile()
   await ensureActiveProfileExists()
 }
 
@@ -100,20 +174,14 @@ async function loadBackendChoice() {
   } catch {
     backendChoice = 'SDL'
   }
-  BIN_DIR = app.isPackaged ? path.join(process.resourcesPath, 'bin', backendChoice) : path.join(APP_ROOT, 'bin', backendChoice)
-  STARTUP_FILE = path.join(BIN_DIR, 'OnStartUp.txt')
-  JSM_EXECUTABLE = path.join(BIN_DIR, process.platform === 'win32' ? 'JoyShockMapper.exe' : 'JoyShockMapper')
-  CONSOLE_INJECTOR = path.join(BIN_DIR, process.platform === 'win32' ? 'jsm-console-injector.exe' : 'jsm-console-injector')
+  refreshBackendPaths()
 }
 
 async function saveBackendChoice(choice: BackendChoice) {
   backendChoice = choice
   await fs.mkdir(path.dirname(BACKEND_FILE), { recursive: true })
   await fs.writeFile(BACKEND_FILE, JSON.stringify(choice), 'utf8')
-  BIN_DIR = app.isPackaged ? path.join(process.resourcesPath, 'bin', backendChoice) : path.join(APP_ROOT, 'bin', backendChoice)
-  STARTUP_FILE = path.join(BIN_DIR, 'OnStartUp.txt')
-  JSM_EXECUTABLE = path.join(BIN_DIR, process.platform === 'win32' ? 'JoyShockMapper.exe' : 'JoyShockMapper')
-  CONSOLE_INJECTOR = path.join(BIN_DIR, process.platform === 'win32' ? 'jsm-console-injector.exe' : 'jsm-console-injector')
+  refreshBackendPaths()
 }
 
 async function ensureLibraryDir() {
@@ -128,7 +196,20 @@ const sanitizeProfileName = (rawName: string) => {
   return withoutTrailing.length > 0 ? withoutTrailing : 'Profile'
 }
 
-const relativeProfilePathFromName = (name: string) => `${PROFILE_LIBRARY_RELATIVE}/${name}.txt`
+const getTelemetryDevices = (packet: Record<string, unknown> | null) => {
+  const devices = packet?.devices
+  return Array.isArray(devices) ? devices : []
+}
+
+const telemetryPacketHasDevices = (packet: Record<string, unknown> | null) => getTelemetryDevices(packet).length > 0
+
+function broadcastTelemetryPacket(packet: Record<string, unknown>) {
+  if (win && !win.isDestroyed()) {
+    win.webContents.send('telemetry-sample', packet)
+  }
+}
+
+const relativeProfilePathFromName = (name: string) => path.posix.join(PROFILE_LIBRARY_RELATIVE, `${name}.txt`)
 const absoluteProfilePath = (relativePath: string) => {
   const normalized = relativePath.replace(/\\/g, '/')
   const stripped = normalized.replace(/^(\.\.\/)?profiles-library\//, '')
@@ -229,7 +310,18 @@ const libraryProfilePath = (name: string) => path.join(PROFILE_LIBRARY_DIR, `${n
 
 async function writeStartupFile(profileRelativePath: string) {
   const data = [...getStartupHeaderLines(), profileRelativePath].join('\n') + '\n'
+  await fs.mkdir(path.dirname(STARTUP_FILE), { recursive: true })
   await fs.writeFile(STARTUP_FILE, data, 'utf8')
+}
+
+async function writeCalibrationCommandFile() {
+  const data = `${getCalibrationCommandLines().join('\n')}\n`
+  await fs.mkdir(path.dirname(CALIBRATION_COMMAND_FILE), { recursive: true })
+  await fs.writeFile(CALIBRATION_COMMAND_FILE, data, 'utf8')
+}
+
+async function ensureCalibrationCommandFile() {
+  await ensureFileExists(CALIBRATION_COMMAND_FILE, `${getCalibrationCommandLines().join('\n')}\n`)
 }
 
 async function listLibraryProfiles() {
@@ -280,7 +372,7 @@ async function deleteLibraryProfile(name: string) {
 
 async function loadCalibrationSecondsFromStartup() {
   try {
-    const data = await fs.readFile(STARTUP_FILE, 'utf8')
+    const data = await fs.readFile(CALIBRATION_COMMAND_FILE, 'utf8')
     const match = data.match(/SLEEP\s+(\d+)/i)
     if (match) {
       const value = parseInt(match[1], 10)
@@ -299,17 +391,7 @@ async function writeCalibrationSecondsToStartup(seconds: number) {
   const safe = Math.max(0, Math.round(seconds))
   calibrationSecondsSetting = safe
   try {
-    let data = await fs.readFile(STARTUP_FILE, 'utf8')
-    if (/SLEEP\s+\d+/i.test(data)) {
-      data = data.replace(/SLEEP\s+\d+/i, `SLEEP ${safe}`)
-    } else if (/RESTART_GYRO_CALIBRATION/i.test(data)) {
-      data = data.replace(/RESTART_GYRO_CALIBRATION/i, match => `${match}\nSLEEP ${safe}`)
-    } else if (/FINISH_GYRO_CALIBRATION/i.test(data)) {
-      data = data.replace(/FINISH_GYRO_CALIBRATION/i, match => `SLEEP ${safe}\n${match}`)
-    } else {
-      data += `\nSLEEP ${safe}\nFINISH_GYRO_CALIBRATION`
-    }
-    await fs.writeFile(STARTUP_FILE, data, 'utf8')
+    await writeCalibrationCommandFile()
   } catch (err) {
     console.error('Failed to update calibration seconds', err)
     throw err
@@ -352,10 +434,13 @@ function startTelemetryListener() {
   })
   telemetrySocket.on('message', msg => {
     try {
-      latestTelemetryPacket = JSON.parse(msg.toString('utf8'))
-      if (win && !win.isDestroyed()) {
-        win.webContents.send('telemetry-sample', latestTelemetryPacket)
+      const parsedPacket = JSON.parse(msg.toString('utf8')) as Record<string, unknown>
+      latestTelemetryPacket = parsedPacket
+      latestTelemetryPacketReceivedAt = Date.now()
+      if (telemetryPacketHasDevices(latestTelemetryPacket)) {
+        stopControllerReconnectLoop()
       }
+      broadcastTelemetryPacket(parsedPacket)
     } catch (err) {
       console.warn('[telemetry] failed to parse payload', err)
     }
@@ -363,6 +448,7 @@ function startTelemetryListener() {
   telemetrySocket.bind(TELEMETRY_PORT, '127.0.0.1', () => {
     console.log(`[telemetry] listening on udp://127.0.0.1:${TELEMETRY_PORT}`)
   })
+  startTelemetryHealthMonitor()
 }
 
 function broadcastCalibrationStatus(calibrating: boolean, seconds?: number) {
@@ -398,6 +484,71 @@ function stopTelemetryListener() {
   if (telemetrySocket) {
     telemetrySocket.close()
     telemetrySocket = null
+  }
+  stopTelemetryHealthMonitor()
+  stopControllerReconnectLoop()
+}
+
+async function requestControllerReconnect() {
+  if (backendChoice !== 'SDL' || process.platform !== 'win32' || !jsmProcess || controllerReconnectInFlight) {
+    return
+  }
+  controllerReconnectInFlight = true
+  try {
+    await tryInjectConsoleCommand('RECONNECT_CONTROLLERS')
+  } finally {
+    controllerReconnectInFlight = false
+  }
+}
+
+function startControllerReconnectLoop() {
+  if (controllerReconnectTimer || backendChoice !== 'SDL' || process.platform !== 'win32' || !jsmProcess) {
+    return
+  }
+  controllerReconnectTimer = setInterval(() => {
+    if (telemetryPacketHasDevices(latestTelemetryPacket)) {
+      stopControllerReconnectLoop()
+      return
+    }
+    requestControllerReconnect().catch(err => {
+      console.error('Controller reconnect attempt failed', err)
+    })
+  }, CONTROLLER_RESCAN_INTERVAL_MS)
+}
+
+function stopControllerReconnectLoop() {
+  if (controllerReconnectTimer) {
+    clearInterval(controllerReconnectTimer)
+    controllerReconnectTimer = null
+  }
+}
+
+function startTelemetryHealthMonitor() {
+  if (telemetryHealthTimer) {
+    return
+  }
+  telemetryHealthTimer = setInterval(() => {
+    const hasDevices = telemetryPacketHasDevices(latestTelemetryPacket)
+    const hasFreshTelemetry =
+      latestTelemetryPacketReceivedAt > 0 && Date.now() - latestTelemetryPacketReceivedAt <= TELEMETRY_STALE_MS
+
+    if (hasDevices && !hasFreshTelemetry && latestTelemetryPacket) {
+      latestTelemetryPacket = { ...latestTelemetryPacket, devices: [] }
+      broadcastTelemetryPacket(latestTelemetryPacket)
+    }
+
+    if (!hasDevices || !hasFreshTelemetry) {
+      startControllerReconnectLoop()
+    } else {
+      stopControllerReconnectLoop()
+    }
+  }, TELEMETRY_HEALTH_CHECK_MS)
+}
+
+function stopTelemetryHealthMonitor() {
+  if (telemetryHealthTimer) {
+    clearInterval(telemetryHealthTimer)
+    telemetryHealthTimer = null
   }
 }
 
@@ -477,40 +628,37 @@ async function runConsoleCommandWithOutput(command: string) {
   })
 }
 
-function launchJoyShockMapper(calibrationSeconds = 5) {
+function launchJoyShockMapper() {
   if (jsmProcess) {
     return Promise.resolve()
   }
   return new Promise<void>((resolve, reject) => {
     try {
-      const proc = spawn(JSM_EXECUTABLE, [], {
+      const launchArgs = [RUNTIME_DIR]
+      const procWithRuntime = spawn(JSM_EXECUTABLE, launchArgs, {
         cwd: BIN_DIR,
         windowsHide: true,
         stdio: ['pipe', 'ignore', 'ignore'],
       })
-      jsmProcess = proc
-      proc.once('error', err => {
-        if (proc === jsmProcess) {
+      jsmProcess = procWithRuntime
+      procWithRuntime.once('error', err => {
+        if (procWithRuntime === jsmProcess) {
           jsmProcess = null
         }
         reject(err)
       })
-      proc.once('spawn', () => {
+      procWithRuntime.once('spawn', () => {
         resolve()
       })
-      proc.once('exit', () => {
-        if (proc === jsmProcess) {
+      procWithRuntime.once('exit', () => {
+        if (procWithRuntime === jsmProcess) {
           jsmProcess = null
         }
         if (win && !win.isDestroyed()) {
           win.webContents.send('jsm-exited', '')
         }
       })
-      if (calibrationSeconds > 0) {
-        startCalibrationCountdown(calibrationSeconds)
-      } else {
-        broadcastCalibrationStatus(false)
-      }
+      broadcastCalibrationStatus(false)
 
       if (win) {
         setTimeout(() => {
@@ -539,6 +687,9 @@ function terminateJoyShockMapper() {
       if (proc === jsmProcess) {
         jsmProcess = null
       }
+      latestTelemetryPacket = latestTelemetryPacket ? { ...latestTelemetryPacket, devices: [] } : { devices: [] }
+      latestTelemetryPacketReceivedAt = 0
+      broadcastTelemetryPacket(latestTelemetryPacket)
       if (calibrationTimer) {
         clearInterval(calibrationTimer)
         calibrationTimer = null
@@ -626,7 +777,7 @@ app.whenReady().then(async () => {
   startTelemetryListener()
   await createWindow()
   setTimeout(() => {
-    launchJoyShockMapper(calibrationSecondsSetting).catch(err => console.error('Auto-launch failed', err))
+    launchJoyShockMapper().catch(err => console.error('Auto-launch failed', err))
   }, 500)
 
   autoUpdater.autoDownload = false
@@ -658,14 +809,14 @@ app.on('will-quit', () => {
 const normalizeRelativeProfilePath = (input?: string | null) => {
   if (!input) return null
   const normalized = input.replace(/\\/g, '/')
-  const allowedPrefix = normalized.startsWith(PROFILE_LIBRARY_RELATIVE + '/') || normalized.startsWith('profiles-library/')
-  if (!allowedPrefix) {
+  const stripped = normalized.replace(/^(\.\.\/)?profiles-library\//, '')
+  if (stripped === normalized || stripped.length === 0) {
     return null
   }
-  if (normalized.includes('../') || normalized.includes('..\\')) {
+  if (stripped.includes('../') || stripped.includes('..\\') || stripped.startsWith('/')) {
     return null
   }
-  return normalized
+  return path.posix.join(PROFILE_LIBRARY_RELATIVE, stripped)
 }
 
 async function backupUserDataForUpdate() {
@@ -744,10 +895,13 @@ ipcMain.handle('set-backend-choice', async (_event, choice: BackendChoice) => {
   }
   await terminateJoyShockMapper()
   await saveBackendChoice(choice)
+  if (choice !== 'SDL') {
+    stopControllerReconnectLoop()
+  }
   await ensureRequiredFiles()
   await loadCalibrationSecondsFromStartup()
   setTimeout(() => {
-    launchJoyShockMapper(calibrationSecondsSetting).catch(err => console.error('Auto-launch failed after backend switch', err))
+    launchJoyShockMapper().catch(err => console.error('Auto-launch failed after backend switch', err))
   }, 300)
   return { success: true, backend: backendChoice }
 })
@@ -865,18 +1019,20 @@ ipcMain.handle('library-copy-active-profile', async () => {
 })
 
 ipcMain.handle('recalibrate-gyro', async () => {
-  const injected = await tryInjectConsoleCommand(STARTUP_COMMAND)
+  await writeCalibrationCommandFile()
+  const injected = await tryInjectConsoleCommand(CALIBRATION_COMMAND)
   if (injected) {
     startCalibrationCountdown(calibrationSecondsSetting)
     return { success: true }
   }
-  await writeLog('Failed to inject OnStartUp.txt for recalibration.')
+  await writeLog('Failed to inject calibration command file for recalibration.')
   return { success: false }
 })
 
 ipcMain.handle('launch-jsm', async (_event, calibrationSeconds = 5) => {
   calibrationSecondsSetting = calibrationSeconds
-  await launchJoyShockMapper(calibrationSecondsSetting)
+  await writeCalibrationCommandFile()
+  await launchJoyShockMapper()
 })
 
 ipcMain.handle('terminate-jsm', async () => {
@@ -904,7 +1060,7 @@ ipcMain.handle('load-calibration-preset', async () => {
   await ensureRequiredFiles()
   await fs.mkdir(CALIBRATION_DIR, { recursive: true })
   const active = (await getStartupProfilePath()) ?? DEFAULT_PROFILE_RELATIVE
-  const calibrationRelative = path.posix.join('..', 'GyroConfigs', '_3Dcalibrate.txt')
+  const calibrationRelative = CALIBRATION_PROFILE_RELATIVE
   const calibrationAbsolute = path.join(CALIBRATION_DIR, '_3Dcalibrate.txt')
   try {
     await fs.access(calibrationAbsolute)
@@ -919,7 +1075,7 @@ ipcMain.handle('load-calibration-preset', async () => {
 ipcMain.handle('read-calibration-preset', async () => {
   await ensureRequiredFiles()
   await fs.mkdir(CALIBRATION_DIR, { recursive: true })
-  const calibrationRelative = path.posix.join('..', 'GyroConfigs', '_3Dcalibrate.txt')
+  const calibrationRelative = CALIBRATION_PROFILE_RELATIVE
   const calibrationAbsolute = path.join(CALIBRATION_DIR, '_3Dcalibrate.txt')
   try {
     const content = await fs.readFile(calibrationAbsolute, 'utf8')
@@ -933,7 +1089,7 @@ ipcMain.handle('read-calibration-preset', async () => {
 ipcMain.handle('save-calibration-preset', async (_event, content: string) => {
   await ensureRequiredFiles()
   await fs.mkdir(CALIBRATION_DIR, { recursive: true })
-  const calibrationRelative = path.posix.join('..', 'GyroConfigs', '_3Dcalibrate.txt')
+  const calibrationRelative = CALIBRATION_PROFILE_RELATIVE
   const calibrationAbsolute = path.join(CALIBRATION_DIR, '_3Dcalibrate.txt')
   try {
     await fs.writeFile(calibrationAbsolute, content ?? '', 'utf8')
