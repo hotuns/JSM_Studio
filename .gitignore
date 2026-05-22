@@ -9,6 +9,10 @@ build/
 .bashrc.project
 .vscode/
 .claude/
+.codex/
+.codex-dev/
+JSM_document.md
+三角洲.txt
 
 # custom:
 *.tlog
