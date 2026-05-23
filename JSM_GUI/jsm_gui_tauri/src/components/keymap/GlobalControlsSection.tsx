@@ -16,11 +16,17 @@ type GlobalControlsSectionProps = {
   onSimPressWindowChange: (value: string) => void
   lightBarColor: string | null
   onLightBarChange: (color: string | null) => void
+  adaptiveTriggerValue: string
+  onAdaptiveTriggerChange: (value: string) => void
+  triggerThreshold: number
+  onTriggerThresholdChange: (value: string) => void
   hasPendingChanges: boolean
   statusMessage?: string | null
   onApply: () => void
   onCancel: () => void
   applyDisabled?: boolean
+  compact?: boolean
+  showActions?: boolean
 }
 
 export function GlobalControlsSection({
@@ -36,11 +42,17 @@ export function GlobalControlsSection({
   onSimPressWindowChange,
   lightBarColor,
   onLightBarChange,
+  adaptiveTriggerValue,
+  onAdaptiveTriggerChange,
+  triggerThreshold,
+  onTriggerThresholdChange,
   hasPendingChanges,
   statusMessage,
   onApply,
   onCancel,
   applyDisabled,
+  compact = false,
+  showActions = true,
 }: GlobalControlsSectionProps) {
   const { t } = useTranslation()
 
@@ -58,7 +70,7 @@ export function GlobalControlsSection({
   )
 
   return (
-    <>
+    <div className={`${keymapStyles.globalControlsBlock} ${compact ? keymapStyles.globalControlsBlockCompact : ''}`}>
       <KeymapSection title={t('keymap.globalControlsTitle')} description={t('keymap.globalControlsDescription')}>
         <div className={keymapStyles.globalControls}>
           {renderRow(
@@ -100,16 +112,55 @@ export function GlobalControlsSection({
               )}
             </div>
           </div>
+          <div className={keymapStyles.globalControlRow} data-capture-ignore="true">
+            <div className={keymapStyles.globalControlText}>
+              <span className={keymapStyles.globalControlTitle}>{t('keymap.adaptiveTriggers')}</span>
+            </div>
+            <div className={keymapStyles.globalControlInputGroup}>
+              <select
+                className="app-select"
+                value={adaptiveTriggerValue}
+                onChange={(event) => onAdaptiveTriggerChange(event.target.value)}
+                disabled={applyDisabled}
+              >
+                <option value="">{t('common.defaultValue', { value: 'ON' })}</option>
+                <option value="OFF">{t('common.off')}</option>
+              </select>
+            </div>
+          </div>
+          <div className={keymapStyles.globalControlRow} data-capture-ignore="true">
+            <div className={keymapStyles.globalControlText}>
+              <span className={keymapStyles.globalControlTitle}>{t('keymap.triggerThreshold')}</span>
+              <span className={keymapStyles.globalControlCaption}>
+                {triggerThreshold > 0
+                  ? t('keymap.triggerThresholdCustom', { value: triggerThreshold.toFixed(2) })
+                  : t('keymap.triggerThresholdDefault')}
+              </span>
+            </div>
+            <div className={keymapStyles.globalControlInputGroup}>
+              <input
+                type="number"
+                min="0"
+                max="1"
+                step="0.01"
+                value={triggerThreshold}
+                onChange={(event) => onTriggerThresholdChange(event.target.value)}
+                disabled={applyDisabled}
+              />
+            </div>
+          </div>
         </div>
       </KeymapSection>
-      <SectionActions
-        className={keymapStyles.keymapSectionActions}
-        hasPendingChanges={hasPendingChanges}
-        statusMessage={statusMessage}
-        onApply={onApply}
-        onCancel={onCancel}
-        applyDisabled={applyDisabled}
-      />
-    </>
+      {showActions && (
+        <SectionActions
+          className={keymapStyles.keymapSectionActions}
+          hasPendingChanges={hasPendingChanges}
+          statusMessage={statusMessage}
+          onApply={onApply}
+          onCancel={onCancel}
+          applyDisabled={applyDisabled}
+        />
+      )}
+    </div>
   )
 }

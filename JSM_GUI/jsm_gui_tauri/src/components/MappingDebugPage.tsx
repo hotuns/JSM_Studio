@@ -175,7 +175,7 @@ export function MappingDebugPage({ configText, appliedConfig, hasPendingChanges 
         ) : (
           <>
             <div className={styles.controls}>
-              <button type="button" className="secondary-btn" onClick={handleStart} disabled={isBusy || status.running}>
+              <button type="button" className="primary-btn" onClick={handleStart} disabled={isBusy || status.running}>
                 {t('mappingDebug.startCapture')}
               </button>
               <button type="button" className="secondary-btn" onClick={handleStop} disabled={isBusy || !status.running}>
@@ -184,7 +184,7 @@ export function MappingDebugPage({ configText, appliedConfig, hasPendingChanges 
               <button type="button" className="secondary-btn" onClick={() => setIsPaused(value => !value)} disabled={!status.running}>
                 {isPaused ? t('mappingDebug.resumeLogging') : t('mappingDebug.pauseLogging')}
               </button>
-              <button type="button" className="secondary-btn" onClick={handleClear} disabled={events.length === 0}>
+              <button type="button" className="ghost-btn" onClick={handleClear} disabled={events.length === 0}>
                 {t('mappingDebug.clearLog')}
               </button>
             </div>

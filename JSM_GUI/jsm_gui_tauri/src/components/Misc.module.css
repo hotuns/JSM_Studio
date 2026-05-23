@@ -69,7 +69,7 @@
   margin-top: 1rem;
   border: 1px solid var(--border-1);
   border-radius: 10px;
-  background: #0a0a0a;
+  background: var(--bg-input);
   padding: 0.9rem 1rem;
   overflow: hidden;
 }
@@ -83,7 +83,7 @@
 .calibrationOutputLabel {
   font-weight: 700;
   font-size: 0.95rem;
-  color: #e0e0e0;
+  color: var(--text-strong);
   margin: 1rem 0 0.35rem 0;
 }
 

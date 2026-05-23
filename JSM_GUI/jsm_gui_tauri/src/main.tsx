@@ -26,7 +26,7 @@ const bootFallback = (
     <div className="boot-card">
       <div className="boot-mark">JSM</div>
       <div className="boot-copy">
-        <div className="boot-title">JoyShockMapper Custom Curve</div>
+        <div className="boot-title">JSM Studio</div>
         <div className="boot-subtitle">Loading interface...</div>
       </div>
     </div>

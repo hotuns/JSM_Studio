@@ -5,6 +5,7 @@ use tauri::{AppHandle, State, Window};
 use crate::{
   runtime,
   services::{
+    ai,
     app_state::AppState,
     input_debug,
     jsm_process,
@@ -13,12 +14,15 @@ use crate::{
 };
 
 type CommandResult<T> = Result<T, String>;
+const PROFILE_INJECTION_ATTEMPTS: usize = 3;
+const PROFILE_INJECTION_RETRY_DELAY_MS: u64 = 150;
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ApplyProfileResult {
   restarted: bool,
   path: Option<String>,
+  mapping_enabled: bool,
 }
 
 #[derive(Serialize)]
@@ -120,11 +124,136 @@ pub fn apply_profile(
   text: String,
 ) -> CommandResult<ApplyProfileResult> {
   let path = runtime::write_active_profile(&app, profile_path.as_deref(), &text)?;
-  let _ = jsm_process::inject_console_command(&app, state.inner(), &path)?;
+  let runtime_state = runtime::get_runtime_mapping_state(&app)?;
+  if !runtime_state.mapping_enabled {
+    return Ok(ApplyProfileResult {
+      restarted: false,
+      path: Some(path),
+      mapping_enabled: false,
+    });
+  }
+
+  let mut restarted = false;
+  if jsm_process::is_running(state.inner())? {
+    let injected = inject_profile_with_retry(&app, state.inner(), &path)?;
+    if !injected {
+      jsm_process::terminate_jsm(&app, state.inner())?;
+      jsm_process::launch_jsm(&app, state.inner())?;
+      restarted = true;
+    }
+  } else {
+    jsm_process::launch_jsm(&app, state.inner())?;
+    restarted = true;
+  }
+
   Ok(ApplyProfileResult {
-    restarted: false,
+    restarted,
     path: Some(path),
+    mapping_enabled: true,
   })
+}
+
+#[tauri::command]
+pub fn get_runtime_mapping_state(app: AppHandle) -> CommandResult<runtime::RuntimeMappingState> {
+  runtime::get_runtime_mapping_state(&app)
+}
+
+#[tauri::command]
+pub fn set_mapping_enabled(
+  app: AppHandle,
+  state: State<'_, AppState>,
+  enabled: bool,
+) -> CommandResult<runtime::RuntimeMappingState> {
+  let runtime_state = runtime::set_mapping_enabled(&app, enabled)?;
+  apply_runtime_mapping_state(&app, state.inner(), &runtime_state)?;
+  Ok(runtime_state)
+}
+
+#[tauri::command]
+pub fn set_autoload_enabled(
+  app: AppHandle,
+  state: State<'_, AppState>,
+  enabled: bool,
+) -> CommandResult<runtime::RuntimeMappingState> {
+  let runtime_state = runtime::set_autoload_enabled(&app, enabled)?;
+  if jsm_process::is_running(state.inner())? {
+    let command = if runtime_state.mapping_enabled && runtime_state.autoload_enabled {
+      "AUTOLOAD = ON"
+    } else {
+      "AUTOLOAD = OFF"
+    };
+    let _ = jsm_process::inject_console_command(&app, state.inner(), command)?;
+  }
+  Ok(runtime_state)
+}
+
+#[tauri::command]
+pub fn list_autoload_rules(app: AppHandle) -> CommandResult<Vec<runtime::AutoloadRule>> {
+  runtime::list_autoload_rules(&app)
+}
+
+#[tauri::command]
+pub fn save_autoload_rule(
+  app: AppHandle,
+  process_name: String,
+  profile_name: String,
+) -> CommandResult<runtime::AutoloadRule> {
+  runtime::save_autoload_rule(&app, &process_name, &profile_name)
+}
+
+#[tauri::command]
+pub fn delete_autoload_rule(
+  app: AppHandle,
+  process_name: String,
+) -> CommandResult<SimpleSuccessResult> {
+  let success = runtime::delete_autoload_rule(&app, &process_name)?;
+  Ok(SimpleSuccessResult { success })
+}
+
+fn apply_runtime_mapping_state(
+  app: &AppHandle,
+  state: &AppState,
+  runtime_state: &runtime::RuntimeMappingState,
+) -> CommandResult<()> {
+  let target_profile = runtime::effective_profile_for_state(runtime_state);
+  if jsm_process::is_running(state)? {
+    let injected = inject_profile_with_retry(app, state, &target_profile)?;
+    if !injected {
+      jsm_process::terminate_jsm(app, state)?;
+      jsm_process::launch_jsm(app, state)?;
+    }
+  } else {
+    jsm_process::launch_jsm(app, state)?;
+  }
+
+  if runtime_state.mapping_enabled {
+    let autoload_command = if runtime_state.autoload_enabled {
+      "AUTOLOAD = ON"
+    } else {
+      "AUTOLOAD = OFF"
+    };
+    let _ = jsm_process::inject_console_command(app, state, autoload_command)?;
+  }
+
+  Ok(())
+}
+
+fn inject_profile_with_retry(
+  app: &AppHandle,
+  state: &AppState,
+  path: &str,
+) -> CommandResult<bool> {
+  for attempt in 0..PROFILE_INJECTION_ATTEMPTS {
+    if jsm_process::inject_console_command(app, state, path)? {
+      return Ok(true);
+    }
+    if attempt + 1 < PROFILE_INJECTION_ATTEMPTS {
+      std::thread::sleep(std::time::Duration::from_millis(
+        PROFILE_INJECTION_RETRY_DELAY_MS,
+      ));
+    }
+  }
+  Ok(false)
 }
 
 #[tauri::command]
@@ -336,4 +465,25 @@ pub fn get_input_debug_hook_status() -> CommandResult<input_debug::InputDebugHoo
 fn named_profile(path: String, content: String) -> NamedProfile {
   let name = runtime::profile_name_from_relative_path(&path);
   NamedProfile { path, name, content }
+}
+
+#[tauri::command]
+pub fn get_ai_settings(app: AppHandle) -> CommandResult<ai::AiSettings> {
+  ai::load_settings(&app)
+}
+
+#[tauri::command]
+pub fn save_ai_settings(
+  app: AppHandle,
+  settings: ai::AiSettingsInput,
+) -> CommandResult<ai::AiSettings> {
+  ai::save_settings(&app, settings)
+}
+
+#[tauri::command]
+pub async fn generate_ai_mapping(
+  app: AppHandle,
+  request: ai::GenerateMappingRequest,
+) -> CommandResult<ai::GenerateMappingResponse> {
+  ai::generate_mapping(&app, request).await
 }

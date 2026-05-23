@@ -85,13 +85,13 @@
 }
 
 .toggleSwitch input[type='checkbox']:checked + .toggleSlider {
-  background: #6a8bff;
-  box-shadow: 0 0 0 2px rgba(106, 139, 255, 0.2);
+  background: var(--accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 22%, transparent);
 }
 
 .toggleSwitch input[type='checkbox']:checked + .toggleSlider::after {
   transform: translateX(16px);
-  background: #ffffff;
+  background: var(--bg-0);
 }
 
 .toggleLabel {

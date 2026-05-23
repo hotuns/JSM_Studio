@@ -1,8 +1,8 @@
 {
-  "name": "jsm-gui-tauri",
+  "name": "jsm-studio",
   "private": true,
-  "version": "2.1.0",
-  "description": "JoyShockMapper Custom Curve GUI (Tauri)",
+  "version": "0.1.0",
+  "description": "JSM Studio for JoyShockMapper (Tauri)",
   "author": "Evan McLean",
   "type": "module",
   "scripts": {

@@ -1,4 +1,4 @@
-import { Suspense, lazy, type CSSProperties } from 'react'
+import { type CSSProperties } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { TelemetryDevice } from '../hooks/useTelemetry'
 import { controllerButtonLabel, getPressedControllerButtons } from '../utils/controllerStatus'
@@ -8,11 +8,8 @@ import { ControllerStatusSvg } from './ControllerStatusSvg'
 import styles from './ControllerStatusPage.module.css'
 
 type ControllerStatusPageProps = {
-  backendChoice: 'SDL' | 'legacy'
-  configText: string
   devices?: TelemetryDevice[]
   ignoredDevices?: string[]
-  view: 'status' | 'bindings'
 }
 
 type ControllerStatusDeviceCardProps = {
@@ -27,11 +24,6 @@ type MeterRowProps = {
   mode?: 'signed' | 'unsigned'
   maxAbs?: number
 }
-
-const ControllerBindingsPreview = lazy(async () => {
-  const module = await import('./ControllerBindingsPreview')
-  return { default: module.ControllerBindingsPreview }
-})
 
 const formatValue = (value: number | undefined, digits = 2) =>
   typeof value === 'number' && Number.isFinite(value) ? value.toFixed(digits) : '0.00'
@@ -182,41 +174,19 @@ function ControllerStatusDeviceCard({ device, ignoredDevices }: ControllerStatus
 }
 
 export function ControllerStatusPage({
-  backendChoice,
-  configText,
   devices,
   ignoredDevices,
-  view,
 }: ControllerStatusPageProps) {
   const { t } = useTranslation()
-  const descriptionKey =
-    view === 'bindings' ? 'controllerStatus.bindingsDescription' : 'controllerStatus.description'
-  const noControllersDescriptionKey =
-    view === 'bindings'
-      ? 'controllerStatus.noControllersBindingsDescription'
-      : 'controllerStatus.noControllersDescription'
-
-  if (backendChoice === 'legacy' && view === 'status') {
-    return (
-      <Card className={styles.pageCard}>
-        <h2>{t('controllerStatus.title')}</h2>
-        <p className="field-description">{t(descriptionKey)}</p>
-        <div className={styles.emptyState}>
-          <strong>{t('controllerStatus.sdlOnlyTitle')}</strong>
-          <p>{t('controllerStatus.sdlOnlyDescription')}</p>
-        </div>
-      </Card>
-    )
-  }
 
   if (!devices || devices.length === 0) {
     return (
       <Card className={styles.pageCard}>
         <h2>{t('controllerStatus.title')}</h2>
-        <p className="field-description">{t(descriptionKey)}</p>
+        <p className="field-description">{t('controllerStatus.description')}</p>
         <div className={styles.emptyState}>
           <strong>{t('controllerStatus.noControllersTitle')}</strong>
-          <p>{t(noControllersDescriptionKey)}</p>
+          <p>{t('controllerStatus.noControllersDescription')}</p>
         </div>
       </Card>
     )
@@ -226,23 +196,11 @@ export function ControllerStatusPage({
     <div className={styles.page}>
       <Card className={styles.pageCard}>
         <h2>{t('controllerStatus.title')}</h2>
-        <p className="field-description">{t(descriptionKey)}</p>
+        <p className="field-description">{t('controllerStatus.description')}</p>
       </Card>
-      {view === 'bindings' ? (
-        <Suspense
-          fallback={
-            <Card className={styles.deviceCard}>
-              <div className={styles.emptyInline}>Loading...</div>
-            </Card>
-          }
-        >
-          <ControllerBindingsPreview configText={configText} devices={devices} ignoredDevices={ignoredDevices} />
-        </Suspense>
-      ) : (
-        devices.map(device => (
-          <ControllerStatusDeviceCard key={device.handle} device={device} ignoredDevices={ignoredDevices} />
-        ))
-      )}
+      {devices.map(device => (
+        <ControllerStatusDeviceCard key={device.handle} device={device} ignoredDevices={ignoredDevices} />
+      ))}
     </div>
   )
 }

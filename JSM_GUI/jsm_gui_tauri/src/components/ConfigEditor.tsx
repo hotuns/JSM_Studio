@@ -1,4 +1,3 @@
-import { Card } from './Card'
 import { SectionActions } from './SectionActions'
 import styles from './ConfigEditor.module.css'
 
@@ -24,7 +23,7 @@ export function ConfigEditor({
   onCancel,
 }: ConfigEditorProps) {
   return (
-    <Card className={`${styles.configPanel} config-panel legacy`}>
+    <section className={`${styles.configPanel} config-panel`}>
       <label>
         {label}
         <textarea value={value} onChange={(e) => onChange(e.target.value)} rows={12} disabled={disabled} />
@@ -37,6 +36,6 @@ export function ConfigEditor({
         onCancel={onCancel}
         applyDisabled={disabled}
       />
-    </Card>
+    </section>
   )
 }

@@ -17,6 +17,7 @@ type StickSettingsCardProps = {
   onInnerChange: (value: string) => void
   onOuterChange: (value: string) => void
   modeExtras?: ReactNode
+  variant?: 'card' | 'inline'
 }
 
 const clamp = (value: number) => {
@@ -88,6 +89,7 @@ export function StickSettingsCard({
   onInnerChange,
   onOuterChange,
   modeExtras,
+  variant = 'card',
 }: StickSettingsCardProps) {
   const { t } = useTranslation()
   const inner = useDeadzoneDraft(innerValue, onInnerChange)
@@ -99,7 +101,7 @@ export function StickSettingsCard({
   const selectableStickModes = STICK_MODE_VALUES.filter(mode => mode !== 'NO_MOUSE')
 
   return (
-    <div className={styles.stickModeCard} data-capture-ignore="true">
+    <div className={`${styles.stickModeCard} ${variant === 'inline' ? styles.stickModeInline : ''}`} data-capture-ignore="true">
       <h3>{title}</h3>
       <label>
         {t('stickModes.stickMode')}

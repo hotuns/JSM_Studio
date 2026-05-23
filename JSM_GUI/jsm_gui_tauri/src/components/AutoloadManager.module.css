@@ -1,0 +1,182 @@
+.modal {
+  width: min(820px, calc(100vw - 48px));
+  max-height: min(760px, calc(100vh - 48px));
+  overflow: auto;
+}
+
+.switchPanel,
+.rulesPanel,
+.addPanel {
+  border: 1px solid var(--border-1);
+  border-radius: 8px;
+  background: var(--bg-1-5);
+  padding: 0.75rem;
+}
+
+.switchPanel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.switchTitle {
+  font-weight: 800;
+  color: var(--text-strong);
+}
+
+.switchPanel p,
+.sectionHeader p {
+  margin: 0.2rem 0 0;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+.switchButton {
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  padding: 0.38rem 0.72rem;
+  background: var(--bg-input);
+  color: var(--text-muted);
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.switchButtonOn {
+  border-color: color-mix(in srgb, var(--accent) 70%, transparent);
+  background: color-mix(in srgb, var(--accent) 20%, var(--bg-input));
+  color: var(--text-strong);
+  box-shadow: inset 0 -2px 0 var(--accent);
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.65rem;
+}
+
+.sectionHeader h4,
+.addPanel h4 {
+  margin: 0;
+  font-size: 0.92rem;
+}
+
+.emptyState {
+  border: 1px dashed var(--border-1);
+  border-radius: 8px;
+  color: var(--text-muted);
+  padding: 0.75rem;
+}
+
+.ruleList {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.ruleRow {
+  display: grid;
+  grid-template-columns: minmax(150px, 1fr) minmax(180px, 1.2fr) minmax(120px, auto) auto;
+  align-items: center;
+  gap: 0.55rem;
+  border: 1px solid var(--border-1);
+  border-radius: 8px;
+  background: var(--bg-2);
+  padding: 0.55rem;
+}
+
+.ruleProgram {
+  display: grid;
+  gap: 3px;
+  font-weight: 800;
+}
+
+.ruleProgram small,
+.advancedNote {
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.ruleProfile select {
+  width: 100%;
+}
+
+.ruleStatus {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.statusOk,
+.statusWarning,
+.statusAdvanced {
+  border-radius: 6px;
+  padding: 0.24rem 0.5rem;
+  font-size: 0.72rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.statusOk {
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  color: var(--accent);
+}
+
+.statusWarning {
+  background: rgba(255, 186, 73, 0.16);
+  color: #ffba49;
+}
+
+.statusAdvanced {
+  background: rgba(143, 160, 190, 0.18);
+  color: var(--text-muted);
+}
+
+.ruleActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.4rem;
+}
+
+.addPanel {
+  margin-top: 0.75rem;
+}
+
+.addForm {
+  display: grid;
+  grid-template-columns: minmax(160px, 1fr) minmax(180px, 1fr) auto;
+  align-items: end;
+  gap: 0.55rem;
+  margin-top: 0.55rem;
+}
+
+.addForm label {
+  display: grid;
+  gap: 6px;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+@media (max-width: 760px) {
+  .modal {
+    width: calc(100vw - 24px);
+  }
+
+  .switchPanel,
+  .sectionHeader {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .ruleRow,
+  .addForm {
+    grid-template-columns: 1fr;
+  }
+
+  .ruleActions {
+    justify-content: flex-start;
+  }
+}

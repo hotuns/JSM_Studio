@@ -1,6 +1,6 @@
 .app-shell {
   display: grid;
-  grid-template-columns: 240px 1fr;
+  grid-template-columns: 208px 1fr;
   height: 100vh;
   width: 100%;
   box-sizing: border-box;
@@ -12,6 +12,7 @@
   height: 100vh;
   overflow: hidden;
   position: relative;
+  background: var(--bg-0);
 }
 
 .shell-scroll {
@@ -19,13 +20,18 @@
   overflow-y: auto;
   scrollbar-gutter: stable;
   min-height: 0;
+  background:
+    linear-gradient(90deg, var(--shell-scroll-grid-x) 1px, transparent 1px),
+    linear-gradient(180deg, var(--shell-scroll-grid-y) 1px, transparent 1px),
+    var(--bg-0);
+  background-size: 32px 32px, 32px 32px, auto;
 }
 
 .content-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: 0;
-  padding: 1.25rem 1.75rem 2rem;
+  padding: 0.85rem 1rem 1.2rem;
   align-items: start;
   width: 100%;
   box-sizing: border-box;

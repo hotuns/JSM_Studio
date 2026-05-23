@@ -43,7 +43,7 @@ export function UpdateBanner() {
           <div className={styles.updateBannerActions}>
             <button
               type="button"
-              className="secondary-btn"
+              className="primary-btn"
               onClick={() => {
                 setUpdate({ phase: 'downloading' })
                 void desktopBridge.downloadUpdate()
@@ -51,7 +51,7 @@ export function UpdateBanner() {
             >
               {t('update.downloadNow')}
             </button>
-            <button type="button" className="secondary-btn" onClick={() => setDismissed(true)}>
+            <button type="button" className="ghost-btn" onClick={() => setDismissed(true)}>
               {t('common.later')}
             </button>
           </div>
@@ -61,7 +61,7 @@ export function UpdateBanner() {
       {update.phase === 'ready' && (
         <>
           <span>{t('update.ready')}</span>
-          <button type="button" className="secondary-btn" onClick={() => void desktopBridge.installUpdate()}>
+          <button type="button" className="primary-btn" onClick={() => void desktopBridge.installUpdate()}>
             {t('update.restartNow')}
           </button>
         </>

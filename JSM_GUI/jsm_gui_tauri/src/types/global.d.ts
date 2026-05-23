@@ -4,7 +4,7 @@ declare interface Window {
     launchJSM: (calibrationSeconds?: number) => Promise<void>
     terminateJSM: () => Promise<void>
     minimizeTemporarily: () => Promise<void>
-    applyProfile?: (profilePath: string, text: string) => Promise<{ restarted: boolean; path?: string }>
+    applyProfile?: (profilePath: string, text: string) => Promise<{ restarted: boolean; path?: string; mappingEnabled?: boolean }>
     recalibrateGyro?: () => Promise<{ success: boolean }>
     getCalibrationSeconds?: () => Promise<number>
     setCalibrationSeconds?: (seconds: number) => Promise<number>
@@ -30,6 +30,27 @@ declare interface Window {
     onUpdateDownloadProgress?: (callback: (percent: number) => void) => () => void
     downloadUpdate?: () => Promise<void>
     installUpdate?: () => Promise<void>
+    getAiSettings?: () => Promise<{ apiKey: string; model: string; baseUrl: string; temperature: number }>
+    saveAiSettings?: (settings: {
+      apiKey: string
+      model?: string
+      baseUrl?: string
+      temperature?: number
+    }) => Promise<{ apiKey: string; model: string; baseUrl: string; temperature: number }>
+    generateAiMapping?: (request: {
+      userPrompt: string
+      currentConfig?: string
+      currentProfileName?: string | null
+      includeCurrentConfig?: boolean
+      conversationHistory?: Array<{ role: 'user' | 'assistant'; content: string }>
+      locale?: string
+    }) => Promise<{
+      summary: string
+      configText: string
+      assumptions: string[]
+      warnings: string[]
+      model: string
+    }>
   }
   telemetry?: {
     onSample?: (callback: (payload: unknown) => void) => () => void

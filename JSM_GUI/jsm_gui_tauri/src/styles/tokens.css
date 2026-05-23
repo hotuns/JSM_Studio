@@ -1,48 +1,58 @@
 :root,
 :root[data-theme='dark'] {
   /* Layout */
-  --top-bar-height: 72px;
+  --top-bar-height: 48px;
   --bp-main: 1060px;
 
   /* Backgrounds */
-  --bg-0: #0b0f16;      /* page backdrop */
-  --bg-1: #101722;      /* side nav */
-  --bg-1-5: #121a26;    /* top bar / tabs strip */
-  --bg-2: rgba(22, 31, 43, 0.82);      /* cards / panels */
-  --bg-btn: rgba(16, 24, 35, 0.9);    /* button + input base (match cards) */
-  --bg-btn-hover: rgba(28, 42, 58, 0.94);
-  --bg-btn-primary: rgba(21, 45, 52, 0.92);
-  --bg-input: rgba(8, 13, 20, 0.84);  /* config editor + inputs */
+  --bg-0: #090d12;
+  --bg-1: #0c1219;
+  --bg-1-5: #111923;
+  --bg-2: #151e29;
+  --bg-btn: #17222f;
+  --bg-btn-hover: #1f2d3c;
+  --bg-btn-primary: #123440;
+  --bg-input: #0d141c;
+  --canvas-grid-x: rgba(255, 255, 255, 0.025);
+  --canvas-grid-y: rgba(255, 255, 255, 0.018);
+  --canvas-gradient: linear-gradient(180deg, #0b1016 0%, var(--bg-0) 100%);
+  --shell-scroll-grid-x: rgba(255, 255, 255, 0.018);
+  --shell-scroll-grid-y: rgba(255, 255, 255, 0.014);
+  --topbar-bg: linear-gradient(180deg, #111a24, #0f171f);
+  --sidebar-bg: linear-gradient(180deg, #0d151d, #080d12);
+  --toolbar-bg: #111923;
+  --inset-highlight: rgba(255, 255, 255, 0.025);
 
   /* Text */
-  --text-strong: #f2f8ff;
-  --text-mid: #a9b8c8;
-  --text-muted: #708096;
-  --text-dim: #647188;
+  --text-strong: #eef6fb;
+  --text-mid: #b8c6d2;
+  --text-muted: #81909d;
+  --text-dim: #5f6d78;
 
   /* Borders */
-  --border-1: rgba(126, 239, 255, 0.13);
-  --border-strong: rgba(126, 239, 255, 0.28);
+  --border-1: rgba(122, 151, 171, 0.24);
+  --border-strong: rgba(64, 221, 207, 0.58);
 
   /* Accent */
-  --accent: #35f2d0;
-  --accent-primary: #35f2d0;
+  --accent: #27e6cf;
+  --accent-primary: #2cb9ff;
+  --btn-primary-text: #08161d;
 
   /* Specialty */
-  --telemetry-green: #96ff83;
+  --telemetry-green: #72f68d;
 
   /* Pills / alerts (dark) */
-  --pill-warn-bg: rgba(255, 183, 77, 0.12);
-  --pill-warn-border: rgba(255, 183, 77, 0.4);
-  --pill-warn-text: #ffd28a;
+  --pill-warn-bg: rgba(255, 190, 88, 0.16);
+  --pill-warn-border: rgba(255, 190, 88, 0.56);
+  --pill-warn-text: #ffe1a8;
 
-  --pill-error-bg: rgba(255, 120, 111, 0.12);
-  --pill-error-border: rgba(255, 120, 111, 0.6);
-  --pill-error-text: #ffb7af;
+  --pill-error-bg: rgba(255, 116, 120, 0.16);
+  --pill-error-border: rgba(255, 116, 120, 0.64);
+  --pill-error-text: #ffc7c9;
 
-  --pill-success-bg: rgba(111, 213, 179, 0.12);
-  --pill-success-border: rgba(111, 213, 179, 0.4);
-  --pill-success-text: #a9ffe2;
+  --pill-success-bg: rgba(88, 235, 178, 0.16);
+  --pill-success-border: rgba(88, 235, 178, 0.56);
+  --pill-success-text: #c5ffeb;
 
   /* Danger buttons/links (dark) */
   --danger-bg: var(--pill-error-bg);
@@ -50,67 +60,76 @@
   --danger-text: var(--pill-error-text);
 
   /* Toasts (dark) */
-  --toast-success-bg: #13382f;
-  --toast-success-border: #60d7b5;
-  --toast-success-text: #cafcee;
-  --toast-warn-bg: #3a2b10;
-  --toast-warn-border: #f1b355;
-  --toast-warn-text: #ffe1ae;
-  --toast-error-bg: #3a1818;
-  --toast-error-border: #f28a8a;
-  --toast-error-text: #ffd6d6;
+  --toast-success-bg: #102b27;
+  --toast-success-border: #41dfc2;
+  --toast-success-text: #d4fff2;
+  --toast-warn-bg: #442f12;
+  --toast-warn-border: #ffc15e;
+  --toast-warn-text: #ffe9c4;
+  --toast-error-bg: #461b22;
+  --toast-error-border: #ff8f9a;
+  --toast-error-text: #ffe0e3;
 
   /* Touchpad grid (dark) */
-  --touchpad-grid-bg: #121212;
-  --touchpad-grid-border: #2c2c2c;
-  --touchpad-grid-cell-bg: #151515;
-  --touchpad-grid-cell-border: #2f2f2f;
-  --touchpad-grid-muted: #b0b0b0;
-  --touchpad-grid-hint: #cfcfcf;
-  --touchpad-grid-limit: #bbbbbb;
+  --touchpad-grid-bg: #0e151e;
+  --touchpad-grid-border: #263646;
+  --touchpad-grid-cell-bg: #121b26;
+  --touchpad-grid-cell-border: #314254;
+  --touchpad-grid-muted: #9daac0;
+  --touchpad-grid-hint: #d3deef;
+  --touchpad-grid-limit: #b4c1d6;
 
 }
 
-/* Light theme (initial values; tune next) */
 :root[data-theme='light'] {
-  --top-bar-height: 72px;
+  --top-bar-height: 48px;
   --bp-main: 1060px;
 
-  --bg-0: #f7f8fb;
-  --bg-1: #f0f2f6;
-  --bg-1-5: #e8ebf2;
-  --bg-2: #ffffff;
-  --bg-btn: #ffffff;
-  --bg-btn-hover: #e8edf6;
-  --bg-btn-primary: #e0e7f3;
-  --bg-input: #ffffff;
+  --bg-0: #dfe6ee;
+  --bg-1: #e8eef4;
+  --bg-1-5: #f0f4f8;
+  --bg-2: #f6f8fb;
+  --bg-btn: #edf2f7;
+  --bg-btn-hover: #dfe8f0;
+  --bg-btn-primary: #d7ecec;
+  --bg-input: #eef3f7;
+  --canvas-grid-x: rgba(63, 84, 105, 0.07);
+  --canvas-grid-y: rgba(63, 84, 105, 0.05);
+  --canvas-gradient: linear-gradient(180deg, #e7edf3 0%, var(--bg-0) 100%);
+  --shell-scroll-grid-x: rgba(63, 84, 105, 0.055);
+  --shell-scroll-grid-y: rgba(63, 84, 105, 0.04);
+  --topbar-bg: linear-gradient(180deg, #f4f7fa, #e9f0f6);
+  --sidebar-bg: linear-gradient(180deg, #edf3f8, #dce5ed);
+  --toolbar-bg: #eef3f8;
+  --inset-highlight: rgba(255, 255, 255, 0.82);
 
-  --text-strong: #0f1116;
-  --text-mid: #3a4050;
-  --text-muted: #606778;
+  --text-strong: #17212c;
+  --text-mid: #3f4d5c;
+  --text-muted: #667687;
+  --text-dim: #8795a5;
 
-  --border-1: #d3d8e2;
-  --border-strong: #b8c0ce;
+  --border-1: #c4ced9;
+  --border-strong: rgba(0, 143, 134, 0.52);
 
-  --accent: #3b74ff;
-  --accent-primary: #3b74ff;
-  --text-dim: #737a8a;
+  --accent: #008f86;
+  --accent-primary: #1677b7;
+  --btn-primary-text: #f6fbff;
 
   /* Specialty */
-  --telemetry-green: #3b8f6d;
+  --telemetry-green: #1f8f52;
 
   /* Pills / alerts (light) */
-  --pill-warn-bg: rgba(229, 140, 49, 0.14);
-  --pill-warn-border: rgba(229, 140, 49, 0.55);
-  --pill-warn-text: #9a4f1f;
+  --pill-warn-bg: rgba(173, 104, 24, 0.13);
+  --pill-warn-border: rgba(173, 104, 24, 0.48);
+  --pill-warn-text: #7f4b10;
 
-  --pill-error-bg: rgba(193, 80, 80, 0.14);
-  --pill-error-border: rgba(193, 80, 80, 0.55);
-  --pill-error-text: #b14545;
+  --pill-error-bg: rgba(181, 60, 72, 0.12);
+  --pill-error-border: rgba(181, 60, 72, 0.48);
+  --pill-error-text: #9d2d39;
 
-  --pill-success-bg: rgba(59, 143, 109, 0.14);
-  --pill-success-border: rgba(59, 143, 109, 0.5);
-  --pill-success-text: #3b8f6d;
+  --pill-success-bg: rgba(0, 143, 111, 0.12);
+  --pill-success-border: rgba(0, 143, 111, 0.45);
+  --pill-success-text: #006f58;
 
   /* Danger buttons/links (light) */
   --danger-bg: var(--pill-error-bg);
@@ -118,22 +137,22 @@
   --danger-text: var(--pill-error-text);
 
   /* Toasts (light) */
-  --toast-success-bg: rgba(59, 143, 109, 0.12);
-  --toast-success-border: rgba(59, 143, 109, 0.6);
-  --toast-success-text: #29664e;
-  --toast-warn-bg: rgba(229, 140, 49, 0.12);
-  --toast-warn-border: rgba(229, 140, 49, 0.6);
-  --toast-warn-text: #a65e1f;
-  --toast-error-bg: rgba(193, 80, 80, 0.12);
-  --toast-error-border: rgba(193, 80, 80, 0.6);
-  --toast-error-text: #9a3a3a;
+  --toast-success-bg: #e1f2ed;
+  --toast-success-border: #31a27f;
+  --toast-success-text: #17664f;
+  --toast-warn-bg: #f5ebd8;
+  --toast-warn-border: #bd7b26;
+  --toast-warn-text: #805016;
+  --toast-error-bg: #f4e4e7;
+  --toast-error-border: #c24e5f;
+  --toast-error-text: #8e2d39;
 
   /* Touchpad grid (light) */
-  --touchpad-grid-bg: #eef2f9;
-  --touchpad-grid-border: #d3d8e2;
-  --touchpad-grid-cell-bg: #ffffff;
-  --touchpad-grid-cell-border: #c5ccda;
-  --touchpad-grid-muted: #5f6575;
-  --touchpad-grid-hint: #4a5160;
-  --touchpad-grid-limit: #737a8a;
+  --touchpad-grid-bg: #e7edf4;
+  --touchpad-grid-border: #c4ced9;
+  --touchpad-grid-cell-bg: #f3f6f9;
+  --touchpad-grid-cell-border: #b9c5d1;
+  --touchpad-grid-muted: #617182;
+  --touchpad-grid-hint: #344251;
+  --touchpad-grid-limit: #7d8b99;
 }

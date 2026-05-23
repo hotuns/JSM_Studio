@@ -14,6 +14,7 @@ import {
 import type { TelemetryDevice } from '../hooks/useTelemetry'
 
 export type ControllerVisualFamily = 'playstation' | 'xbox' | 'nintendo' | 'generic'
+export type ControllerBackInputMode = 'none' | 'twoPaddles' | 'fourPaddles' | 'leftJoyConRail' | 'rightJoyConRail'
 
 const CONTROLLER_TYPES = {
   XBOXONE: 6,
@@ -41,6 +42,25 @@ const SPLIT_TYPES = {
   LEFT: 1,
   RIGHT: 2,
 } as const
+
+const FOUR_PADDLE_CONTROLLER_TYPES = new Set<number>([
+  CONTROLLER_TYPES.DS,
+  CONTROLLER_TYPES.XBOXONE_ELITE,
+  CONTROLLER_TYPES.HORI_STEAM,
+  CONTROLLER_TYPES.FLYDIGI_APEX5,
+  CONTROLLER_TYPES.FLYDIGI_VADER3_PRO,
+  CONTROLLER_TYPES.FLYDIGI_VADER4_PRO,
+  CONTROLLER_TYPES.FLYDIGI_VADER5_PRO,
+])
+
+const TWO_PADDLE_CONTROLLER_TYPES = new Set<number>([
+  CONTROLLER_TYPES.G7_PRO_8K,
+  CONTROLLER_TYPES.EIGHTBITDO_PRO_2,
+  CONTROLLER_TYPES.EIGHTBITDO_PRO_2_BT,
+  CONTROLLER_TYPES.EIGHTBITDO_PRO_3,
+  CONTROLLER_TYPES.EIGHTBITDO_ULTIMATE2_WIRELESS,
+  CONTROLLER_TYPES.SWITCH2_PRO_CONTROLLER,
+])
 
 const RAW_BUTTONS = {
   UP: 0,
@@ -140,6 +160,29 @@ export const controllerVisualFamily = (type?: number): ControllerVisualFamily =>
     default:
       return 'generic'
   }
+}
+
+export const controllerBackInputMode = (device?: TelemetryDevice): ControllerBackInputMode => {
+  const controllerType = device?.type ?? 0
+  const splitType = device?.split ?? 0
+
+  if (splitType === SPLIT_TYPES.LEFT || controllerType === CONTROLLER_TYPES.JOYCON_LEFT) {
+    return 'leftJoyConRail'
+  }
+
+  if (splitType === SPLIT_TYPES.RIGHT || controllerType === CONTROLLER_TYPES.JOYCON_RIGHT) {
+    return 'rightJoyConRail'
+  }
+
+  if (FOUR_PADDLE_CONTROLLER_TYPES.has(controllerType)) {
+    return 'fourPaddles'
+  }
+
+  if (TWO_PADDLE_CONTROLLER_TYPES.has(controllerType)) {
+    return 'twoPaddles'
+  }
+
+  return 'none'
 }
 
 const BUTTON_GLYPHS: Record<ControllerVisualFamily, Partial<Record<string, string>>> = {

@@ -60,6 +60,7 @@
   align-items: center;
   gap: 0.75rem;
   margin-top: 0.75rem;
+  flex-wrap: wrap;
 }
 
 .legacy-binding-warning {
@@ -93,15 +94,19 @@
 .link-btn {
   border: none;
   background: none;
-  color: #9cb6ff;
+  color: color-mix(in srgb, var(--accent-primary) 68%, var(--text-mid));
   cursor: pointer;
-  padding: 0.2rem 0.4rem;
+  padding: 0.2rem 0.45rem;
+  border-radius: 6px;
   font-size: 0.85rem;
+  font-weight: 700;
   text-decoration: underline;
+  transition: background-color 0.18s ease, color 0.18s ease;
 }
 
 .link-btn:hover {
-  color: #cdd8ff;
+  color: var(--text-strong);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
 }
 
 .full-width-btn {

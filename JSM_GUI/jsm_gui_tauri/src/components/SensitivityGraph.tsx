@@ -143,7 +143,7 @@ export function SensitivityGraph(props: SensitivityGraphProps) {
 
     const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#6fa7ff'
     const liveSensColor = accent
-    const liveOutputColor = '#5bc7d7'
+    const liveOutputColor = getComputedStyle(document.documentElement).getPropertyValue('--telemetry-green').trim() || '#87ff9d'
 
     const styles = getComputedStyle(document.documentElement)
     const bg = styles.getPropertyValue('--bg-input').trim() || '#0f0f0f'

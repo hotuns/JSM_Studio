@@ -28,6 +28,14 @@
   filter: drop-shadow(0 24px 28px rgba(0, 0, 0, 0.32));
 }
 
+.shellLine {
+  fill: none;
+  stroke: color-mix(in srgb, var(--accent) 24%, var(--border-strong));
+  stroke-width: 3;
+  vector-effect: non-scaling-stroke;
+  filter: drop-shadow(0 18px 24px rgba(0, 0, 0, 0.24));
+}
+
 .centerPanel {
   fill: color-mix(in srgb, var(--bg-input) 72%, rgba(255, 255, 255, 0.05));
   stroke: var(--border-strong);
@@ -60,7 +68,7 @@
 
 .triggerLabel,
 .controlText {
-  font-size: 17px;
+  font-size: 28px;
   font-weight: 700;
   fill: var(--text-muted);
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
@@ -75,7 +83,7 @@
 }
 
 .controlTextCompact {
-  font-size: 13px;
+  font-size: 20px;
   letter-spacing: 0.04em;
 }
 
@@ -89,6 +97,15 @@
 
 .controlCompact {
   stroke-width: 1.8;
+}
+
+.paddleControl {
+  stroke-width: 1.9;
+}
+
+.paddleText {
+  font-size: 18px;
+  letter-spacing: 0.04em;
 }
 
 .controlBound {
@@ -159,4 +176,32 @@
 
 .sideMuted {
   opacity: 0.28;
+}
+
+:global(:root[data-theme='light']) .shell {
+  fill: #d8e1ea;
+  stroke: color-mix(in srgb, var(--accent-primary) 30%, var(--border-1));
+  filter: drop-shadow(0 12px 18px rgba(74, 92, 110, 0.18));
+}
+
+:global(:root[data-theme='light']) .shellLine {
+  stroke: color-mix(in srgb, var(--accent-primary) 28%, var(--border-1));
+  filter: drop-shadow(0 8px 14px rgba(74, 92, 110, 0.14));
+}
+
+:global(:root[data-theme='light']) .centerPanel,
+:global(:root[data-theme='light']) .triggerTrack,
+:global(:root[data-theme='light']) .control,
+:global(:root[data-theme='light']) .stickBase {
+  fill: #eef3f7;
+  stroke: color-mix(in srgb, var(--accent) 36%, var(--border-1));
+}
+
+:global(:root[data-theme='light']) .stickRing {
+  fill: #e2eaf1;
+}
+
+:global(:root[data-theme='light']) .stickKnob {
+  fill: #263746;
+  stroke: color-mix(in srgb, var(--accent) 40%, var(--border-1));
 }

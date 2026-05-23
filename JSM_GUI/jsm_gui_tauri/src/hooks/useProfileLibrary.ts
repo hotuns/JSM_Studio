@@ -104,9 +104,12 @@ export function useProfileLibrary({
           setActiveProfilePath(result.path)
         }
         const profileName = options?.profileNameOverride ?? currentLibraryProfile ?? unsavedProfileLabel
-        const appliedMessage = result?.restarted
-          ? t('messages.profileAppliedRestarted', { profileName })
-          : t('messages.profileApplied', { profileName })
+        const appliedMessage =
+          result?.mappingEnabled === false
+            ? t('messages.mappingSavedWhilePaused', { profileName })
+            : result?.restarted
+              ? t('messages.profileAppliedRestarted', { profileName })
+              : t('messages.profileApplied', { profileName })
         setStatusMessage(appliedMessage)
         showToast(appliedMessage)
         setAppliedConfig(normalizedConfig)

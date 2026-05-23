@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "JoyShockMapper Custom Curve",
-  "version": "2.1.0",
+  "productName": "JSM Studio",
+  "version": "0.1.0",
   "identifier": "com.evanmclean.jsmcustomcurve",
   "build": {
     "beforeDevCommand": "npm run dev:web",
@@ -13,8 +13,8 @@
     "windows": [
       {
         "label": "main",
-        "title": "JoyShockMapper Custom Curve",
-        "width": 1200,
+        "title": "JSM Studio",
+        "width": 1440,
         "height": 900,
         "resizable": true
       }

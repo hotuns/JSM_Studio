@@ -7,20 +7,21 @@
 @import './styles/utilities.css';
 
 :root {
+  color-scheme: dark;
+}
+
+:root[data-theme='light'] {
   color-scheme: light;
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
 }
 
 html,
 body,
 #root {
   min-height: 100%;
-}
-
-body {
-  margin: 0;
-  background:
-    radial-gradient(circle at top, rgba(89, 166, 255, 0.2), transparent 36%),
-    linear-gradient(180deg, #f4f9ff 0%, #edf4fb 52%, #e4eef7 100%);
 }
 
 .boot-shell {

@@ -31,6 +31,12 @@ pub fn run() {
       commands::terminate_jsm,
       commands::minimize_temporarily,
       commands::apply_profile,
+      commands::get_runtime_mapping_state,
+      commands::set_mapping_enabled,
+      commands::set_autoload_enabled,
+      commands::list_autoload_rules,
+      commands::save_autoload_rule,
+      commands::delete_autoload_rule,
       commands::recalibrate_gyro,
       commands::get_calibration_seconds,
       commands::set_calibration_seconds,
@@ -54,6 +60,9 @@ pub fn run() {
       commands::start_input_debug_hook,
       commands::stop_input_debug_hook,
       commands::get_input_debug_hook_status,
+      commands::get_ai_settings,
+      commands::save_ai_settings,
+      commands::generate_ai_mapping,
     ])
     .build(tauri::generate_context!())
     .expect("error while building tauri application");

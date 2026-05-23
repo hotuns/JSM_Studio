@@ -3,12 +3,10 @@
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
-  padding: 0.8rem 1.75rem 0.8rem;
+  min-height: var(--top-bar-height);
+  padding: 0.45rem 1rem;
   border-bottom: 1px solid var(--border-1);
-  background:
-    linear-gradient(90deg, color-mix(in srgb, var(--bg-1-5) 92%, transparent), color-mix(in srgb, var(--bg-0) 82%, transparent)),
-    radial-gradient(circle at 0% 0%, color-mix(in srgb, var(--accent) 8%, transparent), transparent 35%);
-  backdrop-filter: blur(18px);
+  background: var(--topbar-bg);
   position: sticky;
   top: 0;
   z-index: 10;
@@ -27,22 +25,30 @@
   gap: 0.5rem;
 }
 
+.topBarSettings {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
 .inlineSelect {
   display: flex;
   align-items: center;
   gap: 0.5rem;
   color: var(--text-mid);
   font-weight: 600;
-  font-size: 0.95rem;
+  font-size: 0.82rem;
 }
 
 .inlineSelect select {
-  min-width: 140px;
-  border-radius: 999px;
-  border: 1.7px solid var(--border-1);
+  min-width: 128px;
+  border-radius: 6px;
+  border: 1px solid var(--border-1);
   background: var(--bg-input);
   color: var(--text-strong);
-  padding: 0.35rem 0.7rem;
+  padding: 0.3rem 0.55rem;
 }
 
 .responsiveTopBar {
@@ -66,11 +72,16 @@
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  margin-left: auto;
+  flex-shrink: 0;
 }
 
 @media (max-width: 1060px) {
   .desktopTopBar {
     display: none;
+  }
+
+  .topBarSettings {
+    width: 100%;
+    justify-content: flex-end;
   }
 }

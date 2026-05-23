@@ -50,7 +50,7 @@ export function RwcGuideModal({ isOpen, inGameSens, onClose, onApplyRwc }: RwcGu
       <div className="modal-card">
         <div className="modal-header">
           <h3>{t('rwcGuide.title')}</h3>
-          <button className="secondary-btn" onClick={handleCancel}>
+          <button className="ghost-btn" onClick={handleCancel}>
             {t('common.close')}
           </button>
         </div>

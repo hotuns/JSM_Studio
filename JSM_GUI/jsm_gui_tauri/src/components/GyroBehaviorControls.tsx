@@ -46,7 +46,6 @@ type GyroBehaviorControlsProps = {
   onCancel: () => void
   lockMessage?: string
   appliedSampleHz?: string
-  backendChoice?: 'SDL' | 'legacy'
 }
 
 export function GyroBehaviorControls({
@@ -71,7 +70,6 @@ export function GyroBehaviorControls({
   onCancel,
   lockMessage,
   appliedSampleHz,
-  backendChoice = 'SDL',
 }: GyroBehaviorControlsProps) {
   const { t } = useTranslation()
 
@@ -81,7 +79,7 @@ export function GyroBehaviorControls({
       {(onOpenCalibration || onOpenRwcGuide) && (
         <div className="flex-inputs">
           {onOpenRwcGuide && (
-            <button type="button" className="secondary-btn full-width-btn" onClick={onOpenRwcGuide} disabled={isCalibrating}>
+            <button type="button" className="primary-btn full-width-btn" onClick={onOpenRwcGuide} disabled={isCalibrating}>
               {t('gyro.easyCalibrationMethod')}
             </button>
           )}
@@ -165,7 +163,7 @@ export function GyroBehaviorControls({
           </select>
         </label>
       </div>
-      {backendChoice !== 'legacy' && devices && devices.length > 0 && (
+      {devices && devices.length > 0 && (
         <div className="flex-inputs">
           <label>
             {t('gyro.connectedControllers')}

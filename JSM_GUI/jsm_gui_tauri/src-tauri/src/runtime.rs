@@ -3,6 +3,7 @@ use std::{
   path::{Path, PathBuf},
 };
 
+use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Manager};
 
 pub const DEFAULT_PROFILE_NAME: &str = "Profile 1";
@@ -14,8 +15,11 @@ pub const CALIBRATION_COMMAND: &str = "RecalibrateGyro.txt";
 const DEFAULT_BACKEND_CHOICE: &str = "SDL";
 const DEFAULT_CALIBRATION_SECONDS: u32 = 5;
 const BACKEND_FILE_NAME: &str = "backend.json";
+const GUI_STATE_FILE_NAME: &str = "gui-state.json";
 const STARTUP_FILE_NAME: &str = "OnStartUp.txt";
 const CALIBRATION_COMMAND_FILE_NAME: &str = "RecalibrateGyro.txt";
+const MAPPING_DISABLED_FILE_NAME: &str = "MappingDisabled.txt";
+const MAPPING_DISABLED_RELATIVE: &str = MAPPING_DISABLED_FILE_NAME;
 const PROFILE_TEMPLATE_LINES: [&str; 4] = [
   "RESET_MAPPINGS",
   "AUTOCONNECT = ON",
@@ -26,7 +30,34 @@ const STARTUP_HEADER_LINES: [&str; 2] = [
   "TELEMETRY_ENABLED = ON",
   "TELEMETRY_PORT = 8974",
 ];
+const MAPPING_DISABLED_LINES: [&str; 6] = [
+  "RESET_MAPPINGS",
+  "AUTOCONNECT = ON",
+  "TELEMETRY_ENABLED = ON",
+  "TELEMETRY_PORT = 8974",
+  "AUTOLOAD = OFF",
+  "VIRTUAL_CONTROLLER = NONE",
+];
 const SUPPORT_FILE_NAMES: [&str; 2] = ["OnReset.txt", "OnReconnect.txt"];
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RuntimeMappingState {
+  pub active_profile_path: String,
+  pub mapping_enabled: bool,
+  pub autoload_enabled: bool,
+}
+
+#[derive(Clone, Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AutoloadRule {
+  pub process_name: String,
+  pub file_name: String,
+  pub kind: String,
+  pub profile_name: Option<String>,
+  pub profile_path: Option<String>,
+  pub missing_profile: bool,
+}
 
 pub fn ensure_required_files(app: &AppHandle) -> Result<(), String> {
   let backend = read_backend_choice(app)?;
@@ -43,9 +74,14 @@ pub fn ensure_required_files(app: &AppHandle) -> Result<(), String> {
     &absolute_profile_path(app, DEFAULT_PROFILE_RELATIVE)?,
     &profile_template_text(),
   )?;
+  ensure_mapping_disabled_file(app)?;
 
-  let active_relative = ensure_active_profile_exists(app)?;
-  write_startup_file(app, &active_relative)?;
+  let state = ensure_runtime_mapping_state(app)?;
+  ensure_file(
+    &absolute_profile_path(app, &state.active_profile_path)?,
+    &profile_template_text(),
+  )?;
+  write_startup_file(app, &state)?;
   let seconds = read_calibration_seconds(app)?;
   write_calibration_command_file(app, seconds)?;
 
@@ -92,7 +128,7 @@ pub fn write_calibration_seconds(app: &AppHandle, seconds: u32) -> Result<u32, S
 
 pub fn get_active_profile(app: &AppHandle) -> Result<(String, String), String> {
   ensure_required_files(app)?;
-  let relative = ensure_active_profile_exists(app)?;
+  let relative = read_runtime_mapping_state(app)?.active_profile_path;
   let absolute = absolute_profile_path(app, &relative)?;
   let content = fs::read_to_string(absolute)
     .map_err(|error| format!("Failed to read active profile: {error}"))?;
@@ -103,7 +139,11 @@ pub fn set_active_profile(app: &AppHandle, relative: &str) -> Result<(), String>
   ensure_required_files(app)?;
   let absolute = absolute_profile_path(app, relative)?;
   ensure_file(&absolute, "")?;
-  write_startup_file(app, relative)?;
+  let mut state = read_runtime_mapping_state(app)?;
+  state.active_profile_path = normalize_relative_profile_path(Some(relative))
+    .ok_or_else(|| format!("Invalid profile path: {relative}"))?;
+  persist_runtime_mapping_state(app, &state)?;
+  write_startup_file(app, &state)?;
   Ok(())
 }
 
@@ -115,12 +155,15 @@ pub fn write_active_profile(
   ensure_required_files(app)?;
   let resolved = match normalize_relative_profile_path(relative) {
     Some(value) => value,
-    None => ensure_active_profile_exists(app)?,
+    None => read_runtime_mapping_state(app)?.active_profile_path,
   };
   let absolute = absolute_profile_path(app, &resolved)?;
   ensure_file(&absolute, "")?;
   fs::write(&absolute, content).map_err(|error| format!("Failed to write profile: {error}"))?;
-  write_startup_file(app, &resolved)?;
+  let mut state = read_runtime_mapping_state(app)?;
+  state.active_profile_path = resolved.clone();
+  persist_runtime_mapping_state(app, &state)?;
+  write_startup_file(app, &state)?;
   Ok(resolved)
 }
 
@@ -176,7 +219,7 @@ pub fn create_library_profile(
   let absolute = absolute_profile_path(app, &relative)?;
   let content = profile_template_text();
   fs::write(&absolute, &content).map_err(|error| format!("Failed to create profile: {error}"))?;
-  write_startup_file(app, &relative)?;
+  set_active_profile_state(app, &relative)?;
   Ok((relative, content))
 }
 
@@ -219,11 +262,12 @@ pub fn rename_library_profile(
   fs::rename(&old_absolute, &new_absolute)
     .map_err(|error| format!("Failed to rename profile: {error}"))?;
 
-  if let Some(active) = get_startup_profile_path(app)? {
-    if active.eq_ignore_ascii_case(&old_relative) {
-      write_startup_file(app, &new_relative)?;
-    }
+  let active = read_runtime_mapping_state(app)?.active_profile_path;
+  if active.eq_ignore_ascii_case(&old_relative) {
+    set_active_profile_state(app, &new_relative)?;
   }
+
+  update_autoload_profile_references(app, &old_relative, &new_relative)?;
 
   let content = fs::read_to_string(&new_absolute)
     .map_err(|error| format!("Failed to read renamed profile: {error}"))?;
@@ -238,7 +282,7 @@ pub fn copy_active_profile(app: &AppHandle) -> Result<(String, String), String> 
   let copy_relative = relative_profile_path_from_name(&copy_name);
   let copy_absolute = absolute_profile_path(app, &copy_relative)?;
   fs::write(&copy_absolute, &content).map_err(|error| format!("Failed to copy profile: {error}"))?;
-  write_startup_file(app, &copy_relative)?;
+  set_active_profile_state(app, &copy_relative)?;
   Ok((copy_relative, content))
 }
 
@@ -249,21 +293,20 @@ pub fn delete_library_profile(app: &AppHandle, name: &str) -> Result<Option<(Str
   let absolute = absolute_profile_path(app, &relative)?;
   let _ = fs::remove_file(absolute);
 
-  if let Some(active) = get_startup_profile_path(app)? {
-    if active.eq_ignore_ascii_case(&relative) {
-      let remaining = list_library_profiles(app)?;
-      if let Some(fallback_name) = remaining.first() {
-        let fallback_relative = relative_profile_path_from_name(fallback_name);
-        write_startup_file(app, &fallback_relative)?;
-        let content = fs::read_to_string(absolute_profile_path(app, &fallback_relative)?)
-          .map_err(|error| format!("Failed to read fallback profile: {error}"))?;
-        return Ok(Some((fallback_relative, content)));
-      }
-
-      write_startup_file(app, DEFAULT_PROFILE_RELATIVE)?;
-      ensure_file(&absolute_profile_path(app, DEFAULT_PROFILE_RELATIVE)?, "")?;
-      return Ok(Some((DEFAULT_PROFILE_RELATIVE.to_string(), String::new())));
+  let active = read_runtime_mapping_state(app)?.active_profile_path;
+  if active.eq_ignore_ascii_case(&relative) {
+    let remaining = list_library_profiles(app)?;
+    if let Some(fallback_name) = remaining.first() {
+      let fallback_relative = relative_profile_path_from_name(fallback_name);
+      set_active_profile_state(app, &fallback_relative)?;
+      let content = fs::read_to_string(absolute_profile_path(app, &fallback_relative)?)
+        .map_err(|error| format!("Failed to read fallback profile: {error}"))?;
+      return Ok(Some((fallback_relative, content)));
     }
+
+    set_active_profile_state(app, DEFAULT_PROFILE_RELATIVE)?;
+    ensure_file(&absolute_profile_path(app, DEFAULT_PROFILE_RELATIVE)?, "")?;
+    return Ok(Some((DEFAULT_PROFILE_RELATIVE.to_string(), String::new())));
   }
 
   Ok(None)
@@ -296,6 +339,98 @@ pub fn profile_name_from_relative_path(relative: &str) -> String {
 
 pub fn calibration_profile_relative() -> String {
   CALIBRATION_PROFILE_RELATIVE.to_string()
+}
+
+pub fn get_runtime_mapping_state(app: &AppHandle) -> Result<RuntimeMappingState, String> {
+  ensure_required_files(app)?;
+  read_runtime_mapping_state(app)
+}
+
+pub fn set_mapping_enabled(app: &AppHandle, enabled: bool) -> Result<RuntimeMappingState, String> {
+  ensure_required_files(app)?;
+  let mut state = read_runtime_mapping_state(app)?;
+  state.mapping_enabled = enabled;
+  persist_runtime_mapping_state(app, &state)?;
+  write_startup_file(app, &state)?;
+  Ok(state)
+}
+
+pub fn set_autoload_enabled(app: &AppHandle, enabled: bool) -> Result<RuntimeMappingState, String> {
+  ensure_required_files(app)?;
+  let mut state = read_runtime_mapping_state(app)?;
+  state.autoload_enabled = enabled;
+  persist_runtime_mapping_state(app, &state)?;
+  write_startup_file(app, &state)?;
+  Ok(state)
+}
+
+pub fn effective_profile_for_state(state: &RuntimeMappingState) -> String {
+  if state.mapping_enabled {
+    state.active_profile_path.clone()
+  } else {
+    MAPPING_DISABLED_RELATIVE.to_string()
+  }
+}
+
+pub fn list_autoload_rules(app: &AppHandle) -> Result<Vec<AutoloadRule>, String> {
+  ensure_required_files(app)?;
+  let dir = autoload_dir(app)?;
+  ensure_dir(&dir)?;
+
+  let mut rules = Vec::new();
+  let entries = fs::read_dir(&dir)
+    .map_err(|error| format!("Failed to read AutoLoad directory: {error}"))?;
+
+  for entry in entries {
+    let entry = entry.map_err(|error| format!("Failed to read AutoLoad entry: {error}"))?;
+    let path = entry.path();
+    if path.extension().and_then(|ext| ext.to_str()) != Some("txt") {
+      continue;
+    }
+    rules.push(autoload_rule_from_path(app, &path)?);
+  }
+
+  rules.sort_by(|left, right| {
+    left
+      .process_name
+      .to_ascii_lowercase()
+      .cmp(&right.process_name.to_ascii_lowercase())
+      .then_with(|| left.process_name.cmp(&right.process_name))
+  });
+
+  Ok(rules)
+}
+
+pub fn save_autoload_rule(
+  app: &AppHandle,
+  process_name: &str,
+  profile_name: &str,
+) -> Result<AutoloadRule, String> {
+  ensure_required_files(app)?;
+  let process = sanitize_process_name(process_name)?;
+  let safe_profile = sanitize_profile_name(profile_name);
+  let profile_relative = relative_profile_path_from_name(&safe_profile);
+  let profile_absolute = absolute_profile_path(app, &profile_relative)?;
+  if !profile_absolute.exists() {
+    return Err(format!("Profile does not exist: {safe_profile}"));
+  }
+
+  let path = autoload_rule_path(app, &process)?;
+  ensure_parent_dir(&path)?;
+  fs::write(&path, format!("{profile_relative}\n"))
+    .map_err(|error| format!("Failed to save AutoLoad rule: {error}"))?;
+  autoload_rule_from_path(app, &path)
+}
+
+pub fn delete_autoload_rule(app: &AppHandle, process_name: &str) -> Result<bool, String> {
+  ensure_required_files(app)?;
+  let process = sanitize_process_name(process_name)?;
+  let path = autoload_rule_path(app, &process)?;
+  match fs::remove_file(path) {
+    Ok(()) => Ok(true),
+    Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(true),
+    Err(error) => Err(format!("Failed to delete AutoLoad rule: {error}")),
+  }
 }
 
 pub fn sanitize_profile_name(raw_name: &str) -> String {
@@ -403,6 +538,20 @@ fn calibration_preset_path(app: &AppHandle) -> Result<PathBuf, String> {
 
 fn startup_file(app: &AppHandle) -> Result<PathBuf, String> {
   Ok(runtime_dir(app)?.join(STARTUP_FILE_NAME))
+}
+
+fn gui_state_file(app: &AppHandle) -> Result<PathBuf, String> {
+  Ok(
+    app
+      .path()
+      .app_data_dir()
+      .map_err(|error| format!("Failed to resolve app data directory: {error}"))?
+      .join(GUI_STATE_FILE_NAME),
+  )
+}
+
+fn mapping_disabled_file(app: &AppHandle) -> Result<PathBuf, String> {
+  Ok(runtime_dir(app)?.join(MAPPING_DISABLED_FILE_NAME))
 }
 
 fn calibration_command_file(app: &AppHandle) -> Result<PathBuf, String> {
@@ -523,13 +672,26 @@ fn profile_template_text() -> String {
   PROFILE_TEMPLATE_LINES.join("\n") + "\n"
 }
 
-fn startup_file_text(profile_relative_path: &str) -> String {
+fn startup_file_text(state: &RuntimeMappingState) -> String {
   let mut lines = STARTUP_HEADER_LINES
     .iter()
     .map(|line| (*line).to_string())
     .collect::<Vec<_>>();
-  lines.push(profile_relative_path.to_string());
+  if state.mapping_enabled {
+    lines.push(state.active_profile_path.clone());
+    lines.push(format!(
+      "AUTOLOAD = {}",
+      if state.autoload_enabled { "ON" } else { "OFF" }
+    ));
+  } else {
+    lines.push("AUTOLOAD = OFF".to_string());
+    lines.push(MAPPING_DISABLED_RELATIVE.to_string());
+  }
   lines.join("\n") + "\n"
+}
+
+fn mapping_disabled_text() -> String {
+  MAPPING_DISABLED_LINES.join("\n") + "\n"
 }
 
 fn calibration_command_text(seconds: u32) -> String {
@@ -563,11 +725,132 @@ fn get_startup_profile_path(app: &AppHandle) -> Result<Option<String>, String> {
   Ok(None)
 }
 
-fn write_startup_file(app: &AppHandle, relative_path: &str) -> Result<(), String> {
+fn get_startup_autoload_enabled(app: &AppHandle) -> Result<Option<bool>, String> {
+  let path = startup_file(app)?;
+  let content = match fs::read_to_string(path) {
+    Ok(value) => value,
+    Err(_) => return Ok(None),
+  };
+
+  for line in content.lines().rev() {
+    let normalized = line.trim().replace(' ', "").to_ascii_uppercase();
+    match normalized.as_str() {
+      "AUTOLOAD=ON" => return Ok(Some(true)),
+      "AUTOLOAD=OFF" => return Ok(Some(false)),
+      _ => {}
+    }
+  }
+
+  Ok(None)
+}
+
+fn write_startup_file(app: &AppHandle, state: &RuntimeMappingState) -> Result<(), String> {
   let path = startup_file(app)?;
   ensure_parent_dir(&path)?;
-  fs::write(&path, startup_file_text(relative_path))
+  fs::write(&path, startup_file_text(state))
     .map_err(|error| format!("Failed to write startup file: {error}"))
+}
+
+fn ensure_mapping_disabled_file(app: &AppHandle) -> Result<(), String> {
+  let path = mapping_disabled_file(app)?;
+  ensure_parent_dir(&path)?;
+  fs::write(path, mapping_disabled_text())
+    .map_err(|error| format!("Failed to write mapping disabled profile: {error}"))
+}
+
+fn ensure_runtime_mapping_state(app: &AppHandle) -> Result<RuntimeMappingState, String> {
+  let path = gui_state_file(app)?;
+  let mut should_persist = false;
+  let mut state = match fs::read_to_string(&path) {
+    Ok(content) => match serde_json::from_str::<RuntimeMappingState>(&content) {
+      Ok(value) => value,
+      Err(_) => {
+        should_persist = true;
+        default_runtime_mapping_state(app)?
+      }
+    },
+    Err(_) => {
+      should_persist = true;
+      default_runtime_mapping_state(app)?
+    }
+  };
+
+  let normalized_active = normalize_relative_profile_path(Some(&state.active_profile_path))
+    .unwrap_or_else(|| DEFAULT_PROFILE_RELATIVE.to_string());
+  if normalized_active != state.active_profile_path {
+    state.active_profile_path = normalized_active;
+    should_persist = true;
+  }
+
+  ensure_file(
+    &absolute_profile_path(app, &state.active_profile_path)?,
+    &profile_template_text(),
+  )?;
+
+  if should_persist {
+    persist_runtime_mapping_state(app, &state)?;
+  }
+
+  write_startup_file(app, &state)?;
+  Ok(state)
+}
+
+fn default_runtime_mapping_state(app: &AppHandle) -> Result<RuntimeMappingState, String> {
+  let startup_profile = get_startup_profile_path(app)?;
+  let mapping_enabled = startup_profile
+    .as_deref()
+    .map(|candidate| !candidate.eq_ignore_ascii_case(MAPPING_DISABLED_RELATIVE))
+    .unwrap_or(true);
+  let active_profile_path = startup_profile
+    .as_deref()
+    .and_then(|candidate| normalize_relative_profile_path(Some(candidate)))
+    .filter(|relative| {
+      absolute_profile_path(app, relative)
+        .map(|path| path.exists())
+        .unwrap_or(false)
+    })
+    .unwrap_or_else(|| DEFAULT_PROFILE_RELATIVE.to_string());
+
+  Ok(RuntimeMappingState {
+    active_profile_path,
+    mapping_enabled,
+    autoload_enabled: get_startup_autoload_enabled(app)?.unwrap_or(true),
+  })
+}
+
+fn read_runtime_mapping_state(app: &AppHandle) -> Result<RuntimeMappingState, String> {
+  let path = gui_state_file(app)?;
+  let raw = match fs::read_to_string(path) {
+    Ok(value) => value,
+    Err(_) => return default_runtime_mapping_state(app),
+  };
+
+  let mut state = serde_json::from_str::<RuntimeMappingState>(&raw)
+    .map_err(|error| format!("Failed to parse GUI runtime state: {error}"))?;
+  state.active_profile_path = normalize_relative_profile_path(Some(&state.active_profile_path))
+    .unwrap_or_else(|| DEFAULT_PROFILE_RELATIVE.to_string());
+  Ok(state)
+}
+
+fn persist_runtime_mapping_state(app: &AppHandle, state: &RuntimeMappingState) -> Result<(), String> {
+  let path = gui_state_file(app)?;
+  ensure_parent_dir(&path)?;
+  let content = serde_json::to_string_pretty(state)
+    .map_err(|error| format!("Failed to serialize GUI runtime state: {error}"))?;
+  fs::write(path, content).map_err(|error| format!("Failed to write GUI runtime state: {error}"))
+}
+
+fn set_active_profile_state(app: &AppHandle, relative: &str) -> Result<(), String> {
+  let normalized = normalize_relative_profile_path(Some(relative))
+    .ok_or_else(|| format!("Invalid profile path: {relative}"))?;
+  ensure_file(
+    &absolute_profile_path(app, &normalized)?,
+    &profile_template_text(),
+  )?;
+  let mut state = read_runtime_mapping_state(app)?;
+  state.active_profile_path = normalized;
+  persist_runtime_mapping_state(app, &state)?;
+  write_startup_file(app, &state)
 }
 
 fn write_calibration_command_file(app: &AppHandle, seconds: u32) -> Result<(), String> {
@@ -577,23 +860,120 @@ fn write_calibration_command_file(app: &AppHandle, seconds: u32) -> Result<(), S
     .map_err(|error| format!("Failed to write calibration command file: {error}"))
 }
 
-fn ensure_startup_profile_path(app: &AppHandle) -> Result<String, String> {
-  let relative = match get_startup_profile_path(app)? {
-    Some(candidate) => match absolute_profile_path(app, &candidate) {
-      Ok(path) if path.exists() => candidate,
-      _ => DEFAULT_PROFILE_RELATIVE.to_string(),
-    },
-    None => DEFAULT_PROFILE_RELATIVE.to_string(),
-  };
-
-  write_startup_file(app, &relative)?;
-  Ok(relative)
+fn autoload_rule_path(app: &AppHandle, process_name: &str) -> Result<PathBuf, String> {
+  Ok(autoload_dir(app)?.join(format!("{process_name}.txt")))
 }
 
-fn ensure_active_profile_exists(app: &AppHandle) -> Result<String, String> {
-  let relative = ensure_startup_profile_path(app)?;
-  ensure_file(&absolute_profile_path(app, &relative)?, &profile_template_text())?;
-  Ok(relative)
+fn autoload_rule_from_path(app: &AppHandle, path: &Path) -> Result<AutoloadRule, String> {
+  let file_name = path
+    .file_name()
+    .and_then(|value| value.to_str())
+    .unwrap_or_default()
+    .to_string();
+  let process_name = path
+    .file_stem()
+    .and_then(|value| value.to_str())
+    .unwrap_or_default()
+    .to_string();
+  let content = fs::read_to_string(path).unwrap_or_default();
+
+  if let Some(profile_path) = parse_linked_autoload_profile(&content) {
+    let missing_profile = !absolute_profile_path(app, &profile_path)?.exists();
+    return Ok(AutoloadRule {
+      process_name,
+      file_name,
+      kind: "profile".to_string(),
+      profile_name: Some(profile_name_from_relative_path(&profile_path)),
+      profile_path: Some(profile_path),
+      missing_profile,
+    });
+  }
+
+  Ok(AutoloadRule {
+    process_name,
+    file_name,
+    kind: "advanced".to_string(),
+    profile_name: None,
+    profile_path: None,
+    missing_profile: false,
+  })
+}
+
+fn parse_linked_autoload_profile(content: &str) -> Option<String> {
+  let meaningful_lines = content
+    .lines()
+    .map(str::trim)
+    .filter(|line| !line.is_empty() && !line.starts_with('#') && !line.starts_with("//"))
+    .collect::<Vec<_>>();
+
+  if meaningful_lines.len() != 1 {
+    return None;
+  }
+
+  let value = meaningful_lines[0].trim_matches('"');
+  normalize_relative_profile_path(Some(value))
+}
+
+fn update_autoload_profile_references(
+  app: &AppHandle,
+  old_relative: &str,
+  new_relative: &str,
+) -> Result<(), String> {
+  let dir = autoload_dir(app)?;
+  if !dir.exists() {
+    return Ok(());
+  }
+
+  for entry in fs::read_dir(&dir)
+    .map_err(|error| format!("Failed to read AutoLoad directory: {error}"))?
+  {
+    let entry = entry.map_err(|error| format!("Failed to read AutoLoad entry: {error}"))?;
+    let path = entry.path();
+    if path.extension().and_then(|ext| ext.to_str()) != Some("txt") {
+      continue;
+    }
+    let content = fs::read_to_string(&path).unwrap_or_default();
+    if parse_linked_autoload_profile(&content)
+      .as_deref()
+      .is_some_and(|relative| relative.eq_ignore_ascii_case(old_relative))
+    {
+      fs::write(&path, format!("{new_relative}\n"))
+        .map_err(|error| format!("Failed to update AutoLoad profile reference: {error}"))?;
+    }
+  }
+
+  Ok(())
+}
+
+fn sanitize_process_name(raw_name: &str) -> Result<String, String> {
+  let normalized = raw_name.trim().replace('\\', "/");
+  let mut name = normalized
+    .rsplit('/')
+    .next()
+    .unwrap_or_default()
+    .trim()
+    .to_string();
+
+  for suffix in [".exe", ".txt"] {
+    if name.to_ascii_lowercase().ends_with(suffix) {
+      let next_len = name.len().saturating_sub(suffix.len());
+      name.truncate(next_len);
+    }
+  }
+
+  let cleaned = name
+    .chars()
+    .filter(|character| character.is_alphanumeric() || matches!(character, '-' | '_' | '.' | ' '))
+    .take(80)
+    .collect::<String>()
+    .trim_matches(['.', ' '])
+    .to_string();
+
+  if cleaned.is_empty() {
+    Err("Process name cannot be empty.".to_string())
+  } else {
+    Ok(cleaned)
+  }
 }
 
 fn normalize_relative_profile_path(input: Option<&str>) -> Option<String> {

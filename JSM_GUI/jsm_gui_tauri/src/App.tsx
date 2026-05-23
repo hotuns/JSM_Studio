@@ -3,7 +3,7 @@ import { version as APP_VERSION } from '../package.json'
 import sideNavStyles from './components/SideNav.module.css'
 import topBarStyles from './components/TopBar.module.css'
 import { ThemeToggle } from './components/ThemeToggle'
-import { Suspense, lazy, useEffect, useState } from 'react'
+import { Suspense, lazy, useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useTelemetry } from './hooks/useTelemetry'
 import miscStyles from './components/Misc.module.css'
@@ -20,16 +20,47 @@ import { showToast } from './utils/toast'
 import { LanguageSelect } from './components/LanguageSelect'
 
 
-type PrimaryTab = 'gyro' | 'keybinds' | 'touchpad' | 'sticks' | 'controllerStatus' | 'debugConsole' | 'help'
+type PrimaryTab = 'gyro' | 'keybinds' | 'touchpad' | 'controllerStatus' | 'debugConsole' | 'ai' | 'help'
 type GyroSubTab = 'behavior' | 'sensitivity' | 'noise'
-type KeybindsSubTab = 'global' | 'face' | 'dpad' | 'bumpers' | 'triggers' | 'center' | 'paddles' | 'extra'
 type TouchpadSubTab = 'mode' | 'bind'
-type SticksSubTab = 'bindings' | 'modes'
-type ControllerStatusSubTab = 'status' | 'bindings'
+const QQ_GROUP_URL = 'https://qm.qq.com/q/OyPvwoBSkU'
+const QQ_GROUP_NUMBER = '855488128'
 
 const asNumber = (value: unknown) => (typeof value === 'number' ? value : undefined)
 const formatNumber = (value: number | undefined, digits = 2) =>
   typeof value === 'number' && Number.isFinite(value) ? value.toFixed(digits) : '0.00'
+const FLOATING_WINDOW_MARGIN = 16
+
+type FloatingWindowPosition = {
+  x: number
+  y: number
+}
+
+const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max)
+
+const clampFloatingWindowPosition = (
+  position: FloatingWindowPosition,
+  width: number,
+  height: number
+): FloatingWindowPosition => {
+  const maxX = Math.max(FLOATING_WINDOW_MARGIN, window.innerWidth - width - FLOATING_WINDOW_MARGIN)
+  const maxY = Math.max(FLOATING_WINDOW_MARGIN, window.innerHeight - height - FLOATING_WINDOW_MARGIN)
+
+  return {
+    x: clamp(position.x, FLOATING_WINDOW_MARGIN, maxX),
+    y: clamp(position.y, FLOATING_WINDOW_MARGIN, maxY),
+  }
+}
+
+const getDefaultFloatingWindowPosition = (width: number, height: number): FloatingWindowPosition =>
+  clampFloatingWindowPosition(
+    {
+      x: window.innerWidth - width - FLOATING_WINDOW_MARGIN,
+      y: Math.round((window.innerHeight - height) / 2),
+    },
+    width,
+    height
+  )
 
 const GyroBehaviorControls = lazy(async () => {
   const module = await import('./components/GyroBehaviorControls')
@@ -61,6 +92,11 @@ const ProfileManager = lazy(async () => {
   return { default: module.ProfileManager }
 })
 
+const AutoloadManager = lazy(async () => {
+  const module = await import('./components/AutoloadManager')
+  return { default: module.AutoloadManager }
+})
+
 const HelpDocsPage = lazy(async () => {
   const module = await import('./components/HelpDocsPage')
   return { default: module.HelpDocsPage }
@@ -69,6 +105,11 @@ const HelpDocsPage = lazy(async () => {
 const MappingDebugPage = lazy(async () => {
   const module = await import('./components/MappingDebugPage')
   return { default: module.MappingDebugPage }
+})
+
+const AiMappingPage = lazy(async () => {
+  const module = await import('./components/AiMappingPage')
+  return { default: module.AiMappingPage }
 })
 
 const UpdateBanner = lazy(async () => {
@@ -133,6 +174,12 @@ const PrimaryNav = ({ primaryTab, setPrimaryTab, includeHelp = false }: PrimaryN
         >
           {t('app.nav.touchpad')}
         </button>
+        <button
+          className={`${sideNavStyles.navItem} ${primaryTab === 'ai' ? sideNavStyles.active : ''}`}
+          onClick={() => setPrimaryTab('ai')}
+        >
+          {t('app.nav.aiAssistant')}
+        </button>
       </div>
       <div className={sideNavStyles.navSection}>
         <div className={sideNavStyles.navSectionLabel}>{t('app.nav.tuningGroup')}</div>
@@ -141,12 +188,6 @@ const PrimaryNav = ({ primaryTab, setPrimaryTab, includeHelp = false }: PrimaryN
           onClick={() => setPrimaryTab('gyro')}
         >
           {t('app.nav.gyroAndSensitivity')}
-        </button>
-        <button
-          className={`${sideNavStyles.navItem} ${primaryTab === 'sticks' ? sideNavStyles.active : ''}`}
-          onClick={() => setPrimaryTab('sticks')}
-        >
-          {t('app.nav.sticks')}
         </button>
       </div>
       {includeHelp && (
@@ -181,51 +222,47 @@ const HelpNavButton = ({ primaryTab, setPrimaryTab }: HelpNavButtonProps) => {
 
 type TopBarContentProps = {
   primaryTab: PrimaryTab
-  backendChoice: 'SDL' | 'legacy'
-  onBackendChange: (choice: 'SDL' | 'legacy') => void
-  renderControllerStatusNav: () => JSX.Element
   renderGyroNav: () => JSX.Element
-  renderKeybindsNav: () => JSX.Element
   renderTouchpadNav: () => JSX.Element
-  renderSticksNav: () => JSX.Element
+  compactThemeToggle?: boolean
 }
 
 const TopBarContent = ({
   primaryTab,
-  backendChoice,
-  onBackendChange,
-  renderControllerStatusNav,
   renderGyroNav,
-  renderKeybindsNav,
   renderTouchpadNav,
-  renderSticksNav,
+  compactThemeToggle = false,
 }: TopBarContentProps) => {
-  const { t } = useTranslation()
-
   return (
     <>
       <div className={topBarStyles.topBarLeft}>
-        {primaryTab === 'controllerStatus' && renderControllerStatusNav()}
         {primaryTab === 'gyro' && renderGyroNav()}
-        {primaryTab === 'keybinds' && renderKeybindsNav()}
         {primaryTab === 'touchpad' && renderTouchpadNav()}
-        {primaryTab === 'sticks' && renderSticksNav()}
       </div>
       <div className={topBarStyles.topBarRight}>
-        <LanguageSelect className={topBarStyles.inlineSelect} />
-        <label className={topBarStyles.inlineSelect}>
-          <span>{t('app.topBar.jsmVersion')}</span>
-          <select
-            className="app-select"
-            value={backendChoice}
-            onChange={(e) => onBackendChange(e.target.value as 'SDL' | 'legacy')}
-          >
-            <option value="SDL">SDL</option>
-            <option value="legacy">{t('app.topBar.legacy')}</option>
-          </select>
-        </label>
+        <div className={topBarStyles.topBarSettings}>
+          <LanguageSelect className={topBarStyles.inlineSelect} />
+          <ThemeToggle compact={compactThemeToggle} className={topBarStyles.themeToggleInline} />
+        </div>
       </div>
     </>
+  )
+}
+
+const CommunityNavButton = () => {
+  const { t } = useTranslation()
+
+  return (
+    <button
+      type="button"
+      className={`${sideNavStyles.navItem} ${sideNavStyles.navFooterLink}`}
+      onClick={() => {
+        void desktopBridge.openExternal(QQ_GROUP_URL)
+      }}
+    >
+      <span className={sideNavStyles.navFooterLinkTitle}>{t('common.joinQqGroup')}</span>
+      <span className={sideNavStyles.navFooterLinkMeta}>{t('common.qqGroupNumber', { number: QQ_GROUP_NUMBER })}</span>
+    </button>
   )
 }
 
@@ -235,16 +272,21 @@ function App() {
   const [statusMessage, setStatusMessage] = useState<string | null>(null)
   const [recalibrating, setRecalibrating] = useState(false)
   const [isProfileModalOpen, setProfileModalOpen] = useState(false)
+  const [isAutoloadModalOpen, setAutoloadModalOpen] = useState(false)
   const [isRwcGuideModalOpen, setIsRwcGuideModalOpen] = useState(false)
   const [isConfigDrawerOpen, setConfigDrawerOpen] = useState(false)
+  const [configWindowPosition, setConfigWindowPosition] = useState<FloatingWindowPosition | null>(null)
+  const [configWindowDragging, setConfigWindowDragging] = useState(false)
+  const [mappingEnabled, setMappingEnabled] = useState(true)
+  const [autoloadEnabled, setAutoloadEnabled] = useState(true)
+  const [runtimeMappingBusy, setRuntimeMappingBusy] = useState(false)
   const [calibrationTurns, setCalibrationTurns] = useState('1')
   const [primaryTab, setPrimaryTab] = useState<PrimaryTab>('controllerStatus')
   const [gyroSubTab, setGyroSubTab] = useState<GyroSubTab>('behavior')
-  const [keybindsSubTab, setKeybindsSubTab] = useState<KeybindsSubTab>('face')
   const [touchpadSubTab, setTouchpadSubTab] = useState<TouchpadSubTab>('mode')
-  const [sticksSubTab, setSticksSubTab] = useState<SticksSubTab>('bindings')
-  const [controllerStatusSubTab, setControllerStatusSubTab] = useState<ControllerStatusSubTab>('status')
   const [selectedMappingCommand, setSelectedMappingCommand] = useState<string | null>('N')
+  const configWindowRef = useRef<HTMLDivElement | null>(null)
+  const configWindowDragRef = useRef<{ pointerId: number; offsetX: number; offsetY: number } | null>(null)
   const {
     configText,
     setConfigText,
@@ -359,7 +401,6 @@ function App() {
     handleDeleteLibraryProfile,
     handleImportProfile,
     handleCopyActiveProfile,
-    refreshActiveProfile,
   } = useProfileLibrary({
     configText,
     setConfigText,
@@ -435,15 +476,6 @@ function App() {
   const profileLabel = currentLibraryProfile ?? t('app.profileSummary.unsavedProfile')
   const profileFileLabel = `${profileLabel}${profileLabel.endsWith('.txt') ? '' : '.txt'}`
   const lockMessage = t('messages.lockMessage')
-  const [backendChoice, setBackendChoice] = useState<'SDL' | 'legacy'>('SDL')
-
-  useEffect(() => {
-    desktopBridge.getBackendChoice().then(choice => {
-      if (choice === 'SDL' || choice === 'legacy') {
-        setBackendChoice(choice)
-      }
-    }).catch(() => {})
-  }, [])
 
   useEffect(() => {
     const handleFocusIn = (event: FocusEvent) => {
@@ -489,12 +521,43 @@ function App() {
     return () => observer.disconnect()
   }, [])
 
-  const handleBackendChange = (choice: 'SDL' | 'legacy') => {
-    setBackendChoice(choice)
-    desktopBridge.setBackendChoice(choice)
-      .then(() => refreshActiveProfile())
-      .catch(() => {})
-  }
+  useEffect(() => {
+    if (!isConfigDrawerOpen) {
+      configWindowDragRef.current = null
+      setConfigWindowDragging(false)
+      return
+    }
+
+    const updateFloatingWindowPosition = () => {
+      const rect = configWindowRef.current?.getBoundingClientRect()
+      const width = rect?.width ?? Math.min(window.innerWidth - FLOATING_WINDOW_MARGIN * 2, 400)
+      const height = rect?.height ?? Math.min(window.innerHeight - FLOATING_WINDOW_MARGIN * 2, 760)
+      setConfigWindowPosition(current =>
+        clampFloatingWindowPosition(current ?? getDefaultFloatingWindowPosition(width, height), width, height)
+      )
+    }
+
+    const frame = window.requestAnimationFrame(updateFloatingWindowPosition)
+    window.addEventListener('resize', updateFloatingWindowPosition)
+
+    return () => {
+      window.cancelAnimationFrame(frame)
+      window.removeEventListener('resize', updateFloatingWindowPosition)
+    }
+  }, [isConfigDrawerOpen])
+
+  useEffect(() => {
+    if (!isConfigDrawerOpen) return undefined
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setConfigDrawerOpen(false)
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [isConfigDrawerOpen])
 
   const handleApplyWithFinalize = () => {
     const nextText = finalizePendingValues ? finalizePendingValues() : undefined
@@ -503,6 +566,112 @@ function App() {
     } else {
       applyConfig()
     }
+  }
+
+  useEffect(() => {
+    let disposed = false
+    void desktopBridge.getRuntimeMappingState().then(state => {
+      if (disposed) return
+      setMappingEnabled(state.mappingEnabled)
+      setAutoloadEnabled(state.autoloadEnabled)
+    }).catch(error => {
+      console.error('Failed to load runtime mapping state', error)
+    })
+    return () => {
+      disposed = true
+    }
+  }, [])
+
+  const handleToggleMappingEnabled = async () => {
+    if (runtimeMappingBusy) return
+    const nextEnabled = !mappingEnabled
+    setRuntimeMappingBusy(true)
+    try {
+      if (nextEnabled && hasPendingChanges) {
+        await applyConfig()
+      }
+      const nextState = await desktopBridge.setMappingEnabled(nextEnabled)
+      setMappingEnabled(nextState.mappingEnabled)
+      setAutoloadEnabled(nextState.autoloadEnabled)
+      const message = nextState.mappingEnabled ? t('messages.mappingEnabled') : t('messages.mappingPaused')
+      setStatusMessage(message)
+      showToast(message)
+      setTimeout(() => setStatusMessage(null), 3000)
+    } catch (error) {
+      console.error('Failed to toggle mapping output', error)
+      const message = t('messages.mappingToggleFailed')
+      setStatusMessage(message)
+      showToast(message, 'error')
+    } finally {
+      setRuntimeMappingBusy(false)
+    }
+  }
+
+  const handleAutoloadEnabledChange = async (enabled: boolean) => {
+    if (runtimeMappingBusy) return
+    setRuntimeMappingBusy(true)
+    try {
+      const nextState = await desktopBridge.setAutoloadEnabled(enabled)
+      setMappingEnabled(nextState.mappingEnabled)
+      setAutoloadEnabled(nextState.autoloadEnabled)
+      const message = nextState.autoloadEnabled ? t('messages.autoloadEnabled') : t('messages.autoloadDisabled')
+      setStatusMessage(message)
+      showToast(message)
+      setTimeout(() => setStatusMessage(null), 3000)
+    } catch (error) {
+      console.error('Failed to update AutoLoad setting', error)
+      const message = t('messages.autoloadUpdateFailed')
+      setStatusMessage(message)
+      showToast(message, 'error')
+    } finally {
+      setRuntimeMappingBusy(false)
+    }
+  }
+
+  const handleConfigWindowDragStart = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (event.button !== 0) return
+
+    const floatingWindow = configWindowRef.current
+    if (!floatingWindow) return
+
+    const rect = floatingWindow.getBoundingClientRect()
+    const nextPosition = configWindowPosition ?? { x: rect.left, y: rect.top }
+    configWindowDragRef.current = {
+      pointerId: event.pointerId,
+      offsetX: event.clientX - nextPosition.x,
+      offsetY: event.clientY - nextPosition.y,
+    }
+    setConfigWindowPosition(nextPosition)
+    event.currentTarget.setPointerCapture(event.pointerId)
+    setConfigWindowDragging(true)
+  }
+
+  const handleConfigWindowDragMove = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const dragState = configWindowDragRef.current
+    const floatingWindow = configWindowRef.current
+    if (!dragState || dragState.pointerId !== event.pointerId || !floatingWindow) return
+
+    const rect = floatingWindow.getBoundingClientRect()
+    setConfigWindowPosition(
+      clampFloatingWindowPosition(
+        {
+          x: event.clientX - dragState.offsetX,
+          y: event.clientY - dragState.offsetY,
+        },
+        rect.width,
+        rect.height
+      )
+    )
+  }
+
+  const handleConfigWindowDragEnd = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (configWindowDragRef.current?.pointerId !== event.pointerId) return
+
+    configWindowDragRef.current = null
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId)
+    }
+    setConfigWindowDragging(false)
   }
 
   const renderGyroNav = () => (
@@ -519,23 +688,6 @@ function App() {
     </div>
   )
 
-  const renderKeybindsNav = () => (
-    <div className="subnav">
-      {(['global', 'face', 'dpad', 'bumpers', 'triggers', 'center', 'paddles', 'extra'] as KeybindsSubTab[]).map(entry => (
-        <button key={entry} className={`pill-tab ${keybindsSubTab === entry ? 'active' : ''}`} onClick={() => setKeybindsSubTab(entry)}>
-          {entry === 'global' && t('app.tabs.globalSettings')}
-          {entry === 'face' && t('app.tabs.visualMapping')}
-          {entry === 'dpad' && t('app.tabs.dpad')}
-          {entry === 'bumpers' && t('app.tabs.bumpers')}
-          {entry === 'triggers' && t('app.tabs.triggers')}
-          {entry === 'center' && t('app.tabs.center')}
-          {entry === 'paddles' && t('app.tabs.paddles')}
-          {entry === 'extra' && t('app.tabs.extra')}
-        </button>
-      ))}
-    </div>
-  )
-
   const renderTouchpadNav = () => (
     <div className="subnav">
       <button className={`pill-tab ${touchpadSubTab === 'mode' ? 'active' : ''}`} onClick={() => setTouchpadSubTab('mode')}>
@@ -547,36 +699,28 @@ function App() {
     </div>
   )
 
-  const renderSticksNav = () => (
-    <div className="subnav">
-      <button className={`pill-tab ${sticksSubTab === 'modes' ? 'active' : ''}`} onClick={() => setSticksSubTab('modes')}>
-        {t('app.tabs.modesAndSettings')}
-      </button>
-      <button className={`pill-tab ${sticksSubTab === 'bindings' ? 'active' : ''}`} onClick={() => setSticksSubTab('bindings')}>
-        {t('app.tabs.bindings')}
-      </button>
-    </div>
-  )
-
-  const renderControllerStatusNav = () => (
-    <div className="subnav">
-      <button
-        className={`pill-tab ${controllerStatusSubTab === 'status' ? 'active' : ''}`}
-        onClick={() => setControllerStatusSubTab('status')}
-      >
-        {t('app.tabs.status')}
-      </button>
-      <button
-        className={`pill-tab ${controllerStatusSubTab === 'bindings' ? 'active' : ''}`}
-        onClick={() => setControllerStatusSubTab('bindings')}
-      >
-        {t('app.tabs.bindingPreview')}
-      </button>
-    </div>
-  )
-
   const renderUtilityBar = () => (
     <div className="utility-bar">
+      <div className={`utility-mapping-switch ${mappingEnabled ? 'is-enabled' : 'is-paused'}`}>
+        <div>
+          <div className="utility-title">{t('app.profileSummary.mappingOutput')}</div>
+          <div className="utility-caption">
+            {mappingEnabled
+              ? t('app.profileSummary.mappingOutputEnabledHint')
+              : t('app.profileSummary.mappingOutputPausedHint')}
+          </div>
+        </div>
+        <button
+          type="button"
+          className={`mapping-toggle-button ${mappingEnabled ? 'is-enabled' : 'is-paused'}`}
+          onClick={handleToggleMappingEnabled}
+          disabled={runtimeMappingBusy}
+          aria-pressed={mappingEnabled}
+        >
+          {mappingEnabled ? t('app.profileSummary.mappingOutputOn') : t('app.profileSummary.mappingOutputPaused')}
+        </button>
+      </div>
+
       <div className="utility-profile-group">
         <div className="utility-title">{t('app.profileSummary.title')}</div>
         <label className="utility-profile-select">
@@ -604,10 +748,19 @@ function App() {
       </div>
 
       <div className="utility-actions">
+        <button className="secondary-btn" onClick={() => setAutoloadModalOpen(true)}>
+          {t('app.profileSummary.autoloadManager')}
+        </button>
         <button className="secondary-btn" onClick={() => setProfileModalOpen(true)}>
           {t('app.profileSummary.manageProfiles')}
         </button>
-        <button className="secondary-btn" onClick={() => setConfigDrawerOpen(true)}>
+        <button
+          className="secondary-btn"
+          onClick={() => {
+            setConfigWindowPosition(null)
+            setConfigDrawerOpen(true)
+          }}
+        >
           {t('app.profileSummary.openSourceConfig')}
         </button>
         {isCalibrating ? (
@@ -615,7 +768,7 @@ function App() {
             {t('app.recalibration.calibratingCountdown', { seconds: countdown ?? '-' })}
           </span>
         ) : (
-          <button className="secondary-btn" onClick={handleRecalibrate} disabled={recalibrating}>
+          <button className="primary-btn" onClick={handleRecalibrate} disabled={recalibrating}>
             {recalibrating ? t('app.recalibration.recalibrating') : t('app.recalibration.recalibrateGyro')}
           </button>
         )}
@@ -651,7 +804,6 @@ function App() {
                 onCancel={handleCancel}
                 lockMessage={lockMessage}
                 appliedSampleHz={telemetryValues.sampleHz}
-                backendChoice={backendChoice}
               />
             </Suspense>
           )}
@@ -800,7 +952,6 @@ function App() {
             devices={sample?.devices}
             selectedMappingCommand={selectedMappingCommand}
             onSelectedMappingCommandChange={setSelectedMappingCommand}
-            visibleSections={keybindsSubTab === 'global' ? ['global'] : [keybindsSubTab]}
           />
         </Suspense>
       )
@@ -871,75 +1022,11 @@ function App() {
       )
     }
 
-    if (primaryTab === 'sticks') {
-      return (
-        <Suspense fallback={<LazyPanelFallback title={t('app.nav.sticks')} />}>
-          <KeymapControls
-            view="sticks"
-            configText={configText}
-            hasPendingChanges={hasPendingChanges}
-            isCalibrating={isCalibrating}
-            statusMessage={statusMessage}
-            onApply={handleApplyWithFinalize}
-            onCancel={handleCancel}
-            onBindingChange={handleFaceButtonBindingChange}
-            onAssignSpecialAction={handleSpecialActionAssignment}
-            onClearSpecialAction={handleClearSpecialAction}
-            trackballDecay={trackballDecayValue}
-            onTrackballDecayChange={handleTrackballDecayChange}
-            holdPressTimeSeconds={holdPressTimeSeconds}
-            holdPressTimeIsCustom={holdPressTimeIsCustom}
-            holdPressTimeDefault={DEFAULT_HOLD_PRESS_TIME}
-            onHoldPressTimeChange={handleHoldPressTimeChange}
-            doublePressWindowSeconds={doublePressWindowSeconds}
-            doublePressWindowIsCustom={doublePressWindowIsCustom}
-            onDoublePressWindowChange={handleDoublePressWindowChange}
-            simPressWindowSeconds={simPressWindowSeconds}
-            simPressWindowIsCustom={simPressWindowIsCustom}
-            onSimPressWindowChange={handleSimPressWindowChange}
-            lightBarColor={lightBarColor}
-            onLightBarChange={handleLightBarChange}
-            triggerThreshold={triggerThresholdValue}
-            onTriggerThresholdChange={handleTriggerThresholdChange}
-            onModifierChange={handleModifierChange}
-            touchpadMode={touchpadModeValue}
-            gridColumns={gridSizeValue.columns}
-            gridRows={gridSizeValue.rows}
-            stickDeadzoneSettings={{
-              defaults: stickDeadzoneDefaults,
-              left: leftStickDeadzone,
-              right: rightStickDeadzone,
-            }}
-            onStickDeadzoneChange={handleStickDeadzoneChange}
-            stickModeSettings={stickModes}
-            onStickModeChange={handleStickModeChange}
-            onRingModeChange={handleRingModeChange}
-            stickModeShiftAssignments={stickModeShiftAssignments}
-            onStickModeShiftChange={handleStickModeShiftChange}
-            stickAimSettings={stickAimSettings}
-            stickAimHandlers={stickAimHandlers}
-            stickFlickSettings={stickFlickSettings}
-            stickFlickHandlers={stickFlickHandlers}
-            scrollSens={scrollSensValue}
-            onScrollSensChange={handleScrollSensChange}
-            mouseRingRadius={mouseRingRadiusValue}
-            onMouseRingRadiusChange={handleMouseRingRadiusChange}
-            stickForcedView={sticksSubTab}
-            showStickViewToggle={false}
-            lockMessage={lockMessage}
-          />
-        </Suspense>
-      )
-    }
-
     if (primaryTab === 'controllerStatus') {
       return (
         <ControllerStatusPage
-          backendChoice={backendChoice}
-          configText={configText}
           devices={sample?.devices}
           ignoredDevices={ignoredGyroDevices}
-          view={controllerStatusSubTab}
         />
       )
     }
@@ -951,6 +1038,22 @@ function App() {
             configText={configText}
             appliedConfig={appliedConfig}
             hasPendingChanges={hasPendingChanges}
+          />
+        </Suspense>
+      )
+    }
+
+    if (primaryTab === 'ai') {
+      return (
+        <Suspense fallback={<LazyPanelFallback title={t('app.nav.aiAssistant')} />}>
+          <AiMappingPage
+            configText={configText}
+            currentProfileName={currentLibraryProfile}
+            hasPendingChanges={hasPendingChanges}
+            onReplaceConfig={setConfigText}
+            onApplyGeneratedConfig={async (nextConfig) => {
+              await applyConfig({ textOverride: nextConfig })
+            }}
           />
         </Suspense>
       )
@@ -979,7 +1082,7 @@ function App() {
         <PrimaryNav primaryTab={primaryTab} setPrimaryTab={setPrimaryTab} />
         <div className={sideNavStyles.navFooter}>
           <HelpNavButton primaryTab={primaryTab} setPrimaryTab={setPrimaryTab} />
-          <ThemeToggle />
+          <CommunityNavButton />
           <div className={sideNavStyles.navVersion}>v{APP_VERSION}</div>
         </div>
       </aside>
@@ -990,21 +1093,14 @@ function App() {
             <div className={sideNavStyles.navBrand}>{t('common.appName')}</div>
             <PrimaryNav primaryTab={primaryTab} setPrimaryTab={setPrimaryTab} includeHelp />
           </div>
-          <div className={sideNavStyles.navToggleFloat}>
-            <ThemeToggle compact />
-          </div>
         </div>
         <div className="responsive-header-divider" />
         <div className={`${topBarStyles.topBar} ${topBarStyles.responsiveTopBar}`}>
           <TopBarContent
             primaryTab={primaryTab}
-            backendChoice={backendChoice}
-            onBackendChange={handleBackendChange}
-            renderControllerStatusNav={renderControllerStatusNav}
             renderGyroNav={renderGyroNav}
-            renderKeybindsNav={renderKeybindsNav}
             renderTouchpadNav={renderTouchpadNav}
-            renderSticksNav={renderSticksNav}
+            compactThemeToggle
           />
         </div>
       </div>
@@ -1012,13 +1108,8 @@ function App() {
         <div className={`${topBarStyles.topBar} ${topBarStyles.desktopTopBar}`}>
           <TopBarContent
             primaryTab={primaryTab}
-            backendChoice={backendChoice}
-            onBackendChange={handleBackendChange}
-            renderControllerStatusNav={renderControllerStatusNav}
             renderGyroNav={renderGyroNav}
-            renderKeybindsNav={renderKeybindsNav}
             renderTouchpadNav={renderTouchpadNav}
-            renderSticksNav={renderSticksNav}
           />
         </div>
         {renderUtilityBar()}
@@ -1027,17 +1118,33 @@ function App() {
         </div></div>
       </div>
       {isConfigDrawerOpen && (
-        <div className="modal-overlay config-source-overlay" onMouseDown={() => setConfigDrawerOpen(false)}>
-          <div className="config-source-drawer" onMouseDown={event => event.stopPropagation()}>
-            <div className="modal-header">
+        <div
+          ref={configWindowRef}
+          className={`config-source-window ${configWindowDragging ? 'dragging' : ''}`}
+          style={configWindowPosition
+            ? { left: `${configWindowPosition.x}px`, top: `${configWindowPosition.y}px`, transform: 'none' }
+            : undefined}
+          onMouseDown={event => event.stopPropagation()}
+        >
+          <div className="modal-header config-source-window-header">
+            <div
+              className="config-source-window-dragHandle"
+              onPointerDown={handleConfigWindowDragStart}
+              onPointerMove={handleConfigWindowDragMove}
+              onPointerUp={handleConfigWindowDragEnd}
+              onPointerCancel={handleConfigWindowDragEnd}
+            >
+              <span className="config-source-window-grip" aria-hidden="true" />
               <div>
                 <h3>{t('app.profileSummary.sourceConfigTitle')}</h3>
                 <p className="modal-description">{t('app.profileSummary.sourceConfigDescription')}</p>
               </div>
-              <button type="button" className="secondary-btn" onClick={() => setConfigDrawerOpen(false)}>
-                {t('common.close')}
-              </button>
             </div>
+            <button type="button" className="ghost-btn" onClick={() => setConfigDrawerOpen(false)}>
+              {t('common.close')}
+            </button>
+          </div>
+          <div className="config-source-window-body">
             <Suspense fallback={<LazyPanelFallback title={profileFileLabel} compact />}>
               <ConfigEditor
                 value={configText}
@@ -1118,7 +1225,7 @@ function App() {
             <div className="modal-actions">
               <button
                 type="button"
-                className="secondary-btn"
+                className="primary-btn"
                 onClick={() => handleRunCalibration(parseFloat(calibrationTurns) || 1)}
                 disabled={isCalibrating}
               >
@@ -1126,7 +1233,7 @@ function App() {
               </button>
               <button
                 type="button"
-                className="secondary-btn"
+                className="ghost-btn"
                 onClick={() => {
                   handleCloseCalibration()
                   showToast(t('messages.activeProfileToast', { profileName: profileLabel }))
@@ -1166,7 +1273,7 @@ function App() {
           <div className="modal-card profile-modal">
             <div className="modal-header">
               <h3>{t('app.profilesModal.title')}</h3>
-              <button className="secondary-btn" onClick={() => setProfileModalOpen(false)}>
+              <button className="ghost-btn" onClick={() => setProfileModalOpen(false)}>
                 {t('common.close')}
               </button>
             </div>
@@ -1190,6 +1297,17 @@ function App() {
             </Suspense>
           </div>
         </div>
+      )}
+      {isAutoloadModalOpen && (
+        <Suspense fallback={<LazyPanelFallback title={t('autoload.title')} compact />}>
+          <AutoloadManager
+            libraryProfiles={libraryProfiles}
+            autoloadEnabled={autoloadEnabled}
+            runtimeBusy={runtimeMappingBusy}
+            onAutoloadEnabledChange={handleAutoloadEnabledChange}
+            onClose={() => setAutoloadModalOpen(false)}
+          />
+        </Suspense>
       )}
     </div>
   )

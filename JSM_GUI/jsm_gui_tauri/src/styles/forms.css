@@ -1,6 +1,6 @@
 .tab-bar {
   display: flex;
-  gap: 0.75rem;
+  gap: 0.35rem;
 }
 
 .tab-button {
@@ -11,12 +11,12 @@
 
 .pill-tab {
   border: 1px solid var(--border-1);
-  border-radius: 999px;
+  border-radius: 6px;
   background: var(--bg-input);
-  color: var(--text-strong);
-  padding: 0.55rem 1rem;
-  font-weight: 600;
-  font-size: 0.95rem;
+  color: var(--text-mid);
+  padding: 0.38rem 0.72rem;
+  font-weight: 750;
+  font-size: 0.82rem;
   cursor: pointer;
   transition: border-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease, background-color 0.2s ease;
 }
@@ -28,10 +28,10 @@
 }
 
 .pill-tab.active {
-  border: 1.7px solid var(--accent);
+  border: 1px solid var(--accent);
   color: var(--text-strong);
-  background: color-mix(in srgb, var(--accent) 14%, var(--bg-input));
-  box-shadow: 0 0 16px color-mix(in srgb, var(--accent) 18%, transparent);
+  background: color-mix(in srgb, var(--accent) 13%, var(--bg-input));
+  box-shadow: inset 0 -2px 0 var(--accent);
 }
 
 .mode-toggle {
@@ -49,18 +49,18 @@
 }
 
 .app-select {
-  border-radius: 999px;
+  border-radius: 6px;
   border: 1px solid var(--border-1);
   background: var(--bg-input);
   color: var(--text-strong);
-  padding: 0.45rem 0.75rem;
+  padding: 0.34rem 0.55rem;
   font-family: inherit;
 }
 
 .flex-inputs {
   display: flex;
   flex-wrap: wrap;
-  gap: 1rem;
+  gap: 0.65rem;
 }
 
 .flex-inputs label {
@@ -87,8 +87,8 @@
 
 .flex-inputs input:not([type='range']) {
   margin-top: 0.35rem;
-  padding: 0.45rem 0.75rem;
-  border-radius: 8px;
+  padding: 0.38rem 0.55rem;
+  border-radius: 6px;
   border: 1px solid var(--border-1);
   background: var(--bg-input);
   color: var(--text-strong);
@@ -105,8 +105,8 @@
 
 .flex-inputs select {
   margin-top: 0.35rem;
-  padding: 0.45rem 0.75rem;
-  border-radius: 8px;
+  padding: 0.38rem 0.55rem;
+  border-radius: 6px;
   border: 1px solid var(--border-1);
   background: var(--bg-input);
   color: var(--text-strong);
@@ -116,7 +116,7 @@
 }
 
 .flex-inputs select.app-select {
-  border-radius: 8px;
+  border-radius: 6px;
   border: 1px solid var(--border-1);
   background: var(--bg-input);
   color: var(--text-strong);
@@ -126,7 +126,7 @@
 }
 
 .sensitivity-shift-row select {
-  border-radius: 999px;
+  border-radius: 6px;
   border: 1px solid var(--border-1);
   background: var(--bg-input);
   color: var(--text-strong);
@@ -162,35 +162,107 @@ input[type=number] {
   accent-color: var(--accent);
 }
 
-.secondary-btn {
-  padding: 0.5rem 1.2rem;
-  border-radius: 999px;
-  border: 1px solid var(--border-1);
-  background: var(--bg-input);
-  color: var(--text-strong);
+:where(.primary-btn, .secondary-btn, .ghost-btn, .danger-btn) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.42rem;
+  min-height: 2.1rem;
+  padding: 0.38rem 0.82rem;
+  box-sizing: border-box;
+  border-radius: 8px;
+  border: 1px solid transparent;
   cursor: pointer;
-  font-size: 0.85rem;
-  transition: border-color 0.2s ease, background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  line-height: 1.15;
+  transition:
+    transform 0.14s ease,
+    border-color 0.18s ease,
+    background-color 0.18s ease,
+    color 0.18s ease,
+    box-shadow 0.22s ease,
+    opacity 0.18s ease;
+}
+
+:where(.primary-btn, .secondary-btn, .ghost-btn, .danger-btn):hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+:where(.primary-btn, .secondary-btn, .ghost-btn, .danger-btn):active:not(:disabled) {
+  transform: translateY(0);
+}
+
+:where(.primary-btn, .secondary-btn, .ghost-btn, .danger-btn):focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 28%, transparent);
+}
+
+.primary-btn {
+  border-color: color-mix(in srgb, var(--accent) 48%, #ffffff 16%);
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--accent-primary) 88%, #ffffff 12%), color-mix(in srgb, var(--accent) 84%, #0b1016 16%));
+  color: var(--btn-primary-text);
+  box-shadow:
+    0 10px 22px color-mix(in srgb, var(--accent) 22%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16);
+}
+
+.primary-btn:hover:not(:disabled) {
+  box-shadow:
+    0 12px 26px color-mix(in srgb, var(--accent) 28%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
+  filter: saturate(1.05) brightness(1.03);
+}
+
+.secondary-btn {
+  border-color: color-mix(in srgb, var(--border-1) 88%, var(--accent) 12%);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--bg-btn) 94%, #ffffff 6%), color-mix(in srgb, var(--bg-input) 96%, transparent));
+  color: var(--text-strong);
+  box-shadow: inset 0 1px 0 var(--inset-highlight);
+}
+
+.secondary-btn:hover:not(:disabled) {
+  border-color: var(--border-strong);
+  background: color-mix(in srgb, var(--bg-btn-hover) 88%, var(--accent) 12%);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--accent) 14%, transparent),
+    inset 0 1px 0 var(--inset-highlight);
+}
+
+.ghost-btn {
+  border-color: color-mix(in srgb, var(--border-1) 58%, transparent);
+  background: transparent;
+  color: var(--text-mid);
+}
+
+.ghost-btn:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--accent) 24%, var(--border-1));
+  background: color-mix(in srgb, var(--accent) 8%, var(--bg-btn-hover));
+  color: var(--text-strong);
+  box-shadow: inset 0 1px 0 var(--inset-highlight);
 }
 
 .danger-btn {
-  padding: 0.5rem 1.2rem;
-  border-radius: 999px;
-  border: 1px solid var(--danger-border);
-  background: var(--danger-bg);
+  border-color: var(--danger-border);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--danger-bg) 78%, var(--bg-btn) 22%), color-mix(in srgb, var(--danger-bg) 94%, transparent));
   color: var(--danger-text);
-  cursor: pointer;
-  transition: border-color 0.2s ease, background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
-.secondary-btn:hover {
-  border-color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 10%, var(--bg-btn-hover));
-  box-shadow: 0 0 14px color-mix(in srgb, var(--accent) 12%, transparent);
+.danger-btn:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--danger-border) 88%, #ffffff 12%);
+  background: color-mix(in srgb, var(--danger-bg) 84%, var(--bg-btn-hover) 16%);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--danger-border) 26%, transparent);
 }
 
-.secondary-btn:disabled,
-.danger-btn:disabled {
+:where(.primary-btn, .secondary-btn, .ghost-btn, .danger-btn):disabled {
   opacity: 0.5;
   cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+  filter: none;
 }

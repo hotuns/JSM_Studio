@@ -1,8 +1,4 @@
 Contents  内容
-- Installation for Devs  开发者安装指南
-  - Linux specific notes  Linux 特定说明
-- Installation for Players
-玩家安装指南
 - Quick Start  快速入门
 - Commands  命令
   - Digital Inputs  数字输入
@@ -53,116 +49,11 @@ ViGEm 虚拟控制器
 - Credits  鸣谢
 - Helpful Resources  实用资源
 - License  执照
-Installation for Devs  开发者安装指南
-JoyShockMapper is written in C++ and is built using CMake.
-JoyShockMapper 是用 C++编写的，并使用 CMake 构建。
-The project is structured into a set of platform-agnostic headers, while platform-specific source files can be found in their respective subdirectories. The following files are platform-agnostic:
-该项目采用平台无关的头文件结构，而特定于平台的源文件则位于各自的子目录中。以下文件是平台无关的：
-1. include/JoyShockMapper.h - This header provides important type definitions that can be shared across the whole project. No variables are defined here, only constants.
-include/JoyShockMapper.h - 此头文件提供了可在整个项目中共享的重要类型定义。此处未定义任何变量，仅定义了常量。
-2. include/InputHelpers.h - This is platform agnostic declaration of wrappers for OS function calls and features.
-include/InputHelpers.h - 这是与平台无关的操作系统函数调用和功能包装器的声明。
-3. include/PlatformDefinitions.h - This is a set of declarations that create a common ground when dealing with platform-specific types and definitions.
-include/PlatformDefinitions.h - 这是一组声明，用于在处理特定于平台的类型和定义时创建共同的基础。
-4. include/TrayIcon.h - This is a self contained module used to display in Windows an icon in the system tray with a contextual menu.
-include/TrayIcon.h - 这是一个独立的模块，用于在 Windows 系统中显示带有上下文菜单的系统托盘图标。
-5. include/Whitelister.h - This is another self contained Windows specific module that uses a socket to communicate with HIDCerberus and whitelist JSM, the Linux implementation, currently, is a stub.
-include/Whitelister.h - 这是另一个独立的 Windows 特定模块，它使用套接字与 HIDCerberus 通信并将 JSM 列入白名单，目前 Linux 实现只是一个存根。
-6. include/CmdRegistry.h - This header defines the base command type and the CmdRegistry class that processes them.
-include/CmdRegistry.h - 此头文件定义了基本命令类型和处理它们的 CmdRegistry 类。
-7. include/JSMAssignment.hpp - Header for the templated class assignment commands
-include/JSMAssignment.hpp - 模板化类赋值命令的头文件
-8. include/JSMVariable.hpp - Header for the templated core variable class and a few derivatives.
-include/JSMVariable.hpp - 模板化核心变量类及其一些派生类的头文件。
-9. src/main.cpp - This does just about all the main logic of the application. The core processing logic should be kept in the other files as much as possible, and have the JSM specific logic in this file.
-src/main.cpp - 这个文件包含了应用程序几乎所有的主要逻辑。核心处理逻辑应该尽可能放在其他文件中，而 JSM 特有的逻辑则放在这个文件中。
-10. src/CmdRegistry.cpp - Implementation for the command line processing entry point.
-src/CmdRegistry.cpp - 命令行处理入口点的实现。
-11. src/operators.cpp - Implementation of all streaming and comparison operators for custom types declared in JoyShockMapper.h
-src/operators.cpp - JoyShockMapper.h 中声明的自定义类型的所有流式操作符和比较操作符的实现
-The Windows implementation can be found in the following files:
-Windows 版本的实现文件位于以下文件中：
-1. src/win32/InputHelpers.cpp
-2. src/win32/PlatformDefinitions.cpp
-3. src/win32/Whitelister.cpp.cpp
-4. include/win32/WindowsTrayIcon.h
-5. src/win32/WindowsTrayIcon.cpp
-The Linux implementation can be found in the following files:
-Linux 实现文件位于以下文件中：
-1. src/linux/InputHelpers.cpp
-2. src/linux/PlatformDefinitions.cpp
-3. src/linux/Whitelister.cpp.cpp
-4. include/linux/StatusNotifierItem.h
-5. src/linux/StatusNotifierItem.cpp
-Generate the project by runnning the following in a command prompt at the project root:
-在项目根目录的命令提示符中运行以下命令来生成项目：
-- Windows:   视窗：
-  - mkdir build && cd build
-  - To create a Visual Studio x86 configuration: cmake .. -G "Visual Studio 16 2019" -A Win32 .
-要创建 Visual Studio x86 配置： cmake .. -G "Visual Studio 16 2019" -A Win32 .
-  - To create a Visual Studio x64 configuration: cmake .. -G "Visual Studio 16 2019" -A x64 .
-要创建 Visual Studio x64 配置： cmake .. -G "Visual Studio 16 2019" -A x64 .
-- Linux:   Linux：
-  - mkdir build && cd build
-  - cmake .. -DCMAKE_CXX_COMPILER=clang++ && cmake --build .
-Linux specific notes  Linux 特定说明
-Please note that JoyShockMapper is primarily written for Windows and is a program in rapid development.
-请注意，JoyShockMapper 主要针对 Windows 系统编写，并且是一个正在快速开发的程序。
-While JSM can be built for Linux, please note that the rapid pace of development and limited number of Linux maintainers means that the Linux release may not always build.
-虽然 JSM 可以构建为 Linux 版本，但请注意，由于 Linux 开发速度快、维护人员数量有限，Linux 版本可能并非总能成功构建。
-In order to build on Linux, the following dependencies must be met, with their respective development packages:
-要在 Linux 系统上构建，必须满足以下依赖项及其相应的开发包：
-- clang++ (see below bug)
-clang++（见下方错误）
-- gtk+3
-- libappindicator3
-- libevdev
-- libusb
-- SDL2
-- hidapi  触碰
-Distribution-Specific Package Names:
-发行版特定软件包名称：
-- Ubuntu:  Ubuntu：
-  - sudo apt-get install -y libappindicator3-dev gir1.2-appindicator3-0.1 libgtk-3-dev libgtkmm-3.0-dev clang libsdl2-dev libdrm-dev libhidapi-dev libusb-1.0-0 libusb-1.0-0-dev libevdev-dev
-  - Ubuntu's current repositories appear to be missing the libdecor-0 package. Compile and install libdecor-0 from here
-Ubuntu 当前的软件仓库似乎缺少 libdecor-0 软件包。请从此处编译并安装 libdecor-0。
-    - sudo apt install -y meson libwayland-dev wayland-protocols libpango1.0-dev libdbus-1-dev libegl-dev libxkbcommon-dev
-    - Download and unpack source code to a folder
-下载源代码并将其解压到文件夹中
-    - meson build --buildtype release
-    - meson install -C build
-meson install -C 构建
-- Fedora: clang SDL2-devel libappindicator-gtk3-devel libevdev-devel gtk3-devel libusb-devel hidapi-devel
-Fedora： clang SDL2-devel libappindicator-gtk3-devel libevdev-devel gtk3-devel libusb-devel hidapi-devel
-- Arch: clang sdl2 libappindicator-gtk3 libevdev gtk3 libusb hidapi
-架构： clang sdl2 libappindicator-gtk3 libevdev gtk3 libusb hidapi
-- Gentoo: media-libs/libsdl2 dev-libs/libayatana-appindicator dev-libs/libevdev x11-libs/gtk+ dev-libs/libusb dev-libs/hidapi The clang installed by default is sufficent to build the program. However you will need to rename the include from libappindicator to libayatana-appindicator in ./JoyShockMapper/include/linux/StatusNotifierItem.h and ./JoyShockMapper/src/linux/StatusNotifierItem.cpp. You will also need to change line 7 in ./cmake/LinuxConfig.cmake to pkg_search_module (appindicator REQUIRED IMPORTED_TARGET ayatana-appindicator3-0.1)
-Gentoo： media-libs/libsdl2 dev-libs/libayatana-appindicator dev-libs/libevdev x11-libs/gtk+ dev-libs/libusb dev-libs/hidapi 默认安装的 clang 足以构建程序。但是，您需要将 ./JoyShockMapper/include/linux/StatusNotifierItem.h 和 ./JoyShockMapper/src/linux/StatusNotifierItem.cpp 中的 libappindicator 重命名为 libayatana-appindicator 。您还需要将 ./cmake/LinuxConfig.cmake 中的第 7 行更改为 pkg_search_module (appindicator REQUIRED IMPORTED_TARGET ayatana-appindicator3-0.1)
-- Please provide an issue report or pull request to have additional library lists added.
-如需添加其他库列表，请提交问题报告或拉取请求。
-Due to a bug in GCC, the project in its current form will only build with Clang.
-由于 GCC 存在一个 bug ，目前该项目只能使用 Clang 构建。
-
 ---
-JoyShockMapper was initially developed for Windows, this has the side-effect of some types used through the code-base are Windows specific. These have been redefined on Linux.
-JoyShockMapper 最初是为 Windows 开发的，这导致代码库中使用的一些类型是 Windows 特有的。这些类型已在 Linux 上重新定义。
-This was done to keep changes to the core logic of the application to a minimum, and lower the chance of causing regressions for existing users.
-这样做是为了最大限度地减少对应用程序核心逻辑的更改，并降低对现有用户造成回归的可能性。
-
----
-The application requires rw access to /dev/uinput, and /dev/hidraw[0-n] (the actual device depends on the node allocated by the OS). This can be achieved by chown-ing the required device nodes to the user running the application, or by applying the udev rules found in dist/linux/50-joyshockmapper.rules, adding your user to the input group, and restarting the computer for the changes to take effect. More info on udev rules can be found at https://wiki.archlinux.org/index.php/Udev#About_udev_rules.
-该应用程序需要对 /dev/uinput 和 /dev/hidraw[0-n] 具有 rw （实际设备取决于操作系统分配的节点）。可以通过以下两种方式实现：一是使用 chown 命令将所需设备节点的所有权更改为运行该应用程序的用户；二是应用 dist/linux/50-joyshockmapper.rules 文件中的 udev 规则，将您的用户添加到 input 组，然后重启计算机以使更改生效。有关 udev 规则的更多信息，请访问 https://wiki.archlinux.org/index.php/Udev#About_udev_rules 。
-The application will work on both X11 and Wayland, though focused window detection only works on X11.
-该应用程序可在 X11 和 Wayland 上运行，但焦点窗口检测仅在 X11 上有效。
-Installation for Players  玩家安装指南
-The latest version of JoyShockMapper can always be found here. All you have to do is run JoyShockMapper.exe.
-您始终可以在这里找到最新版本的 JoyShockMapper。您只需运行 JoyShockMapper.exe 即可。
-Included is a folder called GyroConfigs. This includes templates for creating new configurations for 2D and 3D games, and configuration files that include the settings used for simple Real World Calibration.
-其中包含一个名为 GyroConfigs 的文件夹。该文件夹包含用于创建 2D 和 3D 游戏新配置的模板，以及包含用于简单真实世界校准的设置的配置文件。
 Quick Start  快速入门
 1. Connect your controller either with a usb cable or via bluetooth. Most modern controllers will be suported, including all Xbox, Playstation and Switch controllers, although Xbox and many others don't have the gyro sensor required for gyro controls.
 您可以使用 USB 数据线或蓝牙连接控制器。大多数现代控制器都受支持，包括所有 Xbox、PlayStation 和 Switch 控制器，但 Xbox 和许多其他控制器没有陀螺仪控制所需的陀螺仪传感器。
-2. Run the JoyShockMapper executable, and you should see a console window welcoming you to JoyShockMapper.
+1. Run the JoyShockMapper executable, and you should see a console window welcoming you to JoyShockMapper.
 运行 JoyShockMapper 可执行文件，您应该会看到一个控制台窗口，欢迎您使用 JoyShockMapper。
   - In the console you can start entering bindings : [button name] = [key name]. See Digital Inputs section for details on how buttons and keys are named.
 在控制台中，您可以开始输入按键绑定：[按钮名称] = [按键名称]。有关按钮和按键命名方式的详细信息，请参阅 “数字输入”部分 。
@@ -176,7 +67,7 @@ Quick Start  快速入门
 有很多命令并非像上面那样作为赋值语句使用，而是直接运行函数。例如，`RECONNECT_CONTROLLERS` 会更新控制器列表，而 `RESET_MAPPINGS` 会将所有设置和绑定恢复为默认值。README 文件会引导您找到本文档！
   - You will find a JoyShockMapper icon in the system tray: right click on it to display a quick list of commands and configuration files.
 您会在系统托盘中找到 JoyShockMapper 图标：右键单击它以显示命令和配置文件的快速列表。
-3. JoyShockMapper can load all the commands contained in a text file.
+1. JoyShockMapper can load all the commands contained in a text file.
 JoyShockMapper 可以加载文本文件中包含的所有命令。
   - Enter the file's path and name in the console. If the file path is too long, or contains unusual characters, enter the relative path instead (eg: GyroConfigs/config.txt).
 在控制台中输入文件的路径和名称。如果文件路径过长或包含特殊字符，请改为输入相对路径（例如：GyroConfigs/config.txt）。
@@ -186,7 +77,7 @@ JoyShockMapper 可以加载文本文件中包含的所有命令。
 您可以在 GyroConfigs 文件夹中找到示例配置文件。文件之间可以相互引用：您可以随意编辑 GyroConfigs 中的文件，例如，将其作为您自定义的陀螺仪配置。
   - Find more details in the Configuration Files section.
 更多详情请参见 “配置文件” 部分。
-4. If you're using a configuration that utilises gyro controls, the gyro will need to be calibrated (to be told what "not moving" is). See Gyro Mouse Inputs section for more info on that, but here's the short version:
+1. If you're using a configuration that utilises gyro controls, the gyro will need to be calibrated (to be told what "not moving" is). See Gyro Mouse Inputs section for more info on that, but here's the short version:
 如果您使用的是基于陀螺仪控制的配置，则需要对陀螺仪进行校准（以确定“静止”状态）。有关更多信息，请参阅 “陀螺仪鼠标输入”部分 ，但简而言之：
   - Put all controllers down on a still surface;
 将所有控制器放在静止的表面上；
@@ -198,7 +89,7 @@ JoyShockMapper 可以加载文本文件中包含的所有命令。
 这些命令也可以通过托盘图标上下文菜单访问。
   - JoyShockMapper relies on a Real World Calibration value for some features such as flick stick. If you didn't find this value in the online database, check the Real World Calibration section to calculate it yourself.
 JoyShockMapper 的某些功能（例如摇杆）依赖于实际校准值。如果您在在线数据库中找不到此值，请查看 “实际校准” 部分自行计算。
-5. If you run into some issues, make sure you check the Troubleshooting section and Known and Perceived Issues. If you couldn't find your answer, you can find more help online on the GyroGaming subreddit and its affiliated Discord Server.
+1. If you run into some issues, make sure you check the Troubleshooting section and Known and Perceived Issues. If you couldn't find your answer, you can find more help online on the GyroGaming subreddit and its affiliated Discord Server.
 如果遇到问题，请务必查看 “故障排除” 部分和 “已知及疑似问题”部分 。如果找不到答案，您可以在 GyroGaming 子版块及其关联的 Discord 服务器上找到更多帮助。
 Commands  命令
 Commands can be executed by simply typing them into the JoyShockMapper console windows and hitting 'enter'. You can see the list of all available commands by entering HELP, or all commands containing STICK by typing HELP STICK for example. Since there's a quite a lot of them, they are organized in this document by what part of the controller or software they affect.

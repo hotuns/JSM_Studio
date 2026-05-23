@@ -8,6 +8,22 @@ export type CalibrationStatus = {
 export type ApplyProfileResult = {
   restarted: boolean
   path?: string
+  mappingEnabled?: boolean
+}
+
+export type RuntimeMappingState = {
+  activeProfilePath: string
+  mappingEnabled: boolean
+  autoloadEnabled: boolean
+}
+
+export type AutoloadRule = {
+  processName: string
+  fileName: string
+  kind: 'profile' | 'advanced' | string
+  profileName?: string
+  profilePath?: string
+  missingProfile: boolean
 }
 
 export type NamedProfile = {
@@ -62,6 +78,42 @@ export type InputDebugEvent = {
   summary: string
 }
 
+export type AiSettings = {
+  apiKey: string
+  model: string
+  baseUrl: string
+  temperature: number
+}
+
+export type AiSettingsInput = {
+  apiKey: string
+  model?: string
+  baseUrl?: string
+  temperature?: number
+}
+
+export type AiConversationMessage = {
+  role: 'user' | 'assistant'
+  content: string
+}
+
+export type AiGenerateRequest = {
+  userPrompt: string
+  currentConfig?: string
+  currentProfileName?: string | null
+  includeCurrentConfig?: boolean
+  conversationHistory?: AiConversationMessage[]
+  locale?: string
+}
+
+export type AiGenerateResponse = {
+  summary: string
+  configText: string
+  assumptions: string[]
+  warnings: string[]
+  model: string
+}
+
 type Unsubscribe = () => void
 
 export interface DesktopBridge {
@@ -69,6 +121,12 @@ export interface DesktopBridge {
   terminateJSM: () => Promise<void>
   minimizeTemporarily: () => Promise<void>
   applyProfile: (profilePath: string, text: string) => Promise<ApplyProfileResult>
+  getRuntimeMappingState: () => Promise<RuntimeMappingState>
+  setMappingEnabled: (enabled: boolean) => Promise<RuntimeMappingState>
+  setAutoloadEnabled: (enabled: boolean) => Promise<RuntimeMappingState>
+  listAutoloadRules: () => Promise<AutoloadRule[]>
+  saveAutoloadRule: (processName: string, profileName: string) => Promise<AutoloadRule | null>
+  deleteAutoloadRule: (processName: string) => Promise<{ success: boolean }>
   recalibrateGyro: () => Promise<{ success: boolean }>
   getCalibrationSeconds: () => Promise<number | null>
   setCalibrationSeconds: (seconds: number) => Promise<number | null>
@@ -99,6 +157,9 @@ export interface DesktopBridge {
   stopInputDebugHook: () => Promise<InputDebugHookStatus>
   getInputDebugHookStatus: () => Promise<InputDebugHookStatus>
   onInputDebugEvent: (callback: (payload: InputDebugEvent) => void) => Unsubscribe
+  getAiSettings: () => Promise<AiSettings>
+  saveAiSettings: (settings: AiSettingsInput) => Promise<AiSettings>
+  generateAiMapping: (request: AiGenerateRequest) => Promise<AiGenerateResponse>
 }
 
 type TauriEventPayload<T> = { payload: T }
@@ -185,6 +246,42 @@ export const desktopBridge: DesktopBridge = {
     }
     const result = await getElectronAPI()?.applyProfile?.(profilePath, text)
     return result ?? { restarted: false }
+  },
+  async getRuntimeMappingState() {
+    if (isTauriWindow()) {
+      return invokeTauri<RuntimeMappingState>('get_runtime_mapping_state')
+    }
+    return { activeProfilePath: 'profiles-library/Profile 1.txt', mappingEnabled: true, autoloadEnabled: true }
+  },
+  async setMappingEnabled(enabled) {
+    if (isTauriWindow()) {
+      return invokeTauri<RuntimeMappingState>('set_mapping_enabled', { enabled })
+    }
+    return { activeProfilePath: 'profiles-library/Profile 1.txt', mappingEnabled: enabled, autoloadEnabled: true }
+  },
+  async setAutoloadEnabled(enabled) {
+    if (isTauriWindow()) {
+      return invokeTauri<RuntimeMappingState>('set_autoload_enabled', { enabled })
+    }
+    return { activeProfilePath: 'profiles-library/Profile 1.txt', mappingEnabled: true, autoloadEnabled: enabled }
+  },
+  async listAutoloadRules() {
+    if (isTauriWindow()) {
+      return invokeTauri<AutoloadRule[]>('list_autoload_rules').catch(() => [])
+    }
+    return []
+  },
+  async saveAutoloadRule(processName, profileName) {
+    if (isTauriWindow()) {
+      return invokeTauri<AutoloadRule>('save_autoload_rule', { process_name: processName, profile_name: profileName }).catch(() => null)
+    }
+    return null
+  },
+  async deleteAutoloadRule(processName) {
+    if (isTauriWindow()) {
+      return invokeTauri<{ success: boolean }>('delete_autoload_rule', { process_name: processName }).catch(() => ({ success: false }))
+    }
+    return { success: true }
   },
   async recalibrateGyro() {
     if (isTauriWindow()) {
@@ -373,5 +470,44 @@ export const desktopBridge: DesktopBridge = {
       return listenTauri<InputDebugEvent>('input-debug-event', callback)
     }
     return noop
+  },
+  async getAiSettings() {
+    if (isTauriWindow()) {
+      return invokeTauri<AiSettings>('get_ai_settings').catch(() => ({
+        apiKey: '',
+        model: '',
+        baseUrl: '',
+        temperature: 0.2,
+      }))
+    }
+    return {
+      apiKey: '',
+      model: '',
+      baseUrl: '',
+      temperature: 0.2,
+    }
+  },
+  async saveAiSettings(settings) {
+    if (isTauriWindow()) {
+      return invokeTauri<AiSettings>('save_ai_settings', { settings })
+    }
+    return {
+      apiKey: settings.apiKey,
+      model: settings.model ?? '',
+      baseUrl: settings.baseUrl ?? '',
+      temperature: settings.temperature ?? 0.2,
+    }
+  },
+  async generateAiMapping(request) {
+    if (isTauriWindow()) {
+      return invokeTauri<AiGenerateResponse>('generate_ai_mapping', { request })
+    }
+    return {
+      summary: 'AI mapping generation is only available in the Tauri desktop app.',
+      configText: request.currentConfig ?? '',
+      assumptions: [],
+      warnings: ['AI mapping generation is unavailable in this environment.'],
+      model: '',
+    }
   },
 }

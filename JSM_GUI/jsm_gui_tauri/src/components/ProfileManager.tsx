@@ -54,7 +54,7 @@ export function ProfileManager({
         </div>
       )}
 
-      <section className="profile-library">
+      <section className={styles.profileLibrary}>
         <div className={styles.profileLibraryHeader}>
           <div>
             <h3>{t('profiles.libraryTitle')}</h3>
@@ -82,7 +82,7 @@ export function ProfileManager({
                 </div>
                 <div className={styles.profileLibraryButtons}>
                   <button
-                    className="secondary-btn"
+                    className="primary-btn"
                     onClick={() => onRenameProfile(profileName)}
                     disabled={
                       !((editedProfileNames[profileName] ?? profileName).trim()) ||
@@ -96,7 +96,7 @@ export function ProfileManager({
                       <button className="danger-btn" onClick={() => onDeleteProfile(profileName)}>
                         {t('profiles.confirmDelete')}
                       </button>
-                      <button className="secondary-btn" onClick={() => setConfirmingProfile(null)}>
+                      <button className="ghost-btn" onClick={() => setConfirmingProfile(null)}>
                         {t('common.cancel')}
                       </button>
                     </>
@@ -144,7 +144,7 @@ export function ProfileManager({
               {t('profiles.copyActiveProfile')}
             </button>
           )}
-          <button className="secondary-btn" onClick={onAddProfile}>
+          <button className="primary-btn" onClick={onAddProfile}>
             {t('profiles.addProfile')}
           </button>
         </div>

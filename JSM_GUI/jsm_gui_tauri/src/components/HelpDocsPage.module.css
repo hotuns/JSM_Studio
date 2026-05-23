@@ -204,8 +204,8 @@
 }
 
 .findMatchActive {
-  background: rgba(76, 125, 255, 0.28);
-  box-shadow: 0 0 0 1px rgba(76, 125, 255, 0.35);
+  background: color-mix(in srgb, var(--accent) 24%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 38%, transparent);
 }
 
 .heading {
@@ -214,8 +214,8 @@
 }
 
 .headingActive {
-  background: rgba(76, 125, 255, 0.08);
-  box-shadow: 0 0 0 1px rgba(76, 125, 255, 0.22);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 24%, transparent);
   border-radius: 6px;
   padding-left: 0.35rem;
 }

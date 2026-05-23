@@ -27,13 +27,13 @@ export function SectionActions({
 
   return (
     <div className={className}>
-      <button className="secondary-btn" onClick={onApply} disabled={applyDisabled}>
+      <button className="primary-btn" onClick={onApply} disabled={applyDisabled}>
         {applyLabel ?? t('common.applyChanges')}
       </button>
       {hasPendingChanges ? (
         <>
           {onCancel && (
-            <button className="secondary-btn" onClick={onCancel}>
+            <button className="ghost-btn" onClick={onCancel}>
               {cancelLabel ?? t('common.cancel')}
             </button>
           )}

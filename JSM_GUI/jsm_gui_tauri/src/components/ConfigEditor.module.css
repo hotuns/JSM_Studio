@@ -1,26 +1,33 @@
 .configPanel {
   display: flex;
   flex-direction: column;
-  gap: 0.9rem;
+  gap: 0.65rem;
+  min-height: 0;
 }
 
 .configPanel label {
   display: flex;
   flex-direction: column;
-  gap: 5.6px;
+  gap: 0.35rem;
+  min-height: 0;
+  color: var(--text-strong);
+  font-size: 0.82rem;
+  font-weight: 700;
 }
 
 .configPanel textarea {
   width: 100%;
   min-height: 220px;
   font-family: 'JetBrains Mono', Consolas, monospace;
-  font-size: 0.9rem;
+  font-size: 0.82rem;
   color: var(--text-strong);
   background: var(--bg-input);
   border: 1px solid var(--border-1);
-  border-radius: 10px;
-  padding: 0.9rem;
+  border-radius: 6px;
+  padding: 0.65rem;
   resize: vertical;
+  box-sizing: border-box;
+  line-height: 1.45;
 }
 
 .configPanel textarea:disabled {
@@ -30,7 +37,7 @@
 
 .configActions {
   display: flex;
-  gap: 0.6rem;
+  gap: 0.4rem;
   flex-wrap: wrap;
 }
 
