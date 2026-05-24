@@ -1,7 +1,6 @@
 import './App.css'
 import { version as APP_VERSION } from '../package.json'
 import sideNavStyles from './components/SideNav.module.css'
-import topBarStyles from './components/TopBar.module.css'
 import { ThemeToggle } from './components/ThemeToggle'
 import { Suspense, lazy, useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -22,7 +21,6 @@ import { LanguageSelect } from './components/LanguageSelect'
 
 type PrimaryTab = 'gyro' | 'keybinds' | 'touchpad' | 'controllerStatus' | 'debugConsole' | 'ai' | 'help'
 type GyroSubTab = 'behavior' | 'sensitivity' | 'noise'
-type TouchpadSubTab = 'mode' | 'bind'
 const QQ_GROUP_URL = 'https://qm.qq.com/q/OyPvwoBSkU'
 const QQ_GROUP_NUMBER = '855488128'
 
@@ -202,60 +200,13 @@ const PrimaryNav = ({ primaryTab, setPrimaryTab, includeHelp = false }: PrimaryN
   )
 }
 
-type HelpNavButtonProps = {
-  primaryTab: PrimaryTab
-  setPrimaryTab: (tab: PrimaryTab) => void
-}
-
-const HelpNavButton = ({ primaryTab, setPrimaryTab }: HelpNavButtonProps) => {
-  const { t } = useTranslation()
-
-  return (
-    <button
-      className={`${sideNavStyles.navItem} ${primaryTab === 'help' ? sideNavStyles.active : ''}`}
-      onClick={() => setPrimaryTab('help')}
-    >
-      {t('app.nav.documentation')}
-    </button>
-  )
-}
-
-type TopBarContentProps = {
-  primaryTab: PrimaryTab
-  renderGyroNav: () => JSX.Element
-  renderTouchpadNav: () => JSX.Element
-  compactThemeToggle?: boolean
-}
-
-const TopBarContent = ({
-  primaryTab,
-  renderGyroNav,
-  renderTouchpadNav,
-  compactThemeToggle = false,
-}: TopBarContentProps) => {
-  return (
-    <>
-      <div className={topBarStyles.topBarLeft}>
-        {primaryTab === 'gyro' && renderGyroNav()}
-        {primaryTab === 'touchpad' && renderTouchpadNav()}
-      </div>
-      <div className={topBarStyles.topBarRight}>
-        <div className={topBarStyles.topBarSettings}>
-          <LanguageSelect className={topBarStyles.inlineSelect} />
-          <ThemeToggle compact={compactThemeToggle} className={topBarStyles.themeToggleInline} />
-        </div>
-      </div>
-    </>
-  )
-}
-
 const CommunityNavButton = () => {
   const { t } = useTranslation()
 
   return (
     <button
       type="button"
-      className={`${sideNavStyles.navItem} ${sideNavStyles.navFooterLink}`}
+      className={sideNavStyles.navFooterAction}
       onClick={() => {
         void desktopBridge.openExternal(QQ_GROUP_URL)
       }}
@@ -265,6 +216,17 @@ const CommunityNavButton = () => {
     </button>
   )
 }
+
+type NavSettingsProps = {
+  compactThemeToggle?: boolean
+}
+
+const NavSettings = ({ compactThemeToggle = false }: NavSettingsProps) => (
+  <div className={sideNavStyles.navSettings}>
+    <LanguageSelect className={sideNavStyles.navLanguageSelect} />
+    <ThemeToggle compact={compactThemeToggle} className={sideNavStyles.navThemeToggle} />
+  </div>
+)
 
 function App() {
   const { t } = useTranslation()
@@ -283,8 +245,8 @@ function App() {
   const [calibrationTurns, setCalibrationTurns] = useState('1')
   const [primaryTab, setPrimaryTab] = useState<PrimaryTab>('controllerStatus')
   const [gyroSubTab, setGyroSubTab] = useState<GyroSubTab>('behavior')
-  const [touchpadSubTab, setTouchpadSubTab] = useState<TouchpadSubTab>('mode')
   const [selectedMappingCommand, setSelectedMappingCommand] = useState<string | null>('N')
+  const [showHidHideElevationModal, setShowHidHideElevationModal] = useState(false)
   const configWindowRef = useRef<HTMLDivElement | null>(null)
   const configWindowDragRef = useRef<{ pointerId: number; offsetX: number; offsetY: number } | null>(null)
   const {
@@ -582,6 +544,21 @@ function App() {
     }
   }, [])
 
+  useEffect(() => {
+    let disposed = false
+    void desktopBridge.getHidHideStatus().then(status => {
+      if (disposed) return
+      if (status.requiresElevation) {
+        setShowHidHideElevationModal(true)
+      }
+    }).catch(error => {
+      console.error('Failed to probe HidHide status', error)
+    })
+    return () => {
+      disposed = true
+    }
+  }, [])
+
   const handleToggleMappingEnabled = async () => {
     if (runtimeMappingBusy) return
     const nextEnabled = !mappingEnabled
@@ -625,6 +602,15 @@ function App() {
       showToast(message, 'error')
     } finally {
       setRuntimeMappingBusy(false)
+    }
+  }
+
+  const handleOpenConfigDirectory = async () => {
+    try {
+      await desktopBridge.openConfigDirectory()
+    } catch (error) {
+      console.error('Failed to open config directory', error)
+      showToast(t('messages.openConfigDirectoryFailed'), 'error')
     }
   }
 
@@ -688,43 +674,29 @@ function App() {
     </div>
   )
 
-  const renderTouchpadNav = () => (
-    <div className="subnav">
-      <button className={`pill-tab ${touchpadSubTab === 'mode' ? 'active' : ''}`} onClick={() => setTouchpadSubTab('mode')}>
-        {t('app.tabs.mode')}
-      </button>
-      <button className={`pill-tab ${touchpadSubTab === 'bind' ? 'active' : ''}`} onClick={() => setTouchpadSubTab('bind')}>
-        {t('app.tabs.bindings')}
-      </button>
-    </div>
-  )
-
   const renderUtilityBar = () => (
     <div className="utility-bar">
       <div className={`utility-mapping-switch ${mappingEnabled ? 'is-enabled' : 'is-paused'}`}>
-        <div>
-          <div className="utility-title">{t('app.profileSummary.mappingOutput')}</div>
-          <div className="utility-caption">
-            {mappingEnabled
-              ? t('app.profileSummary.mappingOutputEnabledHint')
-              : t('app.profileSummary.mappingOutputPausedHint')}
-          </div>
-        </div>
-        <button
-          type="button"
-          className={`mapping-toggle-button ${mappingEnabled ? 'is-enabled' : 'is-paused'}`}
-          onClick={handleToggleMappingEnabled}
-          disabled={runtimeMappingBusy}
-          aria-pressed={mappingEnabled}
-        >
-          {mappingEnabled ? t('app.profileSummary.mappingOutputOn') : t('app.profileSummary.mappingOutputPaused')}
-        </button>
+        <label className={`mapping-toggle-control ${mappingEnabled ? 'is-enabled' : 'is-paused'}`}>
+          <input
+            type="checkbox"
+            checked={mappingEnabled}
+            disabled={runtimeMappingBusy}
+            aria-label={t('app.profileSummary.mappingOutput')}
+            onChange={() => {
+              void handleToggleMappingEnabled()
+            }}
+          />
+          <span className="mapping-toggle-slider" aria-hidden="true" />
+          <span className="mapping-toggle-state">
+            {mappingEnabled ? t('app.profileSummary.mappingOutputOn') : t('app.profileSummary.mappingOutputPaused')}
+          </span>
+        </label>
       </div>
 
       <div className="utility-profile-group">
         <div className="utility-title">{t('app.profileSummary.title')}</div>
         <label className="utility-profile-select">
-          <span>{t('app.profileSummary.quickSwitch')}</span>
           <select
             className="app-select"
             disabled={isCalibrating}
@@ -754,6 +726,9 @@ function App() {
         <button className="secondary-btn" onClick={() => setProfileModalOpen(true)}>
           {t('app.profileSummary.manageProfiles')}
         </button>
+        <button className="secondary-btn" onClick={handleOpenConfigDirectory}>
+          {t('app.profileSummary.openConfigDirectory')}
+        </button>
         <button
           className="secondary-btn"
           onClick={() => {
@@ -779,7 +754,8 @@ function App() {
   const renderPrimaryContent = () => {
     if (primaryTab === 'gyro') {
       return (
-        <>
+        <div className="page-with-subnav">
+          <div className="page-subnav">{renderGyroNav()}</div>
           {gyroSubTab === 'behavior' && (
             <Suspense fallback={<LazyPanelFallback title={t('app.tabs.gyroBehavior')} />}>
               <GyroBehaviorControls
@@ -886,7 +862,7 @@ function App() {
               />
             </Suspense>
           )}
-        </>
+        </div>
       )
     }
 
@@ -958,7 +934,7 @@ function App() {
     }
 
     if (primaryTab === 'touchpad') {
-      const sections = touchpadSubTab === 'bind' ? ['touch-bind'] : ['touch-grid']
+      const sections = ['touch-grid', 'touch-bind']
       return (
         <Suspense fallback={<LazyPanelFallback title={t('app.nav.touchpad')} />}>
           <KeymapControls
@@ -1079,10 +1055,10 @@ function App() {
       {/* Desktop sidebar */}
       <aside className={sideNavStyles.sideNav}>
         <div className={sideNavStyles.navBrand}>{t('common.appName')}</div>
-        <PrimaryNav primaryTab={primaryTab} setPrimaryTab={setPrimaryTab} />
+        <PrimaryNav primaryTab={primaryTab} setPrimaryTab={setPrimaryTab} includeHelp />
         <div className={sideNavStyles.navFooter}>
-          <HelpNavButton primaryTab={primaryTab} setPrimaryTab={setPrimaryTab} />
           <CommunityNavButton />
+          <NavSettings />
           <div className={sideNavStyles.navVersion}>v{APP_VERSION}</div>
         </div>
       </aside>
@@ -1093,25 +1069,10 @@ function App() {
             <div className={sideNavStyles.navBrand}>{t('common.appName')}</div>
             <PrimaryNav primaryTab={primaryTab} setPrimaryTab={setPrimaryTab} includeHelp />
           </div>
-        </div>
-        <div className="responsive-header-divider" />
-        <div className={`${topBarStyles.topBar} ${topBarStyles.responsiveTopBar}`}>
-          <TopBarContent
-            primaryTab={primaryTab}
-            renderGyroNav={renderGyroNav}
-            renderTouchpadNav={renderTouchpadNav}
-            compactThemeToggle
-          />
+          <NavSettings compactThemeToggle />
         </div>
       </div>
       <div className="shell-main">
-        <div className={`${topBarStyles.topBar} ${topBarStyles.desktopTopBar}`}>
-          <TopBarContent
-            primaryTab={primaryTab}
-            renderGyroNav={renderGyroNav}
-            renderTouchpadNav={renderTouchpadNav}
-          />
-        </div>
         {renderUtilityBar()}
         <div className="shell-scroll"><div className="content-grid">
           <main className="main-pane">{renderPrimaryContent()}</main>
@@ -1250,6 +1211,35 @@ function App() {
                 </div>
               </>
             )}
+          </div>
+        </div>
+      )}
+      {showHidHideElevationModal && (
+        <div className="modal-overlay">
+          <div className="modal-card">
+            <div className="modal-header">
+              <h3>{t('controllerStatus.hidHideElevationTitle')}</h3>
+            </div>
+            <p className="modal-description">{t('controllerStatus.hidHideElevationStartupBody')}</p>
+            <div className="modal-actions">
+              <button
+                type="button"
+                className="primary-btn"
+                onClick={() => {
+                  setPrimaryTab('controllerStatus')
+                  setShowHidHideElevationModal(false)
+                }}
+              >
+                {t('controllerStatus.hidHideOpenStatusPage')}
+              </button>
+              <button
+                type="button"
+                className="ghost-btn"
+                onClick={() => setShowHidHideElevationModal(false)}
+              >
+                {t('common.close')}
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -126,15 +126,17 @@ export function AutoloadManager({
             <div className={styles.switchTitle}>{t('autoload.toggleLabel')}</div>
             <p>{t('autoload.toggleDescription')}</p>
           </div>
-          <button
-            type="button"
-            className={`${styles.switchButton} ${autoloadEnabled ? styles.switchButtonOn : ''}`}
-            onClick={() => void onAutoloadEnabledChange(!autoloadEnabled)}
-            disabled={runtimeBusy}
-            aria-pressed={autoloadEnabled}
-          >
-            {autoloadEnabled ? t('autoload.enabled') : t('autoload.disabled')}
-          </button>
+          <label className={`${styles.toggleControl} ${autoloadEnabled ? styles.toggleControlOn : ''}`}>
+            <input
+              type="checkbox"
+              checked={autoloadEnabled}
+              disabled={runtimeBusy}
+              aria-label={t('autoload.toggleLabel')}
+              onChange={() => void onAutoloadEnabledChange(!autoloadEnabled)}
+            />
+            <span className={styles.toggleSlider} aria-hidden="true" />
+            <span className={styles.toggleText}>{autoloadEnabled ? t('autoload.enabled') : t('autoload.disabled')}</span>
+          </label>
         </section>
 
         <section className={styles.rulesPanel}>
@@ -161,7 +163,7 @@ export function AutoloadManager({
                   <div className={styles.ruleRow} key={rule.fileName}>
                     <div className={styles.ruleProgram}>
                       <span>{rule.processName}.exe</span>
-                      <small>{rule.fileName}</small>
+                      <small>{t('autoload.ruleFile', { file: rule.fileName })}</small>
                     </div>
                     <div className={styles.ruleProfile}>
                       {rule.kind === 'profile' ? (
@@ -221,6 +223,7 @@ export function AutoloadManager({
                 placeholder={t('autoload.processPlaceholder')}
                 onChange={event => setProcessName(event.target.value)}
               />
+              <small>{t('autoload.processHint')}</small>
             </label>
             <label>
               {t('autoload.profile')}

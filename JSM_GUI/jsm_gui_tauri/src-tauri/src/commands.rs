@@ -3,14 +3,8 @@ use serde_json::Value;
 use tauri::{AppHandle, State, Window};
 
 use crate::{
-  runtime,
-  services::{
-    ai,
-    app_state::AppState,
-    input_debug,
-    jsm_process,
-    telemetry,
-  },
+    runtime,
+    services::{ai, app_state::AppState, hidhide, input_debug, jsm_process, telemetry},
 };
 
 type CommandResult<T> = Result<T, String>;
@@ -20,470 +14,735 @@ const PROFILE_INJECTION_RETRY_DELAY_MS: u64 = 150;
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ApplyProfileResult {
-  restarted: bool,
-  path: Option<String>,
-  mapping_enabled: bool,
+    restarted: bool,
+    path: Option<String>,
+    mapping_enabled: bool,
 }
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct NamedProfile {
-  path: String,
-  name: String,
-  content: String,
+    path: String,
+    name: String,
+    content: String,
 }
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LoadLibraryProfileResult {
-  name: String,
-  content: String,
+    name: String,
+    content: String,
 }
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct DeleteLibraryProfileResult {
-  success: bool,
-  fallback: Option<NamedProfile>,
+    success: bool,
+    fallback: Option<NamedProfile>,
 }
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SetBackendChoiceResult {
-  success: bool,
-  backend: String,
+    success: bool,
+    backend: String,
 }
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SimpleSuccessResult {
-  success: bool,
+    success: bool,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ControllerCandidate {
+    device_id: i32,
+    name: String,
+    vendor_id: Option<u16>,
+    product_id: Option<u16>,
+    is_gamepad: bool,
 }
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CalibrationPresetLoadResult {
-  success: bool,
-  active_profile: Option<String>,
-  calibration_profile: Option<String>,
+    success: bool,
+    active_profile: Option<String>,
+    calibration_profile: Option<String>,
 }
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CalibrationPresetReadResult {
-  success: bool,
-  calibration_profile: Option<String>,
-  content: Option<String>,
+    success: bool,
+    calibration_profile: Option<String>,
+    content: Option<String>,
 }
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CalibrationCommandResult {
-  success: bool,
-  output: String,
+    success: bool,
+    output: String,
 }
 
 #[tauri::command]
 pub fn launch_jsm(
-  app: AppHandle,
-  state: State<'_, AppState>,
-  calibration_seconds: Option<u32>,
+    app: AppHandle,
+    state: State<'_, AppState>,
+    calibration_seconds: Option<u32>,
 ) -> CommandResult<()> {
-  if let Some(seconds) = calibration_seconds {
-    runtime::write_calibration_seconds(&app, seconds)?;
-  }
-  jsm_process::launch_jsm(&app, state.inner())
+    if let Some(seconds) = calibration_seconds {
+        runtime::write_calibration_seconds(&app, seconds)?;
+    }
+    jsm_process::launch_jsm(&app, state.inner())
 }
 
 #[tauri::command]
 pub fn terminate_jsm(app: AppHandle, state: State<'_, AppState>) -> CommandResult<()> {
-  jsm_process::terminate_jsm(&app, state.inner())
+    jsm_process::terminate_jsm(&app, state.inner())
 }
 
 #[tauri::command]
 pub fn minimize_temporarily(window: Window) -> CommandResult<()> {
-  window
-    .minimize()
-    .map_err(|error| format!("Failed to minimize window: {error}"))?;
+    window
+        .minimize()
+        .map_err(|error| format!("Failed to minimize window: {error}"))?;
 
-  let window_clone = window.clone();
-  std::thread::spawn(move || {
-    std::thread::sleep(std::time::Duration::from_millis(2500));
-    let _ = window_clone.unminimize();
-    let _ = window_clone.set_focus();
-  });
+    let window_clone = window.clone();
+    std::thread::spawn(move || {
+        std::thread::sleep(std::time::Duration::from_millis(2500));
+        let _ = window_clone.unminimize();
+        let _ = window_clone.set_focus();
+    });
 
-  Ok(())
+    Ok(())
 }
 
 #[tauri::command]
 pub fn apply_profile(
-  app: AppHandle,
-  state: State<'_, AppState>,
-  profile_path: Option<String>,
-  text: String,
+    app: AppHandle,
+    state: State<'_, AppState>,
+    profile_path: Option<String>,
+    text: String,
 ) -> CommandResult<ApplyProfileResult> {
-  let path = runtime::write_active_profile(&app, profile_path.as_deref(), &text)?;
-  let runtime_state = runtime::get_runtime_mapping_state(&app)?;
-  if !runtime_state.mapping_enabled {
-    return Ok(ApplyProfileResult {
-      restarted: false,
-      path: Some(path),
-      mapping_enabled: false,
-    });
-  }
-
-  let mut restarted = false;
-  if jsm_process::is_running(state.inner())? {
-    let injected = inject_profile_with_retry(&app, state.inner(), &path)?;
-    if !injected {
-      jsm_process::terminate_jsm(&app, state.inner())?;
-      jsm_process::launch_jsm(&app, state.inner())?;
-      restarted = true;
+    let path = runtime::write_active_profile(&app, profile_path.as_deref(), &text)?;
+    let runtime_state = runtime::get_runtime_mapping_state(&app)?;
+    if !runtime_state.mapping_enabled {
+        return Ok(ApplyProfileResult {
+            restarted: false,
+            path: Some(path),
+            mapping_enabled: false,
+        });
     }
-  } else {
-    jsm_process::launch_jsm(&app, state.inner())?;
-    restarted = true;
-  }
 
-  Ok(ApplyProfileResult {
-    restarted,
-    path: Some(path),
-    mapping_enabled: true,
-  })
+    let mut restarted = false;
+    if jsm_process::is_running(state.inner())? {
+        let injected = inject_profile_with_retry(&app, state.inner(), &path)?;
+        if !injected {
+            jsm_process::terminate_jsm(&app, state.inner())?;
+            jsm_process::launch_jsm(&app, state.inner())?;
+            restarted = true;
+        }
+    } else {
+        jsm_process::launch_jsm(&app, state.inner())?;
+        restarted = true;
+    }
+
+    Ok(ApplyProfileResult {
+        restarted,
+        path: Some(path),
+        mapping_enabled: true,
+    })
 }
 
 #[tauri::command]
 pub fn get_runtime_mapping_state(app: AppHandle) -> CommandResult<runtime::RuntimeMappingState> {
-  runtime::get_runtime_mapping_state(&app)
+    runtime::get_runtime_mapping_state(&app)
 }
 
 #[tauri::command]
 pub fn set_mapping_enabled(
-  app: AppHandle,
-  state: State<'_, AppState>,
-  enabled: bool,
+    app: AppHandle,
+    state: State<'_, AppState>,
+    enabled: bool,
 ) -> CommandResult<runtime::RuntimeMappingState> {
-  let runtime_state = runtime::set_mapping_enabled(&app, enabled)?;
-  apply_runtime_mapping_state(&app, state.inner(), &runtime_state)?;
-  Ok(runtime_state)
+    let runtime_state = runtime::set_mapping_enabled(&app, enabled)?;
+    apply_runtime_mapping_state(&app, state.inner(), &runtime_state)?;
+    Ok(runtime_state)
 }
 
 #[tauri::command]
 pub fn set_autoload_enabled(
-  app: AppHandle,
-  state: State<'_, AppState>,
-  enabled: bool,
+    app: AppHandle,
+    state: State<'_, AppState>,
+    enabled: bool,
 ) -> CommandResult<runtime::RuntimeMappingState> {
-  let runtime_state = runtime::set_autoload_enabled(&app, enabled)?;
-  if jsm_process::is_running(state.inner())? {
-    let command = if runtime_state.mapping_enabled && runtime_state.autoload_enabled {
-      "AUTOLOAD = ON"
-    } else {
-      "AUTOLOAD = OFF"
-    };
-    let _ = jsm_process::inject_console_command(&app, state.inner(), command)?;
-  }
-  Ok(runtime_state)
+    let runtime_state = runtime::set_autoload_enabled(&app, enabled)?;
+    if jsm_process::is_running(state.inner())? {
+        let command = if runtime_state.mapping_enabled && runtime_state.autoload_enabled {
+            "AUTOLOAD = ON"
+        } else {
+            "AUTOLOAD = OFF"
+        };
+        let _ = jsm_process::inject_console_command(&app, state.inner(), command)?;
+    }
+    Ok(runtime_state)
 }
 
 #[tauri::command]
 pub fn list_autoload_rules(app: AppHandle) -> CommandResult<Vec<runtime::AutoloadRule>> {
-  runtime::list_autoload_rules(&app)
+    runtime::list_autoload_rules(&app)
 }
 
 #[tauri::command]
 pub fn save_autoload_rule(
-  app: AppHandle,
-  process_name: String,
-  profile_name: String,
+    app: AppHandle,
+    process_name: String,
+    profile_name: String,
 ) -> CommandResult<runtime::AutoloadRule> {
-  runtime::save_autoload_rule(&app, &process_name, &profile_name)
+    runtime::save_autoload_rule(&app, &process_name, &profile_name)
 }
 
 #[tauri::command]
 pub fn delete_autoload_rule(
-  app: AppHandle,
-  process_name: String,
+    app: AppHandle,
+    process_name: String,
 ) -> CommandResult<SimpleSuccessResult> {
-  let success = runtime::delete_autoload_rule(&app, &process_name)?;
-  Ok(SimpleSuccessResult { success })
+    let success = runtime::delete_autoload_rule(&app, &process_name)?;
+    Ok(SimpleSuccessResult { success })
 }
 
 fn apply_runtime_mapping_state(
-  app: &AppHandle,
-  state: &AppState,
-  runtime_state: &runtime::RuntimeMappingState,
+    app: &AppHandle,
+    state: &AppState,
+    runtime_state: &runtime::RuntimeMappingState,
 ) -> CommandResult<()> {
-  let target_profile = runtime::effective_profile_for_state(runtime_state);
-  if jsm_process::is_running(state)? {
-    let injected = inject_profile_with_retry(app, state, &target_profile)?;
-    if !injected {
-      jsm_process::terminate_jsm(app, state)?;
-      jsm_process::launch_jsm(app, state)?;
-    }
-  } else {
-    jsm_process::launch_jsm(app, state)?;
-  }
-
-  if runtime_state.mapping_enabled {
-    let autoload_command = if runtime_state.autoload_enabled {
-      "AUTOLOAD = ON"
+    let target_profile = runtime::effective_profile_for_state(runtime_state);
+    if jsm_process::is_running(state)? {
+        let injected = inject_profile_with_retry(app, state, &target_profile)?;
+        if !injected {
+            jsm_process::terminate_jsm(app, state)?;
+            jsm_process::launch_jsm(app, state)?;
+        }
     } else {
-      "AUTOLOAD = OFF"
-    };
-    let _ = jsm_process::inject_console_command(app, state, autoload_command)?;
-  }
+        jsm_process::launch_jsm(app, state)?;
+    }
 
-  Ok(())
+    if runtime_state.mapping_enabled {
+        let autoload_command = if runtime_state.autoload_enabled {
+            "AUTOLOAD = ON"
+        } else {
+            "AUTOLOAD = OFF"
+        };
+        let _ = jsm_process::inject_console_command(app, state, autoload_command)?;
+    }
+
+    Ok(())
 }
 
-fn inject_profile_with_retry(
-  app: &AppHandle,
-  state: &AppState,
-  path: &str,
+fn inject_profile_with_retry(app: &AppHandle, state: &AppState, path: &str) -> CommandResult<bool> {
+    inject_console_command_with_retry(app, state, path)
+}
+
+fn inject_console_command_with_retry(
+    app: &AppHandle,
+    state: &AppState,
+    command: &str,
 ) -> CommandResult<bool> {
-  for attempt in 0..PROFILE_INJECTION_ATTEMPTS {
-    if jsm_process::inject_console_command(app, state, path)? {
-      return Ok(true);
+    for attempt in 0..PROFILE_INJECTION_ATTEMPTS {
+        if jsm_process::inject_console_command(app, state, command)? {
+            return Ok(true);
+        }
+        if attempt + 1 < PROFILE_INJECTION_ATTEMPTS {
+            std::thread::sleep(std::time::Duration::from_millis(
+                PROFILE_INJECTION_RETRY_DELAY_MS,
+            ));
+        }
     }
-    if attempt + 1 < PROFILE_INJECTION_ATTEMPTS {
-      std::thread::sleep(std::time::Duration::from_millis(
-        PROFILE_INJECTION_RETRY_DELAY_MS,
-      ));
+    Ok(false)
+}
+
+fn run_console_command_with_output_retry(
+    app: &AppHandle,
+    state: &AppState,
+    command: &str,
+) -> CommandResult<jsm_process::ConsoleCommandResult> {
+    let mut last_result = None;
+    for attempt in 0..PROFILE_INJECTION_ATTEMPTS {
+        let result = jsm_process::run_console_command_with_output(app, state, command)?;
+        if result.success {
+            return Ok(result);
+        }
+        last_result = Some(result);
+        if attempt + 1 < PROFILE_INJECTION_ATTEMPTS {
+            std::thread::sleep(std::time::Duration::from_millis(
+                PROFILE_INJECTION_RETRY_DELAY_MS,
+            ));
+        }
     }
-  }
-  Ok(false)
+
+    Ok(last_result.unwrap_or(jsm_process::ConsoleCommandResult {
+        success: false,
+        output: String::new(),
+    }))
 }
 
 #[tauri::command]
-pub fn recalibrate_gyro(app: AppHandle, state: State<'_, AppState>) -> CommandResult<SimpleSuccessResult> {
-  runtime::ensure_required_files(&app)?;
-  let success = jsm_process::inject_console_command(&app, state.inner(), runtime::CALIBRATION_COMMAND)?;
-  if success {
-    let seconds = runtime::read_calibration_seconds(&app)?;
-    telemetry::start_calibration_countdown(app.clone(), state.inner().clone(), seconds)?;
-  } else {
-    telemetry::stop_calibration_countdown(&app, state.inner())?;
-  }
-  Ok(SimpleSuccessResult { success })
+pub fn recalibrate_gyro(
+    app: AppHandle,
+    state: State<'_, AppState>,
+) -> CommandResult<SimpleSuccessResult> {
+    runtime::ensure_required_files(&app)?;
+    let success =
+        jsm_process::inject_console_command(&app, state.inner(), runtime::CALIBRATION_COMMAND)?;
+    if success {
+        let seconds = runtime::read_calibration_seconds(&app)?;
+        telemetry::start_calibration_countdown(app.clone(), state.inner().clone(), seconds)?;
+    } else {
+        telemetry::stop_calibration_countdown(&app, state.inner())?;
+    }
+    Ok(SimpleSuccessResult { success })
 }
 
 #[tauri::command]
 pub fn get_calibration_seconds(app: AppHandle) -> CommandResult<u32> {
-  runtime::read_calibration_seconds(&app)
+    runtime::read_calibration_seconds(&app)
 }
 
 #[tauri::command]
 pub fn set_calibration_seconds(app: AppHandle, seconds: u32) -> CommandResult<u32> {
-  runtime::write_calibration_seconds(&app, seconds)
+    runtime::write_calibration_seconds(&app, seconds)
 }
 
 #[tauri::command]
 pub fn library_list_profiles(app: AppHandle) -> CommandResult<Vec<String>> {
-  runtime::list_library_profiles(&app)
+    runtime::list_library_profiles(&app)
 }
 
 #[tauri::command]
-pub fn library_save_profile(app: AppHandle, name: String, content: String) -> CommandResult<LoadLibraryProfileResult> {
-  let saved_name = runtime::save_library_profile(&app, &name, &content)?;
-  Ok(LoadLibraryProfileResult {
-    name: saved_name,
-    content,
-  })
+pub fn library_save_profile(
+    app: AppHandle,
+    name: String,
+    content: String,
+) -> CommandResult<LoadLibraryProfileResult> {
+    let saved_name = runtime::save_library_profile(&app, &name, &content)?;
+    Ok(LoadLibraryProfileResult {
+        name: saved_name,
+        content,
+    })
 }
 
 #[tauri::command]
-pub fn library_load_profile(app: AppHandle, name: String) -> CommandResult<LoadLibraryProfileResult> {
-  let content = runtime::load_library_profile(&app, &name)?;
-  Ok(LoadLibraryProfileResult { name, content })
+pub fn library_load_profile(
+    app: AppHandle,
+    name: String,
+) -> CommandResult<LoadLibraryProfileResult> {
+    let content = runtime::load_library_profile(&app, &name)?;
+    Ok(LoadLibraryProfileResult { name, content })
 }
 
 #[tauri::command]
 pub fn get_active_profile(app: AppHandle) -> CommandResult<NamedProfile> {
-  let (path, content) = runtime::get_active_profile(&app)?;
-  Ok(named_profile(path, content))
+    let (path, content) = runtime::get_active_profile(&app)?;
+    Ok(named_profile(path, content))
 }
 
 #[tauri::command]
 pub fn activate_library_profile(app: AppHandle, name: String) -> CommandResult<NamedProfile> {
-  let safe_name = runtime::sanitize_profile_name(&name);
-  let path = format!("{}/{}.txt", runtime::PROFILE_LIBRARY_RELATIVE, safe_name);
-  runtime::set_active_profile(&app, &path)?;
-  let content = runtime::load_library_profile(&app, &safe_name)?;
-  Ok(named_profile(path, content))
+    let safe_name = runtime::sanitize_profile_name(&name);
+    let path = format!("{}/{}.txt", runtime::PROFILE_LIBRARY_RELATIVE, safe_name);
+    runtime::set_active_profile(&app, &path)?;
+    let content = runtime::load_library_profile(&app, &safe_name)?;
+    Ok(named_profile(path, content))
 }
 
 #[tauri::command]
 pub fn library_create_profile(
-  app: AppHandle,
-  preferred_base_name: Option<String>,
+    app: AppHandle,
+    preferred_base_name: Option<String>,
 ) -> CommandResult<NamedProfile> {
-  let (path, content) = runtime::create_library_profile(&app, preferred_base_name.as_deref())?;
-  Ok(named_profile(path, content))
+    let (path, content) = runtime::create_library_profile(&app, preferred_base_name.as_deref())?;
+    Ok(named_profile(path, content))
 }
 
 #[tauri::command]
 pub fn library_rename_profile(
-  app: AppHandle,
-  old_name: String,
-  new_name: String,
+    app: AppHandle,
+    old_name: String,
+    new_name: String,
 ) -> CommandResult<NamedProfile> {
-  let (path, content) = runtime::rename_library_profile(&app, &old_name, &new_name)?;
-  Ok(named_profile(path, content))
+    let (path, content) = runtime::rename_library_profile(&app, &old_name, &new_name)?;
+    Ok(named_profile(path, content))
 }
 
 #[tauri::command]
-pub fn library_delete_profile(app: AppHandle, name: String) -> CommandResult<DeleteLibraryProfileResult> {
-  let fallback = runtime::delete_library_profile(&app, &name)?
-    .map(|(path, content)| named_profile(path, content));
+pub fn library_delete_profile(
+    app: AppHandle,
+    name: String,
+) -> CommandResult<DeleteLibraryProfileResult> {
+    let fallback = runtime::delete_library_profile(&app, &name)?
+        .map(|(path, content)| named_profile(path, content));
 
-  Ok(DeleteLibraryProfileResult {
-    success: true,
-    fallback,
-  })
+    Ok(DeleteLibraryProfileResult {
+        success: true,
+        fallback,
+    })
 }
 
 #[tauri::command]
 pub fn library_copy_active_profile(app: AppHandle) -> CommandResult<NamedProfile> {
-  let (path, content) = runtime::copy_active_profile(&app)?;
-  Ok(named_profile(path, content))
+    let (path, content) = runtime::copy_active_profile(&app)?;
+    Ok(named_profile(path, content))
 }
 
 #[tauri::command]
 pub fn load_calibration_preset(
-  app: AppHandle,
-  state: State<'_, AppState>,
+    app: AppHandle,
+    state: State<'_, AppState>,
 ) -> CommandResult<CalibrationPresetLoadResult> {
-  runtime::ensure_required_files(&app)?;
-  let (active_profile, _) = runtime::get_active_profile(&app)?;
-  let success = if runtime::calibration_preset_exists(&app)? {
-    jsm_process::inject_console_command(&app, state.inner(), &runtime::calibration_profile_relative())?
-  } else {
-    false
-  };
-  Ok(CalibrationPresetLoadResult {
-    success,
-    active_profile: Some(active_profile),
-    calibration_profile: Some(runtime::calibration_profile_relative()),
-  })
+    runtime::ensure_required_files(&app)?;
+    let (active_profile, _) = runtime::get_active_profile(&app)?;
+    let success = if runtime::calibration_preset_exists(&app)? {
+        jsm_process::inject_console_command(
+            &app,
+            state.inner(),
+            &runtime::calibration_profile_relative(),
+        )?
+    } else {
+        false
+    };
+    Ok(CalibrationPresetLoadResult {
+        success,
+        active_profile: Some(active_profile),
+        calibration_profile: Some(runtime::calibration_profile_relative()),
+    })
 }
 
 #[tauri::command]
 pub fn read_calibration_preset(app: AppHandle) -> CommandResult<CalibrationPresetReadResult> {
-  let content = runtime::read_calibration_preset(&app)?;
-  Ok(CalibrationPresetReadResult {
-    success: true,
-    calibration_profile: Some(runtime::calibration_profile_relative()),
-    content: Some(content),
-  })
+    let content = runtime::read_calibration_preset(&app)?;
+    Ok(CalibrationPresetReadResult {
+        success: true,
+        calibration_profile: Some(runtime::calibration_profile_relative()),
+        content: Some(content),
+    })
 }
 
 #[tauri::command]
-pub fn save_calibration_preset(app: AppHandle, content: String) -> CommandResult<SimpleSuccessResult> {
-  runtime::save_calibration_preset(&app, &content)?;
-  Ok(SimpleSuccessResult { success: true })
+pub fn save_calibration_preset(
+    app: AppHandle,
+    content: String,
+) -> CommandResult<SimpleSuccessResult> {
+    runtime::save_calibration_preset(&app, &content)?;
+    Ok(SimpleSuccessResult { success: true })
 }
 
 #[tauri::command]
 pub fn run_calibration_command(
-  app: AppHandle,
-  state: State<'_, AppState>,
-  command: String,
+    app: AppHandle,
+    state: State<'_, AppState>,
+    command: String,
 ) -> CommandResult<CalibrationCommandResult> {
-  runtime::ensure_required_files(&app)?;
-  let result = jsm_process::run_console_command_with_output(&app, state.inner(), &command)?;
-  Ok(CalibrationCommandResult {
-    success: result.success,
-    output: result.output,
-  })
+    runtime::ensure_required_files(&app)?;
+    let result = jsm_process::run_console_command_with_output(&app, state.inner(), &command)?;
+    Ok(CalibrationCommandResult {
+        success: result.success,
+        output: result.output,
+    })
+}
+
+#[tauri::command]
+pub fn list_jsm_controllers(
+    app: AppHandle,
+    state: State<'_, AppState>,
+) -> CommandResult<Vec<ControllerCandidate>> {
+    ensure_hidhide_visibility_for_controller_scan(&app, state.inner())?;
+    jsm_process::launch_jsm(&app, state.inner())?;
+    let result = run_console_command_with_output_retry(&app, state.inner(), "LIST_CONTROLLERS")?;
+    if !result.success {
+        return Err(format!(
+            "Failed to query JoyShockMapper controllers. {}",
+            result.output.trim()
+        )
+        .trim()
+        .to_string());
+    }
+    Ok(parse_controller_candidates(&result.output))
+}
+
+#[tauri::command]
+pub fn connect_jsm_controllers(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    device_ids: Vec<i32>,
+) -> CommandResult<SimpleSuccessResult> {
+    if device_ids.is_empty() {
+        return Err("Select at least one controller to connect.".to_string());
+    }
+
+    let mut unique_ids = Vec::new();
+    for device_id in device_ids {
+        if device_id < 0 {
+            return Err(format!("Invalid controller id: {device_id}"));
+        }
+        if !unique_ids.contains(&device_id) {
+            unique_ids.push(device_id);
+        }
+    }
+
+    ensure_hidhide_visibility_for_controller_scan(&app, state.inner())?;
+    jsm_process::launch_jsm(&app, state.inner())?;
+    let command = format!(
+        "RECONNECT_CONTROLLERS SELECT {}",
+        unique_ids
+            .iter()
+            .map(i32::to_string)
+            .collect::<Vec<_>>()
+            .join(" ")
+    );
+    let success = inject_console_command_with_retry(&app, state.inner(), &command)?;
+    if !success {
+        return Err("Failed to send controller selection to JoyShockMapper.".to_string());
+    }
+
+    Ok(SimpleSuccessResult { success: true })
+}
+
+fn ensure_hidhide_visibility_for_controller_scan(
+    app: &AppHandle,
+    state: &AppState,
+) -> CommandResult<()> {
+    let latest_packet = telemetry::latest_packet(state)?;
+    let status = hidhide::get_status(app, latest_packet.as_ref())?;
+    if !status.supported || !status.installed {
+        return Ok(());
+    }
+    if status.requires_elevation {
+        return Err(
+            "HidHide is installed, but JSM Studio cannot repair the whitelist without administrator rights. Restart JSM Studio as administrator."
+                .to_string(),
+        );
+    }
+    if status.whitelist_synced {
+        return Ok(());
+    }
+
+    hidhide::sync_whitelist(app, latest_packet.as_ref())?;
+    if jsm_process::is_running(state)? {
+        jsm_process::terminate_jsm(app, state)?;
+    }
+
+    Ok(())
+}
+
+fn parse_controller_candidates(output: &str) -> Vec<ControllerCandidate> {
+    let mut candidates = Vec::new();
+    let mut in_list = false;
+
+    for line in output.lines() {
+        let trimmed = line.trim();
+        if trimmed == "JSM_CONTROLLER_LIST_BEGIN" {
+            in_list = true;
+            continue;
+        }
+        if trimmed == "JSM_CONTROLLER_LIST_END" {
+            break;
+        }
+        if !in_list || !trimmed.starts_with("JSM_CONTROLLER") {
+            continue;
+        }
+
+        let fields = trimmed.split_whitespace().collect::<Vec<_>>();
+        if fields.len() < 5 || fields[0] != "JSM_CONTROLLER" {
+            continue;
+        }
+        let Ok(device_id) = fields[1].parse::<i32>() else {
+            continue;
+        };
+        let vendor_id = parse_vid_pid(fields[2]);
+        let product_id = parse_vid_pid(fields[3]);
+        let is_gamepad = fields[4] == "1";
+        let name = fields
+            .get(5..)
+            .map(|parts| parts.join(" "))
+            .unwrap_or_default();
+        let name = name.trim();
+
+        candidates.push(ControllerCandidate {
+            device_id,
+            name: if name.is_empty() {
+                "Unknown controller".to_string()
+            } else {
+                name.to_string()
+            },
+            vendor_id,
+            product_id,
+            is_gamepad,
+        });
+    }
+
+    candidates
+}
+
+fn parse_vid_pid(value: &str) -> Option<u16> {
+    let parsed = value.parse::<u32>().ok()?;
+    if parsed == 0 || parsed > u16::MAX as u32 {
+        return None;
+    }
+    Some(parsed as u16)
 }
 
 #[tauri::command]
 pub fn get_backend_choice(app: AppHandle) -> CommandResult<String> {
-  runtime::read_backend_choice(&app)
+    runtime::read_backend_choice(&app)
 }
 
 #[tauri::command]
 pub fn set_backend_choice(
-  app: AppHandle,
-  state: State<'_, AppState>,
-  choice: String,
+    app: AppHandle,
+    state: State<'_, AppState>,
+    choice: String,
 ) -> CommandResult<SetBackendChoiceResult> {
-  if choice != "SDL" && choice != "legacy" {
-    let backend = runtime::read_backend_choice(&app)?;
-    return Ok(SetBackendChoiceResult {
-      success: false,
-      backend,
-    });
-  }
+    if choice != "SDL" && choice != "legacy" {
+        let backend = runtime::read_backend_choice(&app)?;
+        return Ok(SetBackendChoiceResult {
+            success: false,
+            backend,
+        });
+    }
 
-  let current = runtime::read_backend_choice(&app)?;
-  if current == choice {
-    return Ok(SetBackendChoiceResult {
-      success: true,
-      backend: current,
-    });
-  }
+    let current = runtime::read_backend_choice(&app)?;
+    if current == choice {
+        return Ok(SetBackendChoiceResult {
+            success: true,
+            backend: current,
+        });
+    }
 
-  jsm_process::terminate_jsm(&app, state.inner())?;
-  let backend = runtime::write_backend_choice(&app, &choice)?;
-  runtime::ensure_required_files(&app)?;
-  jsm_process::launch_jsm(&app, state.inner())?;
-  Ok(SetBackendChoiceResult {
-    success: true,
-    backend,
-  })
+    jsm_process::terminate_jsm(&app, state.inner())?;
+    let backend = runtime::write_backend_choice(&app, &choice)?;
+    runtime::ensure_required_files(&app)?;
+    jsm_process::launch_jsm(&app, state.inner())?;
+    Ok(SetBackendChoiceResult {
+        success: true,
+        backend,
+    })
 }
 
 #[tauri::command]
 pub fn get_latest_telemetry_sample(state: State<'_, AppState>) -> CommandResult<Option<Value>> {
-  telemetry::latest_packet(state.inner())
+    telemetry::latest_packet(state.inner())
+}
+
+#[tauri::command]
+pub fn get_hidhide_status(
+    app: AppHandle,
+    state: State<'_, AppState>,
+) -> CommandResult<hidhide::HidHideStatus> {
+    let latest_packet = telemetry::latest_packet(state.inner())?;
+    hidhide::get_status(&app, latest_packet.as_ref())
+}
+
+#[tauri::command]
+pub fn set_hidhide_active(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    active: bool,
+) -> CommandResult<hidhide::HidHideStatus> {
+    let latest_packet = telemetry::latest_packet(state.inner())?;
+    hidhide::set_active(&app, active, latest_packet.as_ref())
+}
+
+#[tauri::command]
+pub fn set_hidhide_device_hidden(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    instance_id: String,
+    hidden: bool,
+) -> CommandResult<hidhide::HidHideStatus> {
+    let latest_packet = telemetry::latest_packet(state.inner())?;
+    hidhide::set_device_hidden(&app, &instance_id, hidden, latest_packet.as_ref())
+}
+
+#[tauri::command]
+pub fn sync_hidhide_whitelist(
+    app: AppHandle,
+    state: State<'_, AppState>,
+) -> CommandResult<hidhide::HidHideStatus> {
+    let latest_packet = telemetry::latest_packet(state.inner())?;
+    hidhide::sync_whitelist(&app, latest_packet.as_ref())
+}
+
+#[tauri::command]
+pub fn install_bundled_hidhide(
+    app: AppHandle,
+    state: State<'_, AppState>,
+) -> CommandResult<hidhide::HidHideInstallResult> {
+    let latest_packet = telemetry::latest_packet(state.inner())?;
+    hidhide::install_bundled(&app, latest_packet.as_ref())
+}
+
+#[tauri::command]
+pub fn open_hidhide_client(app: AppHandle) -> CommandResult<()> {
+    hidhide::open_configuration_client(&app)
 }
 
 #[tauri::command]
 pub fn open_external(url: String) -> CommandResult<()> {
-  open::that(url).map_err(|error| format!("Failed to open external link: {error}"))?;
-  Ok(())
+    open::that(url).map_err(|error| format!("Failed to open external link: {error}"))?;
+    Ok(())
+}
+
+#[tauri::command]
+pub fn open_config_directory(app: AppHandle) -> CommandResult<()> {
+    let path = runtime::config_directory(&app)?;
+    open::that(path).map_err(|error| format!("Failed to open config directory: {error}"))?;
+    Ok(())
 }
 
 #[tauri::command]
 pub fn start_input_debug_hook(app: AppHandle) -> CommandResult<input_debug::InputDebugHookStatus> {
-  input_debug::start(app)
+    input_debug::start(app)
 }
 
 #[tauri::command]
 pub fn stop_input_debug_hook() -> CommandResult<input_debug::InputDebugHookStatus> {
-  input_debug::stop()
+    input_debug::stop()
 }
 
 #[tauri::command]
 pub fn get_input_debug_hook_status() -> CommandResult<input_debug::InputDebugHookStatus> {
-  input_debug::status()
+    input_debug::status()
 }
 
 fn named_profile(path: String, content: String) -> NamedProfile {
-  let name = runtime::profile_name_from_relative_path(&path);
-  NamedProfile { path, name, content }
+    let name = runtime::profile_name_from_relative_path(&path);
+    NamedProfile {
+        path,
+        name,
+        content,
+    }
 }
 
 #[tauri::command]
 pub fn get_ai_settings(app: AppHandle) -> CommandResult<ai::AiSettings> {
-  ai::load_settings(&app)
+    ai::load_settings(&app)
 }
 
 #[tauri::command]
 pub fn save_ai_settings(
-  app: AppHandle,
-  settings: ai::AiSettingsInput,
+    app: AppHandle,
+    settings: ai::AiSettingsInput,
 ) -> CommandResult<ai::AiSettings> {
-  ai::save_settings(&app, settings)
+    ai::save_settings(&app, settings)
 }
 
 #[tauri::command]
 pub async fn generate_ai_mapping(
-  app: AppHandle,
-  request: ai::GenerateMappingRequest,
+    app: AppHandle,
+    request: ai::GenerateMappingRequest,
 ) -> CommandResult<ai::GenerateMappingResponse> {
-  ai::generate_mapping(&app, request).await
+    ai::generate_mapping(&app, request).await
 }

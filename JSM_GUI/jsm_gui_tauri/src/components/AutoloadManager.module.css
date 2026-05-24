@@ -33,21 +33,81 @@
   font-size: 0.8rem;
 }
 
-.switchButton {
-  border: 1px solid var(--border-strong);
-  border-radius: 6px;
-  padding: 0.38rem 0.72rem;
+.toggleControl {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 8rem;
+  border: 1px solid var(--border-1);
+  border-radius: 999px;
+  padding: 0.34rem 0.55rem;
   background: var(--bg-input);
-  color: var(--text-muted);
-  font-weight: 800;
+  color: var(--text-strong);
   cursor: pointer;
+  font-weight: 800;
+  user-select: none;
+  transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.switchButtonOn {
+.toggleControl input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.toggleSlider {
+  position: relative;
+  width: 42px;
+  height: 24px;
+  border: 1px solid var(--border-1);
+  border-radius: 999px;
+  background: var(--pill-warn-bg);
+  box-shadow: inset 0 1px 2px color-mix(in srgb, black 18%, transparent);
+  transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.toggleSlider::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--pill-warn-text);
+  box-shadow: 0 1px 4px color-mix(in srgb, black 28%, transparent);
+  transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+.toggleControlOn {
   border-color: color-mix(in srgb, var(--accent) 70%, transparent);
-  background: color-mix(in srgb, var(--accent) 20%, var(--bg-input));
-  color: var(--text-strong);
-  box-shadow: inset 0 -2px 0 var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, var(--bg-input));
+  box-shadow: 0 0 18px color-mix(in srgb, var(--accent) 16%, transparent);
+}
+
+.toggleControlOn .toggleSlider {
+  border-color: color-mix(in srgb, var(--accent) 70%, transparent);
+  background: color-mix(in srgb, var(--accent) 72%, var(--bg-input));
+}
+
+.toggleControlOn .toggleSlider::after {
+  transform: translateX(18px);
+  background: var(--bg-0);
+}
+
+.toggleControl:has(input:focus-visible) .toggleSlider {
+  outline: 2px solid color-mix(in srgb, var(--accent) 72%, transparent);
+  outline-offset: 2px;
+}
+
+.toggleControl:has(input:disabled) {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.toggleText {
+  min-width: 3.2rem;
 }
 
 .sectionHeader {
@@ -158,6 +218,13 @@
   color: var(--text-muted);
   font-size: 0.78rem;
   font-weight: 800;
+}
+
+.addForm label small {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1.35;
 }
 
 @media (max-width: 760px) {

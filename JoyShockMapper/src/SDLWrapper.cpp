@@ -14,6 +14,7 @@
 #include <iostream>
 #include <cstring>
 #include <span>
+#include <vector>
 
 typedef struct
 {
@@ -531,14 +532,30 @@ public:
 		return 1;
 	}
 
-	SDL_JoystickID * _joysticksArray = nullptr;
+	std::vector<SDL_JoystickID> _joysticks;
 	map<int, ControllerDevice *> _controllerMap;
 	void (*g_callback)(int, JOY_SHOCK_STATE, JOY_SHOCK_STATE, IMU_STATE, IMU_STATE, float) = nullptr;
 	void (*g_touch_callback)(int, TOUCH_STATE, TOUCH_STATE, float) = nullptr;
 	atomic_bool keep_polling = false;
 	mutex controller_lock;
 
+	void RefreshDeviceList()
+	{
+		SDL_PumpEvents();
+		SDL_UpdateJoysticks();
+		SDL_UpdateGamepads();
+		SDL_Delay(20);
+		SDL_PumpEvents();
+		SDL_UpdateJoysticks();
+		SDL_UpdateGamepads();
+	}
+
 	int ConnectDevices() override
+	{
+		return ConnectDevices({});
+	}
+
+	int ConnectDevices(const std::vector<int>& selectedDeviceIds) override
 	{
 		DisableProcessPowerThrottling();
 		RaiseProcessPriority();
@@ -555,20 +572,66 @@ public:
 			  "Poll Devices", this);
 			SDL_DetachThread(controller_polling_thread);
 		}
-		SDL_UpdateGamepads(); // Refresh driver listing
-		SDL_free(_joysticksArray);
+		RefreshDeviceList(); // Refresh driver listing
 		int count = 0;
-		_joysticksArray = SDL_GetJoysticks(&count);
-		return count;
+		SDL_JoystickID *joysticksArray = SDL_GetJoysticks(&count);
+		_joysticks.clear();
+		_joysticks.reserve(count);
+
+		for (int i = 0; i < count; ++i)
+		{
+			SDL_JoystickID joystickId = joysticksArray[i];
+			if (!selectedDeviceIds.empty() &&
+				std::find(selectedDeviceIds.begin(), selectedDeviceIds.end(), int(joystickId)) == selectedDeviceIds.end())
+			{
+				continue;
+			}
+			_joysticks.push_back(joystickId);
+		}
+
+		SDL_free(joysticksArray);
+		return int(_joysticks.size());
 	}
 
 	int GetDeviceCount() override
 	{
 		std::lock_guard guard(controller_lock);
-		SDL_free(_joysticksArray);
+		RefreshDeviceList();
 		int count = 0;
-		_joysticksArray = SDL_GetJoysticks(&count);
+		SDL_JoystickID *joysticksArray = SDL_GetJoysticks(&count);
+		SDL_free(joysticksArray);
 		return count;
+	}
+
+	std::vector<ControllerInfo> ListAvailableDevices() override
+	{
+		std::lock_guard guard(controller_lock);
+		RefreshDeviceList();
+
+		int count = 0;
+		SDL_JoystickID *joysticksArray = SDL_GetJoysticks(&count);
+		std::vector<ControllerInfo> devices;
+		devices.reserve(count);
+
+		for (int i = 0; i < count; ++i)
+		{
+			SDL_JoystickID joystickId = joysticksArray[i];
+			bool isGamepad = SDL_IsGamepad(joystickId);
+			const char *name = isGamepad ? SDL_GetGamepadNameForID(joystickId) : SDL_GetJoystickNameForID(joystickId);
+			int vendorId = isGamepad ? SDL_GetGamepadVendorForID(joystickId) : SDL_GetJoystickVendorForID(joystickId);
+			int productId = isGamepad ? SDL_GetGamepadProductForID(joystickId) : SDL_GetJoystickProductForID(joystickId);
+
+			devices.push_back({
+				int(joystickId),
+				vendorId,
+				productId,
+				isGamepad,
+				name != nullptr ? name : "Unknown controller"
+			});
+		}
+
+		SDL_free(joysticksArray);
+		return devices;
 	}
 
 	int GetConnectedDeviceHandles(int *deviceHandleArray, int size) override
@@ -580,9 +643,10 @@ public:
 			delete iter->second;
 			iter = _controllerMap.erase(iter);
 		}
-		for (int i = 0; i < size; i++)
+		int limit = std::min(size, int(_joysticks.size()));
+		for (int i = 0; i < limit; i++)
 		{
-			ControllerDevice *device = new ControllerDevice(_joysticksArray[i]);
+			ControllerDevice *device = new ControllerDevice(_joysticks[i]);
 			if (device->isValid())
 			{
 				deviceHandleArray[i] = i + 1;
@@ -593,6 +657,10 @@ public:
                 deviceHandleArray[i] = -1;
 				delete device;
 			}
+		}
+		for (int i = limit; i < size; i++)
+		{
+			deviceHandleArray[i] = -1;
 		}
 		return int(_controllerMap.size());
 	}
@@ -609,8 +677,7 @@ public:
 			delete iter->second;
 			iter = _controllerMap.erase(iter);
 		}
-		SDL_free(_joysticksArray);
-		_joysticksArray = nullptr;
+		_joysticks.clear();
 		SDL_Delay(200);
 	}
 

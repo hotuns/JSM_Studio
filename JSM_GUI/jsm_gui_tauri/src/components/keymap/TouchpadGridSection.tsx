@@ -1,6 +1,6 @@
 import { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { type ButtonDefinition } from '../../keymap/schema'
+import { getButtonDescription, type ButtonDefinition } from '../../keymap/schema'
 import { KeymapSection } from '../KeymapSection'
 import keymapStyles from '../Keymap.module.css'
 import styles from './Touchpad.module.css'
@@ -11,6 +11,10 @@ type TouchpadGridSectionProps = {
   gridCells: number
   renderButton: (button: ButtonDefinition) => ReactNode
   touchpadButtons: ButtonDefinition[]
+  selectedButton: ButtonDefinition | null
+  selectedCommand: string | null
+  onSelectButton: (command: string) => void
+  isButtonBound?: (command: string) => boolean
   hasPendingChanges: boolean
   statusMessage?: string | null
   onApply: () => void
@@ -23,6 +27,10 @@ export function TouchpadGridSection({
   gridCells,
   renderButton,
   touchpadButtons,
+  selectedButton,
+  selectedCommand,
+  onSelectButton,
+  isButtonBound,
   hasPendingChanges,
   statusMessage,
   onApply,
@@ -30,6 +38,7 @@ export function TouchpadGridSection({
   applyDisabled,
 }: TouchpadGridSectionProps) {
   const { t } = useTranslation()
+  const selectedCommandUpper = selectedCommand?.toUpperCase() ?? ''
 
   return (
     <>
@@ -38,21 +47,40 @@ export function TouchpadGridSection({
           {Array.from({ length: gridCells }).map((_, index) => {
             const rowIndex = Math.floor(index / gridColumns)
             const colIndex = index % gridColumns
+            const button = touchpadButtons[index]
+            const command = button?.command ?? `T${index + 1}`
+            const commandUpper = command.toUpperCase()
+            const isSelected = commandUpper === selectedCommandUpper
+            const isBound = isButtonBound?.(commandUpper) ?? false
             return (
-              <div className={styles.touchpadGridCell} key={`cell-${index}`}>
-                <span>T{index + 1}</span>
+              <button
+                type="button"
+                className={`${styles.touchpadGridCell} ${isSelected ? styles.touchpadGridCellSelected : ''} ${isBound ? styles.touchpadGridCellBound : ''}`}
+                key={`cell-${index}`}
+                aria-pressed={isSelected}
+                onClick={() => onSelectButton(command)}
+              >
+                <span>{command}</span>
                 <small>{t('common.rowCol', { row: rowIndex + 1, col: colIndex + 1 })}</small>
-              </div>
+              </button>
             )
           })}
         </div>
-        <div className={styles.touchpadBindingList} data-touchpad-binding-list>
-          <div className={keymapStyles.keymapGrid}>
-            {touchpadButtons.map(button => (
-              <div key={button.command}>{renderButton(button)}</div>
-            ))}
+        {selectedButton && (
+          <div className={styles.touchpadRegionEditor}>
+            <div className={styles.touchpadRegionHeader}>
+              <div>
+                <span>{t('keymap.selectedTouchpadRegion')}</span>
+                <strong>{selectedButton.command}</strong>
+                <p>{getButtonDescription(selectedButton, t)}</p>
+              </div>
+              {isButtonBound?.(selectedButton.command) && (
+                <span className={styles.touchpadRegionBound}>{t('keymap.bound')}</span>
+              )}
+            </div>
+            {renderButton(selectedButton)}
           </div>
-        </div>
+        )}
       </KeymapSection>
       <SectionActions
         className={keymapStyles.keymapSectionActions}

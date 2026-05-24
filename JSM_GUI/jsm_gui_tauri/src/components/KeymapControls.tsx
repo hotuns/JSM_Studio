@@ -426,6 +426,7 @@ export function KeymapControls({
 }: KeymapControlsProps) {
   const { t } = useTranslation()
   const [mappingHelpOpen, setMappingHelpOpen] = useState(false)
+  const [selectedTouchpadGridCommand, setSelectedTouchpadGridCommand] = useState<string | null>(null)
   const {
     manualRows,
     ensureManualRow,
@@ -477,6 +478,11 @@ export function KeymapControls({
       return buildTouchpadGridButton(index + 1, rowIndex, colIndex)
     })
   }, [clampedGridCells, clampedGridCols])
+
+  const selectedTouchpadGridButton =
+    touchpadGridButtons.find(button => button.command.toUpperCase() === selectedTouchpadGridCommand?.toUpperCase()) ??
+    touchpadGridButtons[0] ??
+    null
 
   const bindingRowsByButton = useMemo(() => {
     const record: Record<string, ButtonBindingRow[]> = {}
@@ -576,6 +582,16 @@ export function KeymapControls({
     onSelectedMappingCommandChange?.(selectedVisualButton.command)
   }, [onSelectedMappingCommandChange, selectedMappingCommand, selectedVisualButton, view])
 
+  useEffect(() => {
+    if (view !== 'touchpad' || !gridActive || touchpadGridButtons.length === 0) return
+    const selectedStillExists = touchpadGridButtons.some(
+      button => button.command.toUpperCase() === selectedTouchpadGridCommand?.toUpperCase()
+    )
+    if (!selectedStillExists) {
+      setSelectedTouchpadGridCommand(touchpadGridButtons[0].command)
+    }
+  }, [gridActive, selectedTouchpadGridCommand, touchpadGridButtons, view])
+
   const showFullLayout = view === 'full'
   const showGlobalOnlyLayout = showFullLayout && visibleSections?.length === 1 && visibleSections[0] === 'global'
   const showVisualMappingLayout = showFullLayout && !showGlobalOnlyLayout
@@ -652,6 +668,12 @@ export function KeymapControls({
     applyDisabled: isCalibrating,
   }
 
+  const isTouchpadButtonBound = (command: string) => {
+    const key = command.toUpperCase()
+    const rows = bindingRowsByButton[key] ?? bindingRowsByButton[command] ?? []
+    return rows.length > 0 || Boolean(specialsByButton[key] || specialsByButton[command])
+  }
+
   const stickModeExtras = (side: 'LEFT' | 'RIGHT') => {
     const mode = side === 'LEFT' ? stickModeSettings?.left.mode ?? '' : stickModeSettings?.right.mode ?? ''
     if ((mode === 'AIM' || (side === 'LEFT' && mode === 'HYBRID_AIM')) && stickAimSettings && stickAimHandlers) {
@@ -715,20 +737,17 @@ export function KeymapControls({
       locked={isCalibrating}
       lockMessage={lockMessage ?? t('messages.lockMessage')}
     >
-      <div className={keymapStyles.keymapCardHeader}>
-        <div className={`${keymapStyles.keymapTitleRow} ${showVisualMappingLayout ? keymapStyles.keymapTitleRowActionsOnly : ''}`}>
-          {!showVisualMappingLayout && (
+      {!showVisualMappingLayout && (
+        <div className={keymapStyles.keymapCardHeader}>
+          <div className={keymapStyles.keymapTitleRow}>
             <h2>
               {view === 'touchpad'
                 ? t('keymap.touchpadControlsTitle')
                 : t('keymap.controlsTitle')}
             </h2>
-          )}
-          <button type="button" className="ghost-btn" onClick={() => setMappingHelpOpen(true)} data-capture-ignore="true">
-            {t('keymap.mappingHelpButton')}
-          </button>
+          </div>
         </div>
-      </div>
+      )}
 
       {showGlobalOnlyLayout && (
         <GlobalControlsSection
@@ -748,6 +767,7 @@ export function KeymapControls({
           onAdaptiveTriggerChange={onAdaptiveTriggerChange}
           triggerThreshold={triggerThreshold}
           onTriggerThresholdChange={onTriggerThresholdChange}
+          onOpenMappingHelp={() => setMappingHelpOpen(true)}
           {...actionsProps}
         />
       )}
@@ -773,6 +793,7 @@ export function KeymapControls({
             onAdaptiveTriggerChange={onAdaptiveTriggerChange}
             triggerThreshold={triggerThreshold}
             onTriggerThresholdChange={onTriggerThresholdChange}
+            onOpenMappingHelp={() => setMappingHelpOpen(true)}
             {...actionsProps}
           />
           <section className={keymapStyles.mappingWorkbench}>
@@ -881,19 +902,6 @@ export function KeymapControls({
         <>
           {renderSections([
             {
-              key: 'touch-bind',
-              shouldRender: isVisible('touch-bind'),
-              node: (
-                <ButtonGridSection
-                  title={t('keymap.touchButtonsTitle')}
-                  description={t('keymap.touchButtonsDescription')}
-                  buttons={TOUCH_BUTTONS}
-                  renderButton={renderButtonCard}
-                  {...actionsProps}
-                />
-              ),
-            },
-            {
               key: 'touch-grid',
               shouldRender: isVisible('touch-grid'),
               node: (
@@ -914,10 +922,27 @@ export function KeymapControls({
                       gridCells={clampedGridCells}
                       renderButton={renderButtonCard}
                       touchpadButtons={touchpadGridButtons}
+                      selectedButton={selectedTouchpadGridButton}
+                      selectedCommand={selectedTouchpadGridButton?.command ?? null}
+                      onSelectButton={setSelectedTouchpadGridCommand}
+                      isButtonBound={isTouchpadButtonBound}
                       {...actionsProps}
                     />
                   )}
                 </>
+              ),
+            },
+            {
+              key: 'touch-bind',
+              shouldRender: isVisible('touch-bind'),
+              node: (
+                <ButtonGridSection
+                  title={t('keymap.touchButtonsTitle')}
+                  description={t('keymap.touchButtonsDescription')}
+                  buttons={TOUCH_BUTTONS}
+                  renderButton={renderButtonCard}
+                  {...actionsProps}
+                />
               ),
             },
           ])}

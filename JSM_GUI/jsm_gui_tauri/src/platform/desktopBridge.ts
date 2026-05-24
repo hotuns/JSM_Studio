@@ -78,6 +78,45 @@ export type InputDebugEvent = {
   summary: string
 }
 
+export type HidHideDevice = {
+  instanceId: string
+  displayName: string
+  vendor: string
+  product: string
+  serialNumber?: string | null
+  present: boolean
+  hidden: boolean
+  likelyCurrentController: boolean
+  stale: boolean
+  managedByApp: boolean
+  vendorId?: number | null
+  productId?: number | null
+}
+
+export type HidHideStatus = {
+  supported: boolean
+  installed: boolean
+  active: boolean
+  devices: HidHideDevice[]
+  managedInstanceIds: string[]
+  whitelistSynced: boolean
+  requiresElevation: boolean
+}
+
+export type HidHideInstallResult = {
+  completed: boolean
+  installerPath?: string | null
+  status: HidHideStatus
+}
+
+export type ControllerCandidate = {
+  deviceId: number
+  name: string
+  vendorId?: number | null
+  productId?: number | null
+  isGamepad: boolean
+}
+
 export type AiSettings = {
   apiKey: string
   model: string
@@ -147,6 +186,7 @@ export interface DesktopBridge {
   getBackendChoice: () => Promise<BackendChoice | null>
   setBackendChoice: (choice: BackendChoice) => Promise<{ success: boolean; backend: BackendChoice } | null>
   openExternal: (url: string) => Promise<void>
+  openConfigDirectory: () => Promise<void>
   onUpdateAvailable: (callback: (version: string) => void) => Unsubscribe
   onUpdateDownloaded: (callback: () => void) => Unsubscribe
   onUpdateDownloadProgress: (callback: (percent: number) => void) => Unsubscribe
@@ -157,6 +197,14 @@ export interface DesktopBridge {
   stopInputDebugHook: () => Promise<InputDebugHookStatus>
   getInputDebugHookStatus: () => Promise<InputDebugHookStatus>
   onInputDebugEvent: (callback: (payload: InputDebugEvent) => void) => Unsubscribe
+  getHidHideStatus: () => Promise<HidHideStatus>
+  setHidHideActive: (active: boolean) => Promise<HidHideStatus>
+  setHidHideDeviceHidden: (instanceId: string, hidden: boolean) => Promise<HidHideStatus>
+  syncHidHideWhitelist: () => Promise<HidHideStatus>
+  installBundledHidHide: () => Promise<HidHideInstallResult>
+  openHidHideClient: () => Promise<void>
+  listJsmControllers: () => Promise<ControllerCandidate[]>
+  connectJsmControllers: (deviceIds: number[]) => Promise<{ success: boolean }>
   getAiSettings: () => Promise<AiSettings>
   saveAiSettings: (settings: AiSettingsInput) => Promise<AiSettings>
   generateAiMapping: (request: AiGenerateRequest) => Promise<AiGenerateResponse>
@@ -183,6 +231,16 @@ const unsupportedInputDebugStatus = (): InputDebugHookStatus => ({
   running: false,
   platform: typeof navigator === 'undefined' ? 'unknown' : navigator.platform,
   message: 'Global input debug hook is only supported in the Tauri desktop app on Windows.',
+})
+
+const unsupportedHidHideStatus = (): HidHideStatus => ({
+  supported: typeof navigator !== 'undefined' ? navigator.platform.startsWith('Win') : false,
+  installed: false,
+  active: false,
+  devices: [],
+  managedInstanceIds: [],
+  whitelistSynced: false,
+  requiresElevation: false,
 })
 
 const listenTauri = <T>(eventName: string, callback: (payload: T) => void): Unsubscribe => {
@@ -405,6 +463,12 @@ export const desktopBridge: DesktopBridge = {
     }
     await getElectronAPI()?.openExternal?.(url)
   },
+  async openConfigDirectory() {
+    if (isTauriWindow()) {
+      await invokeTauri<void>('open_config_directory')
+      return
+    }
+  },
   onUpdateAvailable(callback) {
     if (isTauriWindow()) {
       return listenTauri<string>('update-available', callback)
@@ -470,6 +534,57 @@ export const desktopBridge: DesktopBridge = {
       return listenTauri<InputDebugEvent>('input-debug-event', callback)
     }
     return noop
+  },
+  async getHidHideStatus() {
+    if (isTauriWindow()) {
+      return invokeTauri<HidHideStatus>('get_hidhide_status')
+    }
+    return unsupportedHidHideStatus()
+  },
+  async setHidHideActive(active) {
+    if (isTauriWindow()) {
+      return invokeTauri<HidHideStatus>('set_hidhide_active', { active })
+    }
+    return unsupportedHidHideStatus()
+  },
+  async setHidHideDeviceHidden(instanceId, hidden) {
+    if (isTauriWindow()) {
+      return invokeTauri<HidHideStatus>('set_hidhide_device_hidden', { instanceId, hidden })
+    }
+    return unsupportedHidHideStatus()
+  },
+  async syncHidHideWhitelist() {
+    if (isTauriWindow()) {
+      return invokeTauri<HidHideStatus>('sync_hidhide_whitelist')
+    }
+    return unsupportedHidHideStatus()
+  },
+  async installBundledHidHide() {
+    if (isTauriWindow()) {
+      return invokeTauri<HidHideInstallResult>('install_bundled_hidhide')
+    }
+    return {
+      completed: false,
+      installerPath: null,
+      status: unsupportedHidHideStatus(),
+    }
+  },
+  async openHidHideClient() {
+    if (isTauriWindow()) {
+      await invokeTauri<void>('open_hidhide_client')
+    }
+  },
+  async listJsmControllers() {
+    if (isTauriWindow()) {
+      return invokeTauri<ControllerCandidate[]>('list_jsm_controllers').catch(() => [])
+    }
+    return []
+  },
+  async connectJsmControllers(deviceIds) {
+    if (isTauriWindow()) {
+      return invokeTauri<{ success: boolean }>('connect_jsm_controllers', { deviceIds })
+    }
+    return { success: false }
   },
   async getAiSettings() {
     if (isTauriWindow()) {

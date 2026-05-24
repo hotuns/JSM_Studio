@@ -1,4 +1,4 @@
-/* Global layout glue: responsive header / subnav / utility actions */
+/* Global layout glue: responsive header / page subnav / utility actions */
 
 .responsive-header {
   display: none;
@@ -20,6 +20,21 @@
   flex-wrap: wrap;
   margin: 0;
   align-items: center;
+}
+
+.page-with-subnav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.page-subnav {
+  display: flex;
+  justify-content: flex-start;
+  padding: 0.45rem;
+  border: 1px solid var(--border-1);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--bg-2) 74%, transparent);
 }
 
 .utility-bar {
@@ -46,12 +61,11 @@
 .utility-mapping-switch {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 0.65rem;
-  min-width: 242px;
+  justify-content: center;
+  min-width: 138px;
   border: 1px solid var(--border-1);
   border-radius: 8px;
-  padding: 0.42rem 0.55rem;
+  padding: 0.42rem 0.6rem;
   background: var(--bg-input);
 }
 
@@ -67,33 +81,75 @@
   line-height: 1.2;
 }
 
-.mapping-toggle-button {
+.mapping-toggle-control {
   flex: 0 0 auto;
-  border: 1px solid var(--border-1);
-  border-radius: 6px;
-  padding: 0.35rem 0.65rem;
-  background: var(--bg-input);
-  color: var(--text-strong);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
   cursor: pointer;
+  color: var(--text-strong);
   font-weight: 800;
+  user-select: none;
+}
+
+.mapping-toggle-control input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.mapping-toggle-slider {
+  position: relative;
+  width: 42px;
+  height: 24px;
+  border: 1px solid var(--border-1);
+  border-radius: 999px;
+  background: var(--pill-warn-bg);
+  box-shadow: inset 0 1px 2px color-mix(in srgb, black 18%, transparent);
   transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.mapping-toggle-button.is-enabled {
+.mapping-toggle-slider::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--pill-warn-text);
+  box-shadow: 0 1px 4px color-mix(in srgb, black 28%, transparent);
+  transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+.mapping-toggle-control.is-enabled .mapping-toggle-slider {
   border-color: color-mix(in srgb, var(--accent) 70%, transparent);
-  background: color-mix(in srgb, var(--accent) 18%, var(--bg-input));
+  background: color-mix(in srgb, var(--accent) 72%, var(--bg-input));
   box-shadow: 0 0 18px color-mix(in srgb, var(--accent) 20%, transparent);
 }
 
-.mapping-toggle-button.is-paused {
-  border-color: var(--pill-warn-border);
-  background: var(--pill-warn-bg);
+.mapping-toggle-control.is-enabled .mapping-toggle-slider::after {
+  transform: translateX(18px);
+  background: var(--bg-0);
+}
+
+.mapping-toggle-control.is-paused .mapping-toggle-state {
   color: var(--pill-warn-text);
 }
 
-.mapping-toggle-button:disabled {
+.mapping-toggle-control:has(input:focus-visible) .mapping-toggle-slider {
+  outline: 2px solid color-mix(in srgb, var(--accent) 72%, transparent);
+  outline-offset: 2px;
+}
+
+.mapping-toggle-control:has(input:disabled) {
   cursor: not-allowed;
   opacity: 0.55;
+}
+
+.mapping-toggle-state {
+  min-width: 2.7rem;
+  text-align: left;
 }
 
 .utility-title {
@@ -130,28 +186,6 @@
 }
 
 @media (max-width: 1060px) {
-
-  .top-bar-left {
-    flex: 1 1 auto;
-    width: auto;
-    flex-direction: row;
-    align-items: center;
-    justify-content: flex-start;
-    gap: 0.4rem;
-    flex-wrap: wrap;
-  }
-
-  .top-bar-right {
-    width: auto;
-    flex: 0 0 auto;
-    justify-content: flex-end;
-  }
-
-  /* hide desktop top bar; responsive header provides its own */
-  .top-bar {
-    display: none;
-  }
-
   /* narrow-width sticky header (sidebar buttons + subnav/version) */
   .responsive-header {
     position: sticky;
@@ -166,15 +200,6 @@
       linear-gradient(180deg, color-mix(in srgb, var(--bg-1-5) 96%, transparent), color-mix(in srgb, var(--bg-0) 90%, transparent));
     backdrop-filter: blur(18px);
     border-bottom: 1px solid var(--border-1);
-  }
-
-.responsive-header-divider {
-  height: 1px;
-  background: var(--border-1);
-  margin: 0.35rem 0;
-  /* stretch to full content width by canceling header horizontal padding */
-    margin-left: -1.75rem;
-    margin-right: -1.75rem;
   }
 
   .responsive-header .subnav {

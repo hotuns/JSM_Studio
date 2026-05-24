@@ -57,18 +57,116 @@
 
 .navFooter {
   margin-top: auto;
-  padding-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border-1);
   display: flex;
   flex-direction: column;
   gap: 0.45rem;
 }
 
-.navFooterLink {
+.navSettings {
   display: flex;
   flex-direction: column;
-  gap: 0.18rem;
-  padding-top: 0.62rem;
-  padding-bottom: 0.62rem;
+  gap: 0.42rem;
+  padding: 0.5rem;
+  border: 1px solid var(--border-1);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--bg-input) 82%, transparent);
+}
+
+.navLanguageSelect {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.38rem;
+  min-height: 30px;
+  border: 1px solid var(--border-1);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--bg-2) 62%, var(--bg-input));
+  color: var(--text-strong);
+  padding: 0.28rem 0.45rem;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.navLanguageSelect :global(.language-select-icon) {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.2rem;
+  height: 1.2rem;
+  color: var(--text-mid);
+}
+
+.navLanguageSelect :global(.language-select-icon svg) {
+  width: 1rem;
+  height: 1rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.navLanguageSelect select {
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+  outline: 0;
+  color: var(--text-strong);
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.navThemeToggle {
+  width: 100%;
+  justify-content: space-between;
+}
+
+.navSettings .navThemeToggle {
+  min-height: 30px;
+  border-radius: 999px;
+  padding: 0.28rem 0.45rem;
+  background: color-mix(in srgb, var(--bg-2) 62%, var(--bg-input));
+  font-size: 0.76rem;
+}
+
+.navFooterAction {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.16rem;
+  width: 100%;
+  border: 1px solid var(--border-1);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--bg-input) 78%, transparent);
+  color: var(--text-mid);
+  padding: 0.52rem 0.58rem;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.navFooterAction:hover {
+  border-color: var(--border-strong);
+  background: color-mix(in srgb, var(--bg-btn-hover) 76%, transparent);
+  color: var(--text-strong);
+}
+
+.navFooterActionActive {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border-1));
+  background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 14%, var(--bg-input)), var(--bg-input));
+  color: var(--text-strong);
+  box-shadow: inset 2px 0 0 var(--accent);
 }
 
 .navFooterLinkTitle {
@@ -85,7 +183,8 @@
 }
 
 .navVersion {
-  font-size: 0.75rem;
+  padding-top: 0.05rem;
+  font-size: 0.68rem;
   color: var(--text-dim);
   text-align: center;
   opacity: 0.6;
@@ -211,5 +310,23 @@
     text-align: center;
     font-size: 1.6rem;
     margin: 0;
+  }
+
+  :global(.responsive-header) .navSettings {
+    align-self: center;
+    width: min(360px, 100%);
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+  }
+
+  :global(.responsive-header) .navLanguageSelect {
+    flex: 1 1 180px;
+    flex-direction: row;
+    align-items: center;
+  }
+
+  :global(.responsive-header) .navThemeToggle {
+    width: auto;
   }
 }

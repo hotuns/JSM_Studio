@@ -1,3 +1,5 @@
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+
 fn main() {
-  jsm_gui_app_lib::run();
+    jsm_gui_app_lib::run();
 }

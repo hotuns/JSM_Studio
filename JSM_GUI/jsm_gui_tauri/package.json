@@ -1,7 +1,7 @@
 {
   "name": "jsm-studio",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.1",
   "description": "JSM Studio for JoyShockMapper (Tauri)",
   "author": "Evan McLean",
   "type": "module",
@@ -14,6 +14,7 @@
     "preview": "vite preview",
     "tauri": "tauri",
     "tauri:dev": "tauri dev",
+    "tauri:dev:admin": "powershell -ExecutionPolicy Bypass -File scripts/tauri-dev-admin.ps1",
     "tauri:build": "tauri build"
   },
   "dependencies": {

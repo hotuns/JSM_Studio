@@ -258,6 +258,18 @@ typedef struct TOUCH_STATE
 
 #endif
 
+#include <string>
+#include <vector>
+
+struct ControllerInfo
+{
+	int id = 0;
+	int vendorId = 0;
+	int productId = 0;
+	bool isGamepad = false;
+	std::string name;
+};
+
 class JslWrapper
 {
 protected:
@@ -272,7 +284,16 @@ public:
 	static JslWrapper* getNew();
 
 	virtual int ConnectDevices() = 0;
+	virtual int ConnectDevices(const std::vector<int>& selectedDeviceIds)
+	{
+		static_cast<void>(selectedDeviceIds);
+		return ConnectDevices();
+	}
 	virtual int GetDeviceCount() = 0;
+	virtual std::vector<ControllerInfo> ListAvailableDevices()
+	{
+		return {};
+	}
 	virtual int GetConnectedDeviceHandles(int* deviceHandleArray, int size) = 0;
 	virtual void DisconnectAndDisposeAll() = 0;
 	virtual JOY_SHOCK_STATE GetSimpleState(int deviceId) = 0;

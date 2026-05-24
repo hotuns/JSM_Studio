@@ -54,6 +54,7 @@ std::atomic_bool g_hasGyroOnAllBinding(false);
 vector<pair<int, int>> g_ignoreGyroVidPid;
 unique_ptr<PollingThread> minimizeThread;
 bool devicesCalibrating = false;
+bool g_manualConnectMode = false;
 unordered_map<int, shared_ptr<JoyShock>> handle_to_joyshock;
 
 int input_pipe_fd[2];
@@ -122,6 +123,18 @@ static void RefreshTelemetrySettings()
 	int portValue = std::clamp(telemetryPort->value(), 1, 65535);
 	const bool enabled = telemetryEnabled->value() == Switch::ON;
 	Telemetry::Configure(enabled, static_cast<uint16_t>(portValue));
+}
+
+static string sanitizeControllerInfoName(string name)
+{
+	for (char &character : name)
+	{
+		if (character == '\t' || character == '\r' || character == '\n')
+		{
+			character = ' ';
+		}
+	}
+	return name;
 }
 
 struct TOUCH_POINT
@@ -1631,11 +1644,11 @@ void joyShockPollCallback(int jcHandle, JOY_SHOCK_STATE state, JOY_SHOCK_STATE l
 	jc->_context->callback_lock.unlock();
 }
 
-void connectDevices(bool mergeJoycons = true)
+void connectDevices(bool mergeJoycons = true, const vector<int>& selectedDeviceIds = {})
 {
 	handle_to_joyshock.clear();
 	this_thread::sleep_for(100ms);
-	int numConnected = jsl->ConnectDevices();
+	int numConnected = selectedDeviceIds.empty() ? jsl->ConnectDevices() : jsl->ConnectDevices(selectedDeviceIds);
 	vector<int> deviceHandles(numConnected, 0);
 	if (numConnected > 0)
 	{
@@ -1780,30 +1793,83 @@ bool do_RESET_MAPPINGS(CmdRegistry *registry)
 bool do_RECONNECT_CONTROLLERS(string_view arguments, std::function<void()> loadOnReconnect)
 {
 	static bool mergeJoycons = true;
-	if (arguments.compare("MERGE") == 0)
+	vector<int> selectedDeviceIds;
+	bool hasSelection = false;
+	string token;
+	stringstream argumentStream{ string(arguments) };
+	while (argumentStream >> token)
 	{
-		mergeJoycons = true;
-	}
-	else if(arguments.compare("SPLIT") == 0)
-	{
-		mergeJoycons = false;
-	}
-	else if(!arguments.empty())
-	{
-		CERR << "Invalid argument: " << arguments << '\n';
-		return false;
+		if (token == "MERGE")
+		{
+			mergeJoycons = true;
+			continue;
+		}
+		if (token == "SPLIT")
+		{
+			mergeJoycons = false;
+			continue;
+		}
+		if (token == "SELECT")
+		{
+			hasSelection = true;
+			continue;
+		}
+		if (!hasSelection)
+		{
+			CERR << "Invalid argument: " << token << '\n';
+			return false;
+		}
+
+		try
+		{
+			size_t consumed = 0;
+			int deviceId = stoi(token, &consumed, 10);
+			if (consumed != token.size())
+			{
+				CERR << "Invalid controller id: " << token << '\n';
+				return false;
+			}
+			selectedDeviceIds.push_back(deviceId);
+		}
+		catch (...)
+		{
+			CERR << "Invalid controller id: " << token << '\n';
+			return false;
+		}
 	}
 	// else remember last
+	if (hasSelection && selectedDeviceIds.empty())
+	{
+		CERR << "RECONNECT_CONTROLLERS SELECT requires at least one controller id.\n";
+		return false;
+	}
 	 
 	COUT << "Reconnecting controllers: " << (mergeJoycons ? "MERGE" : "SPLIT") << '\n';
 	jsl->DisconnectAndDisposeAll();
-	connectDevices(mergeJoycons);
+	connectDevices(mergeJoycons, selectedDeviceIds);
 	jsl->SetCallback(&joyShockPollCallback);
 	jsl->SetTouchCallback(&touchCallback);
 
 	if (loadOnReconnect)
 		loadOnReconnect();
 
+	return true;
+}
+
+bool do_LIST_CONTROLLERS()
+{
+	auto devices = jsl->ListAvailableDevices();
+	COUT << "JSM_CONTROLLER_LIST_BEGIN\n";
+	for (auto &device : devices)
+	{
+		COUT << "JSM_CONTROLLER\t"
+			<< device.id << '\t'
+			<< device.vendorId << '\t'
+			<< device.productId << '\t'
+			<< (device.isGamepad ? 1 : 0) << '\t'
+			<< sanitizeControllerInfoName(device.name) << '\n';
+	}
+	COUT << "JSM_CONTROLLER_LIST_END\n";
 	return true;
 }
 
@@ -3111,7 +3177,7 @@ void initJsmSettings(CmdRegistry *commandRegistry)
 	auto *autoloadCmd = new JSMAssignment<Switch>("AUTOLOAD", *autoloadSwitch);
 	commandRegistry->add(autoloadCmd);
 
-	auto autoConnectSwitch = new JSMVariable<Switch>(Switch::ON);
+	auto autoConnectSwitch = new JSMVariable<Switch>(g_manualConnectMode ? Switch::OFF : Switch::ON);
 	autoConnectThread.reset(new JSM::AutoConnect(jsl, autoConnectSwitch->value() == Switch::ON)); // Start by default
 	autoConnectSwitch->setFilter(&filterInvalidValue<Switch, Switch::INVALID>)->addOnChangeListener(bind(&updateThread, autoConnectThread.get(), placeholders::_1));
 	SettingsManager::add(SettingID::AUTOCONNECT, autoConnectSwitch);
@@ -3442,6 +3508,19 @@ int main(int argc, char *argv[])
 	void *trayIconData = nullptr;
 	string module(argv[0]);
 #endif // _WIN32
+	for (int i = 0; i < argc; ++i)
+	{
+#if _WIN32
+		string arg(&argv[i][0], &argv[i][wcslen(argv[i])]);
+#else
+		string arg = string(argv[i]);
+#endif
+		if (arg == "--manual-connect")
+		{
+			g_manualConnectMode = true;
+		}
+	}
+
 	jsl.reset(JslWrapper::getNew());
 	whitelister.reset(Whitelister::getNew(false));
 
@@ -3510,6 +3589,7 @@ int main(int argc, char *argv[])
 	// Add Macro commands
 	commandRegistry.add((new JSMMacro("RESET_MAPPINGS"))->SetMacro(bind(&do_RESET_MAPPINGS, &commandRegistry))->setHelp("Delete all custom bindings and reset to default,\nand run script OnReset.txt in JSM_DIRECTORY."));
 	commandRegistry.add((new JSMMacro("NO_GYRO_BUTTON"))->SetMacro(bind(&do_NO_GYRO_BUTTON))->setHelp("Enable gyro at all times, without any GYRO_OFF binding."));
+	commandRegistry.add((new JSMMacro("LIST_CONTROLLERS"))->SetMacro(bind(&do_LIST_CONTROLLERS))->setHelp("List currently available SDL controllers without connecting them."));
 	commandRegistry.add((new JSMMacro("RECONNECT_CONTROLLERS"))->SetMacro(bind(&do_RECONNECT_CONTROLLERS, placeholders::_2, [&commandRegistry]()
 		{
 			if (!commandRegistry.loadConfigFile("OnReconnect.txt"))
@@ -3549,7 +3629,14 @@ int main(int argc, char *argv[])
 
 	Mapping::_isCommandValid = bind(&CmdRegistry::isCommandValid, &commandRegistry, placeholders::_1);
 
-	connectDevices();
+	if (g_manualConnectMode)
+	{
+		COUT << "Manual controller connection mode enabled. Use LIST_CONTROLLERS and RECONNECT_CONTROLLERS SELECT <id...> to connect devices.\n";
+	}
+	else
+	{
+		connectDevices();
+	}
 	jsl->SetCallback(&joyShockPollCallback);
 	jsl->SetTouchCallback(&touchCallback);
 	tray.reset(TrayIcon::getNew(trayIconData, &beforeShowTrayMenu));

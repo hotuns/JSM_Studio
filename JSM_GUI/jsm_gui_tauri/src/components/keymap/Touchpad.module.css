@@ -49,11 +49,32 @@
   border-radius: 10px;
   padding: 0.6rem;
   background: var(--touchpad-grid-cell-bg);
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 0.25rem;
+  min-height: 4.25rem;
+  text-align: center;
+  transition: border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.touchpadGridCell:hover {
+  border-color: var(--border-strong);
+  background: color-mix(in srgb, var(--accent) 10%, var(--touchpad-grid-cell-bg));
+}
+
+.touchpadGridCellSelected {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 18%, var(--touchpad-grid-cell-bg));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 42%, transparent), 0 0 16px color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
+.touchpadGridCellBound:not(.touchpadGridCellSelected) {
+  border-color: color-mix(in srgb, var(--telemetry-green) 58%, var(--touchpad-grid-cell-border));
 }
 
 .touchpadGridCell span {
@@ -71,6 +92,62 @@
   font-size: 0.9rem;
   line-height: 1.4;
   margin-bottom: 0.8rem;
+}
+
+.touchpadRegionEditor {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  margin-top: 0.65rem;
+  border: 1px solid var(--border-1);
+  border-radius: 10px;
+  background: var(--bg-input);
+  overflow: hidden;
+}
+
+.touchpadRegionHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 0.85rem 0;
+}
+
+.touchpadRegionHeader div {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.18rem;
+}
+
+.touchpadRegionHeader span {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.touchpadRegionHeader strong {
+  color: var(--text-strong);
+  font-size: 1rem;
+}
+
+.touchpadRegionHeader p {
+  margin: 0;
+  color: var(--text-mid);
+  font-size: 0.8rem;
+  line-height: 1.35;
+}
+
+.touchpadRegionBound {
+  flex: 0 0 auto;
+  border: 1px solid color-mix(in srgb, var(--telemetry-green) 50%, transparent);
+  border-radius: 999px;
+  padding: 0.18rem 0.45rem;
+  color: var(--telemetry-green);
+  background: color-mix(in srgb, var(--telemetry-green) 10%, transparent);
+  font-size: 0.68rem;
 }
 
 :global(.keymapGrid) {

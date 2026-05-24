@@ -27,6 +27,7 @@ type GlobalControlsSectionProps = {
   applyDisabled?: boolean
   compact?: boolean
   showActions?: boolean
+  onOpenMappingHelp?: () => void
 }
 
 export function GlobalControlsSection({
@@ -53,6 +54,7 @@ export function GlobalControlsSection({
   applyDisabled,
   compact = false,
   showActions = true,
+  onOpenMappingHelp,
 }: GlobalControlsSectionProps) {
   const { t } = useTranslation()
 
@@ -71,7 +73,15 @@ export function GlobalControlsSection({
 
   return (
     <div className={`${keymapStyles.globalControlsBlock} ${compact ? keymapStyles.globalControlsBlockCompact : ''}`}>
-      <KeymapSection title={t('keymap.globalControlsTitle')} description={t('keymap.globalControlsDescription')}>
+      <KeymapSection
+        title={t('keymap.globalControlsTitle')}
+        description={t('keymap.globalControlsDescription')}
+        action={onOpenMappingHelp && (
+          <button type="button" className="ghost-btn" onClick={onOpenMappingHelp} data-capture-ignore="true">
+            {t('keymap.mappingHelpButton')}
+          </button>
+        )}
+      >
         <div className={keymapStyles.globalControls}>
           {renderRow(
             t('keymap.tapVsHoldPressThreshold'),

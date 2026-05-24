@@ -14,9 +14,19 @@ export function LanguageSelect({ className = '' }: LanguageSelectProps) {
 
   return (
     <label className={className}>
-      <span>{t('language.label')}</span>
+      <span className="language-select-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" focusable="false">
+          <path d="M4 5h10" />
+          <path d="M9 3v2" />
+          <path d="M6 9c1.2 2.4 3.1 4 6 5" />
+          <path d="M12 5c-.7 3.8-2.7 6.8-6 9" />
+          <path d="M13 19l4-9 4 9" />
+          <path d="M14.4 16h5.2" />
+        </svg>
+      </span>
       <select
         className="app-select"
+        aria-label={t('language.label')}
         value={language}
         onChange={(event) => {
           void setLanguage(event.target.value as AppLanguage)

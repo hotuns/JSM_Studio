@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "JSM Studio",
-  "version": "0.1.0",
-  "identifier": "com.evanmclean.jsmcustomcurve",
+  "version": "0.2.1",
+  "identifier": "com.hotuns.jsmstudio",
   "build": {
     "beforeDevCommand": "npm run dev:web",
     "devUrl": "http://127.0.0.1:1420",
@@ -28,9 +28,10 @@
     "icon": [
       "icons/icon.ico"
     ],
-    "resources": [
-      "../../jsm-gui-app/bin"
-    ],
+    "resources": {
+      "../../jsm-gui-app/bin": "bin",
+      "third_party/HidHide": "third_party/HidHide"
+    },
     "targets": "all"
   }
 }
