@@ -48,10 +48,9 @@ Compared to [`evan1mclean/JSM_custom_curve`](https://github.com/evan1mclean/JSM_
 - Embedded JSM documentation links
 - Simplified Chinese / English interface
 - Dark theme
-
+![alt text](docs/1.png)
 ![alt text](docs/2.png)
 ![alt text](docs/3.png)
-![alt text](docs/4.png)
 
 ## Basic Usage Steps
 
