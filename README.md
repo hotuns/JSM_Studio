@@ -4,7 +4,7 @@
 
 JSM Studio is a graphical tool for JoyShockMapper on Windows. It integrates JoyShockMapper’s gyro aiming, key mapping, config management, and HidHide controller-hiding workflow into a single desktop application, aiming to enable users to complete common configuration tasks without using the command line.
 
-![alt text](docs/1.PNG)
+![alt text](docs/1.png)
 
 This repository is a fork of [`evan1mclean/JSM_custom_curve`](https://github.com/evan1mclean/JSM_custom_curve). The upstream repo itself is based on JoyShockMapper, adding custom curves, filtering, and GUI configuration capabilities; this fork further extends it into a more complete JSM Studio desktop tool.
 
@@ -49,9 +49,9 @@ Compared to [`evan1mclean/JSM_custom_curve`](https://github.com/evan1mclean/JSM_
 - Simplified Chinese / English interface
 - Dark theme
 
-![alt text](docs/2.PNG)
-![alt text](docs/3.PNG)
-![alt text](docs/4.PNG)
+![alt text](docs/2.png)
+![alt text](docs/3.png)
+![alt text](docs/4.png)
 
 ## Basic Usage Steps
 
