@@ -14,6 +14,8 @@ import {
   updateKeymapEntry,
 } from '../utils/keymap'
 import { bindingSpecialKeys, keyName } from '../constants/configKeys'
+import type { GyroActivationMode } from '../utils/gyroActivation'
+import { parseGyroActivation, writeGyroActivation } from '../utils/gyroActivation'
 
 const TOGGLE_SPECIALS = [keyName.GYRO_ON, keyName.GYRO_OFF] as const
 const SPECIAL_COMMANDS = bindingSpecialKeys.map(key => key.toUpperCase())
@@ -175,6 +177,23 @@ export function useBindingsConfig({ configText, setConfigText }: BindingArgs) {
     })
   }
 
+  const gyroActivation = useMemo(() => parseGyroActivation(configText), [configText])
+
+  const handleGyroActivationModeChange = (mode: GyroActivationMode, fallbackButton = 'R3') => {
+    setConfigText(prev => {
+      const current = parseGyroActivation(prev)
+      return writeGyroActivation(prev, mode, current.button || fallbackButton)
+    })
+  }
+
+  const handleGyroActivationButtonChange = (button: string) => {
+    if (!button.trim()) return
+    setConfigText(prev => {
+      const current = parseGyroActivation(prev)
+      return writeGyroActivation(prev, current.mode, button)
+    })
+  }
+
   const trackballDecayValue = useMemo(() => getKeymapValue(configText, keyName.TRACKBALL_DECAY) ?? '', [configText])
 
   return {
@@ -182,6 +201,9 @@ export function useBindingsConfig({ configText, setConfigText }: BindingArgs) {
     handleModifierChange,
     handleSpecialActionAssignment,
     handleClearSpecialAction,
+    gyroActivation,
+    handleGyroActivationModeChange,
+    handleGyroActivationButtonChange,
     handleTrackballDecayChange,
     trackballDecayValue,
   }

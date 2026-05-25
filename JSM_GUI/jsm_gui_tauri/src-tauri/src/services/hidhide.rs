@@ -550,7 +550,13 @@ mod imp {
                         .iter()
                         .any(|child| canonicalize_instance_id(child) == canonical_target)
             })
-            .map(|group| group.child_instance_ids.clone());
+            .map(|group| {
+                if hidden {
+                    vec![trimmed_instance_id.to_string()]
+                } else {
+                    group.child_instance_ids.clone()
+                }
+            });
 
         let Some(target_instance_ids) = target_instance_ids.or_else(|| {
             if hidden {

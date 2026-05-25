@@ -72,7 +72,6 @@ pub fn launch_jsm(app: &AppHandle, state: &AppState) -> Result<(), String> {
         let mut command = Command::new(&jsm_executable);
         command
             .arg(&runtime_dir)
-            .arg("--manual-connect")
             .current_dir(&backend_dir)
             .stdin(Stdio::null())
             .stdout(Stdio::null())
@@ -329,11 +328,8 @@ fn spawn_hidden_jsm_windows(
     let mut process_info = PROCESS_INFORMATION::default();
     let application_name = wide_null(executable.as_os_str());
     let current_directory = wide_null(working_dir.as_os_str());
-    let mut command_line = build_windows_command_line([
-        executable.as_os_str(),
-        runtime_dir.as_os_str(),
-        OsStr::new("--manual-connect"),
-    ]);
+    let mut command_line =
+        build_windows_command_line([executable.as_os_str(), runtime_dir.as_os_str()]);
 
     let success = unsafe {
         CreateProcessW(

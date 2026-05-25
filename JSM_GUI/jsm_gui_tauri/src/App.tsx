@@ -320,6 +320,9 @@ function App() {
     handleModifierChange,
     handleSpecialActionAssignment,
     handleClearSpecialAction,
+    gyroActivation,
+    handleGyroActivationModeChange,
+    handleGyroActivationButtonChange,
     trackballDecayValue,
     handleTrackballDecayChange,
     handleStickDeadzoneChange,
@@ -760,6 +763,12 @@ function App() {
             <Suspense fallback={<LazyPanelFallback title={t('app.tabs.gyroBehavior')} />}>
               <GyroBehaviorControls
                 sensitivity={sensitivity}
+                gyroActivationMode={gyroActivation.mode}
+                gyroActivationButton={gyroActivation.button}
+                touchpadMode={touchpadModeValue}
+                touchpadGridCells={
+                  touchpadModeValue === 'GRID_AND_STICK' ? Math.min(25, gridSizeValue.columns * gridSizeValue.rows) : 0
+                }
                 isCalibrating={isCalibrating}
                 statusMessage={statusMessage}
                 devices={sample?.devices}
@@ -771,6 +780,8 @@ function App() {
                 onGyroSpaceChange={handleGyroSpaceChange}
                 onGyroAxisXChange={handleGyroAxisXChange}
                 onGyroAxisYChange={handleGyroAxisYChange}
+                onGyroActivationModeChange={handleGyroActivationModeChange}
+                onGyroActivationButtonChange={handleGyroActivationButtonChange}
                 counterOsMouseSpeed={counterOsMouseSpeedEnabled}
                 onCounterOsMouseSpeedChange={handleCounterOsMouseSpeedChange}
                 onOpenCalibration={handleOpenCalibration}

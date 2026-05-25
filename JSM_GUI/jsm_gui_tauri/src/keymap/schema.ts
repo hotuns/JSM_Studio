@@ -122,6 +122,8 @@ const SPECIAL_BINDING_DEFS: KeyedOption[] = [
   { value: 'GYRO_TRACK_Y', labelKey: 'specialBindings.trackballY' },
 ]
 
+const GYRO_BUTTON_SETTING_SPECIALS = new Set(['GYRO_OFF', 'GYRO_ON'])
+
 const SPECIAL_LABEL_KEYS: Record<string, string> = {
   GYRO_OFF: 'specialBindings.disableGyro',
   GYRO_ON: 'specialBindings.enableGyro',
@@ -145,8 +147,13 @@ export const getSpecialBindings = (t: TFunction) => [
 
 export const getSpecialOptionList = (t: TFunction) => getSpecialBindings(t).filter(option => option.value)
 
+export const isGyroButtonSettingSpecial = (value: string) => GYRO_BUTTON_SETTING_SPECIALS.has(value.trim().toUpperCase())
+
+export const getActionSpecialOptionList = (t: TFunction) =>
+  getSpecialOptionList(t).filter(option => !isGyroButtonSettingSpecial(option.value))
+
 export const getSpecialOptionManualList = (t: TFunction) =>
-  getSpecialOptionList(t).filter(option => !['GYRO_OFF', 'GYRO_ON'].includes(option.value))
+  getActionSpecialOptionList(t)
 
 export const getSpecialLabel = (value: string, t: TFunction) => {
   const key = SPECIAL_LABEL_KEYS[value]

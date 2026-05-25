@@ -54,7 +54,7 @@ pub fn run() {
             commands::save_calibration_preset,
             commands::run_calibration_command,
             commands::list_jsm_controllers,
-            commands::connect_jsm_controllers,
+            commands::reconnect_jsm_controllers,
             commands::get_backend_choice,
             commands::set_backend_choice,
             commands::get_latest_telemetry_sample,

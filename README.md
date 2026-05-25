@@ -62,6 +62,122 @@ Compared to [`evan1mclean/JSM_custom_curve`](https://github.com/evan1mclean/JSM_
 5. If your game sees both the physical controller and causes double input, install HidHide in the "HidHide" section and hide the physical controller.
 6. Test in game. For automatic profile switching, add the relevant rule in the "Auto-Switch" panel.
 
+## Data Flow
+
+JSM Studio has two related but separate controller data paths: controller discovery/connection and real-time input telemetry.
+
+### Controller Discovery and Connection
+
+This path is used when the "Controller Status" page refreshes the list of available controllers.
+
+```text
+[Physical controller raw input]
+   |
+   v
+[Windows HID device stack]
+   |
+   v
+[HidHide filter layer, if enabled]
+   |
+   v
+[JoyShockMapper.exe, whitelisted when HidHide is active]
+   |
+   v
+[SDL / JSL wrapper]
+   |
+   v
+[LIST_CONTROLLERS command]
+   |
+   v
+[JSM console output: JSM_CONTROLLER rows]
+   |
+   v
+[jsm-console-injector --capture]
+   |
+   v
+[Tauri backend parses ControllerCandidate[]]
+   |
+   v
+[React ControllerStatusPage shows clickable controller cards]
+   |
+   v
+[User clicks one controller]
+   |
+   v
+[Tauri sends RECONNECT_CONTROLLERS SELECT <deviceId>]
+   |
+   v
+[JoyShockMapper connects only the selected SDL device]
+```
+
+The device list shown in the UI comes from JoyShockMapper's SDL enumeration, not directly from the browser or from HidHide. HidHide can still show a device even when JSM cannot see it, so the important condition is that the currently running `JoyShockMapper.exe` is present in the HidHide whitelist.
+
+### Real-Time Input and Mapping
+
+After a controller is connected, live input no longer comes from `LIST_CONTROLLERS`. JoyShockMapper polls the selected SDL device and sends telemetry to the Tauri backend.
+
+```text
+[Physical controller raw input]
+   |
+   v
+[Windows HID device stack]
+   |
+   v
+[HidHide filter layer]
+   |
+   v
+[JoyShockMapper.exe]
+   |
+   v
+[SDL / JSL polling]
+   |
+   v
+[joyShockPollCallback]
+   |
+   +--> [JSM mapping logic]
+   |        |
+   |        v
+   |    [Keyboard / mouse / virtual controller output]
+   |
+   +--> [JSM telemetry JSON over UDP 127.0.0.1:8974]
+            |
+            v
+      [Tauri telemetry service]
+            |
+            v
+      [telemetry-sample event]
+            |
+            v
+      [React useTelemetry hook]
+            |
+            v
+      [Controller Status live buttons, sticks, triggers, gyro]
+```
+
+JSM Studio writes these fixed telemetry settings into the runtime config so the GUI can receive live status:
+
+```text
+TELEMETRY_ENABLED = ON
+TELEMETRY_PORT = 8974
+```
+
+### HidHide Position in the Flow
+
+HidHide is a visibility filter, not the mapper itself. Its job is to hide the physical controller from games while allowing JoyShockMapper to keep reading it.
+
+```text
+[Physical controller]
+   |
+   v
+[HidHide]
+   |
+   +--> [Whitelisted JoyShockMapper.exe] can still see the controller
+   |
+   +--> [Game process] cannot see the hidden physical controller
+```
+
+This prevents double input: the game receives JSM's mapped keyboard/mouse or virtual-controller output, but not the original physical controller input.
+
 ## About HidHide
 
 HidHide is used to hide physical controllers from games, letting only JoyShockMapper read the controller input. This avoids double input caused by both the real controller and JSM being recognized together.

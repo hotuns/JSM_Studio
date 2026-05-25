@@ -10,6 +10,9 @@ use crate::{
 type CommandResult<T> = Result<T, String>;
 const PROFILE_INJECTION_ATTEMPTS: usize = 3;
 const PROFILE_INJECTION_RETRY_DELAY_MS: u64 = 150;
+const CONTROLLER_LIST_ATTEMPTS: usize = 5;
+const CONTROLLER_LIST_RETRY_DELAY_MS: u64 = 200;
+const CONTROLLER_LIST_EMPTY_CONFIRM_DELAY_MS: u64 = 300;
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -52,6 +55,13 @@ pub struct SetBackendChoiceResult {
 #[serde(rename_all = "camelCase")]
 pub struct SimpleSuccessResult {
     success: bool,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ReconnectControllersResult {
+    success: bool,
+    restarted: bool,
 }
 
 #[derive(Serialize)]
@@ -144,6 +154,8 @@ pub fn apply_profile(
             jsm_process::terminate_jsm(&app, state.inner())?;
             jsm_process::launch_jsm(&app, state.inner())?;
             restarted = true;
+        } else {
+            let _ = jsm_process::inject_console_command(&app, state.inner(), "AUTOCONNECT = ON")?;
         }
     } else {
         jsm_process::launch_jsm(&app, state.inner())?;
@@ -231,6 +243,10 @@ fn apply_runtime_mapping_state(
     }
 
     if runtime_state.mapping_enabled {
+        let _ = jsm_process::inject_console_command(app, state, "AUTOCONNECT = ON")?;
+    }
+
+    if runtime_state.mapping_enabled {
         let autoload_command = if runtime_state.autoload_enabled {
             "AUTOLOAD = ON"
         } else {
@@ -262,31 +278,6 @@ fn inject_console_command_with_retry(
         }
     }
     Ok(false)
-}
-
-fn run_console_command_with_output_retry(
-    app: &AppHandle,
-    state: &AppState,
-    command: &str,
-) -> CommandResult<jsm_process::ConsoleCommandResult> {
-    let mut last_result = None;
-    for attempt in 0..PROFILE_INJECTION_ATTEMPTS {
-        let result = jsm_process::run_console_command_with_output(app, state, command)?;
-        if result.success {
-            return Ok(result);
-        }
-        last_result = Some(result);
-        if attempt + 1 < PROFILE_INJECTION_ATTEMPTS {
-            std::thread::sleep(std::time::Duration::from_millis(
-                PROFILE_INJECTION_RETRY_DELAY_MS,
-            ));
-        }
-    }
-
-    Ok(last_result.unwrap_or(jsm_process::ConsoleCommandResult {
-        success: false,
-        output: String::new(),
-    }))
 }
 
 #[tauri::command]
@@ -458,62 +449,78 @@ pub fn list_jsm_controllers(
     app: AppHandle,
     state: State<'_, AppState>,
 ) -> CommandResult<Vec<ControllerCandidate>> {
-    ensure_hidhide_visibility_for_controller_scan(&app, state.inner())?;
+    ensure_hidhide_visibility_for_jsm(&app, state.inner())?;
     jsm_process::launch_jsm(&app, state.inner())?;
-    let result = run_console_command_with_output_retry(&app, state.inner(), "LIST_CONTROLLERS")?;
-    if !result.success {
-        return Err(format!(
-            "Failed to query JoyShockMapper controllers. {}",
-            result.output.trim()
-        )
-        .trim()
-        .to_string());
+
+    let mut last_error = None;
+    let mut saw_empty_list = false;
+    for attempt in 0..CONTROLLER_LIST_ATTEMPTS {
+        let result =
+            jsm_process::run_console_command_with_output(&app, state.inner(), "LIST_CONTROLLERS")?;
+        if result.success {
+            match parse_controller_candidates(&result.output) {
+                Ok(candidates) if !candidates.is_empty() => return Ok(candidates),
+                Ok(candidates) => {
+                    if saw_empty_list || attempt + 1 == CONTROLLER_LIST_ATTEMPTS {
+                        return Ok(candidates);
+                    }
+                    saw_empty_list = true;
+                    std::thread::sleep(std::time::Duration::from_millis(
+                        CONTROLLER_LIST_EMPTY_CONFIRM_DELAY_MS,
+                    ));
+                    continue;
+                }
+                Err(error) => {
+                    last_error = Some(error);
+                }
+            }
+        } else {
+            let output = result.output.trim();
+            last_error = Some(if output.is_empty() {
+                "LIST_CONTROLLERS response was not captured.".to_string()
+            } else {
+                format!("Failed to query JoyShockMapper controllers. {output}")
+            });
+        }
+
+        if attempt + 1 < CONTROLLER_LIST_ATTEMPTS {
+            std::thread::sleep(std::time::Duration::from_millis(
+                CONTROLLER_LIST_RETRY_DELAY_MS,
+            ));
+        }
     }
-    Ok(parse_controller_candidates(&result.output))
+
+    Err(last_error.unwrap_or_else(|| "LIST_CONTROLLERS response was not captured.".to_string()))
 }
 
 #[tauri::command]
-pub fn connect_jsm_controllers(
+pub fn reconnect_jsm_controllers(
     app: AppHandle,
     state: State<'_, AppState>,
-    device_ids: Vec<i32>,
-) -> CommandResult<SimpleSuccessResult> {
-    if device_ids.is_empty() {
-        return Err("Select at least one controller to connect.".to_string());
-    }
-
-    let mut unique_ids = Vec::new();
-    for device_id in device_ids {
-        if device_id < 0 {
-            return Err(format!("Invalid controller id: {device_id}"));
-        }
-        if !unique_ids.contains(&device_id) {
-            unique_ids.push(device_id);
-        }
-    }
-
-    ensure_hidhide_visibility_for_controller_scan(&app, state.inner())?;
+) -> CommandResult<ReconnectControllersResult> {
+    ensure_hidhide_visibility_for_jsm(&app, state.inner())?;
     jsm_process::launch_jsm(&app, state.inner())?;
-    let command = format!(
-        "RECONNECT_CONTROLLERS SELECT {}",
-        unique_ids
-            .iter()
-            .map(i32::to_string)
-            .collect::<Vec<_>>()
-            .join(" ")
-    );
-    let success = inject_console_command_with_retry(&app, state.inner(), &command)?;
-    if !success {
-        return Err("Failed to send controller selection to JoyShockMapper.".to_string());
+
+    let autoconnect_enabled =
+        inject_console_command_with_retry(&app, state.inner(), "AUTOCONNECT = ON")?;
+    let reconnected = autoconnect_enabled
+        && inject_console_command_with_retry(&app, state.inner(), "RECONNECT_CONTROLLERS")?;
+    if reconnected {
+        return Ok(ReconnectControllersResult {
+            success: true,
+            restarted: false,
+        });
     }
 
-    Ok(SimpleSuccessResult { success: true })
+    jsm_process::terminate_jsm(&app, state.inner())?;
+    jsm_process::launch_jsm(&app, state.inner())?;
+    Ok(ReconnectControllersResult {
+        success: true,
+        restarted: true,
+    })
 }
 
-fn ensure_hidhide_visibility_for_controller_scan(
-    app: &AppHandle,
-    state: &AppState,
-) -> CommandResult<()> {
+fn ensure_hidhide_visibility_for_jsm(app: &AppHandle, state: &AppState) -> CommandResult<()> {
     let latest_packet = telemetry::latest_packet(state)?;
     let status = hidhide::get_status(app, latest_packet.as_ref())?;
     if !status.supported || !status.installed {
@@ -537,20 +544,49 @@ fn ensure_hidhide_visibility_for_controller_scan(
     Ok(())
 }
 
-fn parse_controller_candidates(output: &str) -> Vec<ControllerCandidate> {
-    let mut candidates = Vec::new();
-    let mut in_list = false;
+fn parse_controller_candidates(output: &str) -> CommandResult<Vec<ControllerCandidate>> {
+    if output.trim().is_empty() {
+        return Err("LIST_CONTROLLERS response was not captured.".to_string());
+    }
 
+    let mut current_block: Option<Vec<&str>> = None;
+    let mut last_complete_block: Option<Vec<&str>> = None;
     for line in output.lines() {
         let trimmed = line.trim();
         if trimmed == "JSM_CONTROLLER_LIST_BEGIN" {
-            in_list = true;
+            current_block = Some(Vec::new());
             continue;
         }
         if trimmed == "JSM_CONTROLLER_LIST_END" {
-            break;
+            if let Some(block) = current_block.take() {
+                last_complete_block = Some(block);
+            }
+            continue;
         }
-        if !in_list || !trimmed.starts_with("JSM_CONTROLLER") {
+        if let Some(block) = current_block.as_mut() {
+            block.push(trimmed);
+        }
+    }
+
+    if let Some(block) = last_complete_block {
+        return Ok(parse_controller_candidate_lines(block.into_iter()));
+    }
+
+    let fallback = parse_controller_candidate_lines(output.lines().map(str::trim));
+    if !fallback.is_empty() {
+        return Ok(fallback);
+    }
+
+    Err("LIST_CONTROLLERS response was not captured.".to_string())
+}
+
+fn parse_controller_candidate_lines<'a>(
+    lines: impl IntoIterator<Item = &'a str>,
+) -> Vec<ControllerCandidate> {
+    let mut candidates = Vec::new();
+
+    for trimmed in lines {
+        if !trimmed.starts_with("JSM_CONTROLLER") {
             continue;
         }
 
@@ -745,4 +781,77 @@ pub async fn generate_ai_mapping(
     request: ai::GenerateMappingRequest,
 ) -> CommandResult<ai::GenerateMappingResponse> {
     ai::generate_mapping(&app, request).await
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parses_complete_controller_list() {
+        let output = "\
+JSM_CONTROLLER_LIST_BEGIN
+JSM_CONTROLLER\t4\t1356\t3302\t1\tDualSense Wireless Controller
+JSM_CONTROLLER_LIST_END
+";
+
+        let candidates = parse_controller_candidates(output).expect("controller list");
+
+        assert_eq!(candidates.len(), 1);
+        assert_eq!(candidates[0].device_id, 4);
+        assert_eq!(candidates[0].vendor_id, Some(1356));
+        assert_eq!(candidates[0].product_id, Some(3302));
+        assert!(candidates[0].is_gamepad);
+        assert_eq!(candidates[0].name, "DualSense Wireless Controller");
+    }
+
+    #[test]
+    fn parses_last_complete_controller_list() {
+        let output = "\
+JSM_CONTROLLER_LIST_BEGIN
+JSM_CONTROLLER\t1\t1111\t2222\t1\tOld Controller
+JSM_CONTROLLER_LIST_END
+noise
+JSM_CONTROLLER_LIST_BEGIN
+JSM_CONTROLLER\t4\t1356\t3302\t1\tDualSense Wireless Controller
+JSM_CONTROLLER_LIST_END
+";
+
+        let candidates = parse_controller_candidates(output).expect("controller list");
+
+        assert_eq!(candidates.len(), 1);
+        assert_eq!(candidates[0].device_id, 4);
+        assert_eq!(candidates[0].name, "DualSense Wireless Controller");
+    }
+
+    #[test]
+    fn parses_controller_rows_without_markers_as_fallback() {
+        let output = "\
+LIST_CONTROLLERS
+JSM_CONTROLLER\t4\t1356\t3302\t1\tDualSense Wireless Controller
+";
+
+        let candidates = parse_controller_candidates(output).expect("controller list");
+
+        assert_eq!(candidates.len(), 1);
+        assert_eq!(candidates[0].device_id, 4);
+    }
+
+    #[test]
+    fn complete_empty_controller_list_is_valid() {
+        let output = "\
+JSM_CONTROLLER_LIST_BEGIN
+JSM_CONTROLLER_LIST_END
+";
+
+        let candidates = parse_controller_candidates(output).expect("controller list");
+
+        assert!(candidates.is_empty());
+    }
+
+    #[test]
+    fn empty_or_unrelated_output_is_capture_failure() {
+        assert!(parse_controller_candidates("").is_err());
+        assert!(parse_controller_candidates("LIST_CONTROLLERS\n").is_err());
+    }
 }

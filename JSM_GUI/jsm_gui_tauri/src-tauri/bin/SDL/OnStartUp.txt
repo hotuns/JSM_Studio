@@ -1,0 +1,3 @@
+TELEMETRY_ENABLED = ON
+TELEMETRY_PORT = 8974
+../profiles-library/Profile 1.txt

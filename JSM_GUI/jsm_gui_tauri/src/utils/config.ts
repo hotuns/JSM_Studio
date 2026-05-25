@@ -1,6 +1,6 @@
 const REQUIRED_HEADER_LINES = [
   { pattern: /^RESET_MAPPINGS\b/i, value: 'RESET_MAPPINGS' },
-  { pattern: /^AUTOCONNECT\b/i, value: 'AUTOCONNECT = OFF' },
+  { pattern: /^AUTOCONNECT\b/i, value: 'AUTOCONNECT = ON' },
   { pattern: /^TELEMETRY_ENABLED\b/i, value: 'TELEMETRY_ENABLED = ON' },
   { pattern: /^TELEMETRY_PORT\b/i, value: 'TELEMETRY_PORT = 8974' },
 ]

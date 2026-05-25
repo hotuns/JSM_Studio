@@ -1,5 +1,8 @@
+import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { SensitivityValues } from '../utils/keymap'
+import type { GyroActivationMode } from '../utils/gyroActivation'
+import { buildModifierOptions, resolveModifierOptionLabel } from '../utils/modifierOptions'
 import { Card } from './Card'
 import { SectionActions } from './SectionActions'
 import { controllerLabel, formatVidPid } from '../utils/controllers'
@@ -18,8 +21,19 @@ const GYRO_SPACE_OPTIONS = [
   { value: 'WORLD_TURN', labelKey: 'gyro.spaces.worldTurn' },
 ]
 
+const GYRO_ACTIVATION_MODE_OPTIONS: Array<{ value: GyroActivationMode; labelKey: string }> = [
+  { value: 'always_on', labelKey: 'gyro.activationAlwaysOn' },
+  { value: 'hold_on', labelKey: 'gyro.activationHoldOn' },
+  { value: 'hold_off', labelKey: 'gyro.activationHoldOff' },
+  { value: 'always_off', labelKey: 'gyro.activationAlwaysOff' },
+]
+
 type GyroBehaviorControlsProps = {
   sensitivity: SensitivityValues
+  gyroActivationMode: GyroActivationMode
+  gyroActivationButton: string
+  touchpadMode: string
+  touchpadGridCells: number
   isCalibrating: boolean
   statusMessage?: string | null
   devices?: {
@@ -37,6 +51,8 @@ type GyroBehaviorControlsProps = {
   onGyroSpaceChange: (value: string) => void
   onGyroAxisXChange: (value: string) => void
   onGyroAxisYChange: (value: string) => void
+  onGyroActivationModeChange: (mode: GyroActivationMode, fallbackButton?: string) => void
+  onGyroActivationButtonChange: (button: string) => void
   counterOsMouseSpeed: boolean
   onCounterOsMouseSpeedChange: (enabled: boolean) => void
   onOpenCalibration?: () => void
@@ -50,6 +66,10 @@ type GyroBehaviorControlsProps = {
 
 export function GyroBehaviorControls({
   sensitivity,
+  gyroActivationMode,
+  gyroActivationButton,
+  touchpadMode,
+  touchpadGridCells,
   isCalibrating,
   statusMessage,
   devices,
@@ -61,6 +81,8 @@ export function GyroBehaviorControls({
   onGyroSpaceChange,
   onGyroAxisXChange,
   onGyroAxisYChange,
+  onGyroActivationModeChange,
+  onGyroActivationButtonChange,
   counterOsMouseSpeed,
   onCounterOsMouseSpeedChange,
   onOpenCalibration,
@@ -72,6 +94,24 @@ export function GyroBehaviorControls({
   appliedSampleHz,
 }: GyroBehaviorControlsProps) {
   const { t } = useTranslation()
+  const isTouchpadGridActive = touchpadMode === 'GRID_AND_STICK'
+  const activationButtonOptions = useMemo(() => {
+    const options = buildModifierOptions(isTouchpadGridActive, isTouchpadGridActive ? touchpadGridCells : 0).map(option => ({
+      value: option.value,
+      label: resolveModifierOptionLabel(option, t),
+      disabled: option.disabled,
+    }))
+    if (gyroActivationButton && !options.some(option => option.value === gyroActivationButton)) {
+      options.push({ value: gyroActivationButton, label: gyroActivationButton, disabled: false })
+    }
+    return options
+  }, [gyroActivationButton, isTouchpadGridActive, t, touchpadGridCells])
+  const fallbackActivationButton =
+    activationButtonOptions.find(option => option.value === 'R3' && !option.disabled)?.value ??
+    activationButtonOptions.find(option => !option.disabled)?.value ??
+    'R3'
+  const selectedActivationButton = gyroActivationButton || fallbackActivationButton
+  const usesActivationButton = gyroActivationMode === 'hold_on' || gyroActivationMode === 'hold_off'
 
   return (
     <Card className="control-panel" lockable locked={isCalibrating} lockMessage={lockMessage ?? t('messages.lockMessage')}>
@@ -90,6 +130,42 @@ export function GyroBehaviorControls({
           )}
         </div>
       )}
+      <div className="flex-inputs">
+        <label>
+          {t('gyro.activationMode')}
+          <p className="field-description">{t('gyro.activationHint')}</p>
+          <select
+            className="app-select"
+            value={gyroActivationMode}
+            onChange={(event) =>
+              onGyroActivationModeChange(event.target.value as GyroActivationMode, selectedActivationButton)
+            }
+            disabled={isCalibrating}
+          >
+            {GYRO_ACTIVATION_MODE_OPTIONS.map(option => (
+              <option key={option.value} value={option.value}>
+                {t(option.labelKey)}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label>
+          {t('gyro.activationButton')}
+          <p className="field-description">{t('gyro.activationButtonHint')}</p>
+          <select
+            className="app-select"
+            value={selectedActivationButton}
+            onChange={(event) => onGyroActivationButtonChange(event.target.value)}
+            disabled={isCalibrating || !usesActivationButton}
+          >
+            {activationButtonOptions.map(option => (
+              <option key={option.value} value={option.value} disabled={option.disabled}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
       <div className="flex-inputs">
         <label>
           {t('gyro.realWorldCalibration')}

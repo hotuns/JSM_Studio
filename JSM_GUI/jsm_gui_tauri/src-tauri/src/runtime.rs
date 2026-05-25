@@ -25,14 +25,14 @@ const MAPPING_DISABLED_FILE_NAME: &str = "MappingDisabled.txt";
 const MAPPING_DISABLED_RELATIVE: &str = MAPPING_DISABLED_FILE_NAME;
 const PROFILE_TEMPLATE_LINES: [&str; 4] = [
     "RESET_MAPPINGS",
-    "AUTOCONNECT = OFF",
+    "AUTOCONNECT = ON",
     "TELEMETRY_ENABLED = ON",
     "TELEMETRY_PORT = 8974",
 ];
 const STARTUP_HEADER_LINES: [&str; 2] = ["TELEMETRY_ENABLED = ON", "TELEMETRY_PORT = 8974"];
 const MAPPING_DISABLED_LINES: [&str; 6] = [
     "RESET_MAPPINGS",
-    "AUTOCONNECT = OFF",
+    "AUTOCONNECT = ON",
     "TELEMETRY_ENABLED = ON",
     "TELEMETRY_PORT = 8974",
     "AUTOLOAD = OFF",
@@ -527,11 +527,7 @@ pub fn bundled_jsm_executable_paths(app: &AppHandle) -> Result<Vec<PathBuf>, Str
 }
 
 fn source_bundled_shared_dir() -> PathBuf {
-    PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .join("..")
-        .join("..")
-        .join("jsm-gui-app")
-        .join("bin")
+    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("bin")
 }
 
 fn bundled_shared_dir_candidates(app: &AppHandle) -> Vec<PathBuf> {
@@ -543,13 +539,6 @@ fn bundled_shared_dir_candidates(app: &AppHandle) -> Vec<PathBuf> {
 
     if let Ok(resource_dir) = app.path().resource_dir() {
         candidates.push(resource_dir.join("bin"));
-        candidates.push(
-            resource_dir
-                .join("_up_")
-                .join("_up_")
-                .join("jsm-gui-app")
-                .join("bin"),
-        );
     }
 
     candidates.push(source_bundled_shared_dir());
@@ -843,13 +832,13 @@ fn startup_file_text(state: &RuntimeMappingState) -> String {
         .collect::<Vec<_>>();
     if state.mapping_enabled {
         lines.push(state.active_profile_path.clone());
-        lines.push("AUTOCONNECT = OFF".to_string());
+        lines.push("AUTOCONNECT = ON".to_string());
         lines.push(format!(
             "AUTOLOAD = {}",
             if state.autoload_enabled { "ON" } else { "OFF" }
         ));
     } else {
-        lines.push("AUTOCONNECT = OFF".to_string());
+        lines.push("AUTOCONNECT = ON".to_string());
         lines.push("AUTOLOAD = OFF".to_string());
         lines.push(MAPPING_DISABLED_RELATIVE.to_string());
     }

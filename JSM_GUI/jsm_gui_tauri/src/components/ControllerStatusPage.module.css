@@ -25,6 +25,37 @@
   margin: 0;
 }
 
+.controlGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.95fr) minmax(360px, 1.05fr);
+  gap: 0.75rem;
+  align-items: start;
+}
+
+.cardMetric,
+.compactStateLine {
+  color: var(--text-dim);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.cardMetric {
+  display: inline-flex;
+  align-items: center;
+}
+
+.cardMetricSuccess {
+  color: var(--toast-success-text);
+}
+
+.cardMetricWarn {
+  color: var(--toast-warning-text);
+}
+
+.compactStateLine {
+  margin-top: -0.1rem;
+}
+
 .introCard {
   flex-direction: row;
   align-items: baseline;
@@ -526,33 +557,24 @@
 }
 
 .connectionCardPriority {
-  min-height: 20rem;
-  justify-content: center;
   border-color: color-mix(in srgb, var(--accent) 58%, var(--border-1));
   background:
     radial-gradient(circle at 16% 12%, color-mix(in srgb, var(--accent) 22%, transparent), transparent 38%),
     linear-gradient(135deg, color-mix(in srgb, var(--accent) 12%, var(--bg-1)) 0%, var(--bg-1) 72%);
-  box-shadow: inset 0 1px 0 var(--inset-highlight), 0 18px 46px color-mix(in srgb, var(--accent) 12%, transparent);
+  box-shadow: inset 0 1px 0 var(--inset-highlight);
 }
 
 .connectionCardPriority .connectionHeading h2 {
-  font-size: 1.28rem;
-}
-
-.connectionCardPriority .connectionHeading :global(.field-description) {
-  max-width: 42rem;
-  color: var(--text-mid);
-  font-size: 0.9rem;
-  line-height: 1.45;
+  font-size: 1.08rem;
 }
 
 .connectionCardPriority .connectionList {
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: 1fr;
 }
 
 .connectionCardPriority .connectionRow {
   border-color: color-mix(in srgb, var(--accent) 30%, var(--border-1));
-  padding: 1rem 1.05rem;
+  padding: 0.85rem 0.9rem;
 }
 
 .connectionCardPriority .connectionRow:not(:disabled):hover {
@@ -563,14 +585,14 @@
 .connectionHeader {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  gap: 1rem;
+  align-items: center;
+  gap: 0.8rem;
 }
 
 .connectionHeading {
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
+  gap: 0.18rem;
 }
 
 .connectionHeading h2 {
@@ -590,10 +612,42 @@
   justify-content: flex-end;
 }
 
+.connectionStateBox {
+  border: 1px solid var(--border-1);
+  border-radius: 12px;
+  padding: 0.8rem 0.9rem;
+  background: var(--bg-input);
+}
+
+.connectionStateBox p {
+  margin: 0.25rem 0 0;
+  color: var(--text-dim);
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.connectionStateTitle {
+  color: var(--text-strong);
+  font-size: 0.95rem;
+  font-weight: 800;
+}
+
+.connectionStateConnected {
+  border-color: color-mix(in srgb, var(--toast-success-border) 54%, var(--border-1));
+  background: color-mix(in srgb, var(--toast-success-bg) 44%, var(--bg-input));
+}
+
+.connectionStateMissing {
+  border-color: color-mix(in srgb, var(--accent) 36%, var(--border-1));
+  background:
+    radial-gradient(circle at 8% 10%, color-mix(in srgb, var(--accent) 14%, transparent), transparent 34%),
+    var(--bg-input);
+}
+
 .connectionList {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
-  gap: 0.75rem;
+  grid-template-columns: 1fr;
+  gap: 0.55rem;
 }
 
 .connectionRow {
@@ -604,11 +658,11 @@
   gap: 0.75rem;
   align-items: flex-start;
   border: 1px solid var(--border-1);
-  border-radius: 14px;
+  border-radius: 12px;
   background: var(--bg-input);
   color: inherit;
   text-align: left;
-  padding: 0.9rem 1rem;
+  padding: 0.75rem 0.85rem;
   cursor: pointer;
   transition: border-color 120ms ease, background 120ms ease, transform 120ms ease;
 }
@@ -666,7 +720,7 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.38rem;
+  gap: 0.26rem;
 }
 
 .connectionDeviceMain strong {
@@ -685,9 +739,9 @@
 .connectionDeviceMeta {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.35rem 0.75rem;
+  gap: 0.25rem 0.6rem;
   color: var(--text-dim);
-  font-size: 0.82rem;
+  font-size: 0.78rem;
 }
 
 .hidHideCard {
@@ -699,14 +753,14 @@
 .hidHideHeader {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  gap: 1rem;
+  align-items: center;
+  gap: 0.8rem;
 }
 
 .hidHideHeading {
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
+  gap: 0.18rem;
 }
 
 .hidHideHeading h2 {
@@ -719,13 +773,13 @@
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
-  gap: 0.5rem;
+  gap: 0.4rem;
 }
 
 .hidHideSummary {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
+  gap: 0.4rem;
 }
 
 .hidHideChip,
@@ -807,18 +861,18 @@
 .hidHideDeviceList {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.55rem;
 }
 
 .hidHideDeviceRow {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 1rem;
+  gap: 0.75rem;
   border: 1px solid var(--border-1);
-  border-radius: 14px;
+  border-radius: 12px;
   background: color-mix(in srgb, var(--bg-input) 88%, var(--accent) 12%);
-  padding: 0.9rem 1rem;
+  padding: 0.75rem 0.85rem;
 }
 
 .hidHideDeviceMain {
@@ -826,7 +880,7 @@
   display: flex;
   flex: 1 1 auto;
   flex-direction: column;
-  gap: 0.45rem;
+  gap: 0.32rem;
 }
 
 .hidHideDeviceTitleRow {
@@ -846,14 +900,14 @@
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
-  gap: 0.35rem;
+  gap: 0.3rem;
 }
 
 .hidHideDeviceMeta {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.35rem 0.75rem;
-  font-size: 0.82rem;
+  gap: 0.25rem 0.6rem;
+  font-size: 0.78rem;
   color: var(--text-dim);
 }
 
@@ -891,6 +945,10 @@
 }
 
 @media (max-width: 860px) {
+  .controlGrid {
+    grid-template-columns: 1fr;
+  }
+
   .deviceHeader {
     flex-direction: column;
   }
@@ -977,13 +1035,15 @@
 
 .hidHideNotice,
 .hidHideDeviceRow,
-.connectionRow {
+.connectionRow,
+.connectionStateBox {
   border-radius: 8px;
 }
 
 .hidHideNotice,
 .hidHideDeviceRow,
-.connectionRow {
+.connectionRow,
+.connectionStateBox {
   padding: 0.75rem 0.85rem;
 }
 

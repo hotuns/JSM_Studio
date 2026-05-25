@@ -27,8 +27,10 @@ import keymapStyles from '../Keymap.module.css'
 import {
   MODIFIER_SLOT_TYPES,
   getButtonDescription,
+  getActionSpecialOptionList,
   getDefaultModifierForButton,
   getSpecialOptionList,
+  isGyroButtonSettingSpecial,
   type ButtonDefinition,
 } from '../../keymap/schema'
 import { BindingCommandCard } from './BindingCommandCard'
@@ -138,12 +140,21 @@ export const ButtonBindingsCard = ({
     () => stickModeShiftAssignments?.[buttonKey] ?? [],
     [buttonKey, stickModeShiftAssignments]
   )
-  const specialOptionList = useMemo(
+  const allSpecialOptionList = useMemo(
     () => [
       { value: 'NONE', label: 'NONE' },
       { value: 'DEFAULT', label: 'DEFAULT' },
       { value: 'CALIBRATE', label: 'CALIBRATE' },
       ...getSpecialOptionList(t),
+    ].filter((option, index, source) => source.findIndex(candidate => candidate.value === option.value) === index),
+    [t]
+  )
+  const actionSpecialOptionList = useMemo(
+    () => [
+      { value: 'NONE', label: 'NONE' },
+      { value: 'DEFAULT', label: 'DEFAULT' },
+      { value: 'CALIBRATE', label: 'CALIBRATE' },
+      ...getActionSpecialOptionList(t),
     ].filter((option, index, source) => source.findIndex(candidate => candidate.value === option.value) === index),
     [t]
   )
@@ -190,6 +201,10 @@ export const ButtonBindingsCard = ({
     if (preset.triggerKind === 'stickShift') {
       onStickModeShiftChange?.(button.command, 'RIGHT', 'NO_MOUSE')
       updateStickShiftDisplayMode(buttonKey, 'extra')
+      return
+    }
+    if (preset.outputKind === 'special' && isGyroButtonSettingSpecial(preset.outputValue)) {
+      onAssignSpecialAction(preset.outputValue, button.command)
       return
     }
     if (!hasOutputValue(preset)) {
@@ -258,6 +273,11 @@ export const ButtonBindingsCard = ({
 
   const updateCommand = (command: BindingCommand, patch: BindingCommandPatch) => {
     const nextCommand = { ...command, ...patch }
+    if (command.source.kind !== 'special' && nextCommand.outputKind === 'special' && isGyroButtonSettingSpecial(nextCommand.outputValue)) {
+      removeCommand(command)
+      onAssignSpecialAction(nextCommand.outputValue, button.command)
+      return
+    }
     if (command.source.kind === 'special') {
       if (nextCommand.outputKind === 'special') {
         onAssignSpecialAction(nextCommand.outputValue, button.command)
@@ -433,7 +453,7 @@ export const ButtonBindingsCard = ({
               key={command.id}
               command={command}
               modifierOptions={modifierOptions}
-              specialOptions={specialOptionList}
+              specialOptions={command.source.kind === 'special' ? allSpecialOptionList : actionSpecialOptionList}
               isCapturing={isCapturingValue(command.id)}
               captureLabel={captureLabel}
               onUpdate={updateCommand}

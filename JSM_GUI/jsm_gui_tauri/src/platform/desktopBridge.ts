@@ -109,12 +109,9 @@ export type HidHideInstallResult = {
   status: HidHideStatus
 }
 
-export type ControllerCandidate = {
-  deviceId: number
-  name: string
-  vendorId?: number | null
-  productId?: number | null
-  isGamepad: boolean
+export type ReconnectControllersResult = {
+  success: boolean
+  restarted: boolean
 }
 
 export type AiSettings = {
@@ -203,8 +200,7 @@ export interface DesktopBridge {
   syncHidHideWhitelist: () => Promise<HidHideStatus>
   installBundledHidHide: () => Promise<HidHideInstallResult>
   openHidHideClient: () => Promise<void>
-  listJsmControllers: () => Promise<ControllerCandidate[]>
-  connectJsmControllers: (deviceIds: number[]) => Promise<{ success: boolean }>
+  reconnectJsmControllers: () => Promise<ReconnectControllersResult>
   getAiSettings: () => Promise<AiSettings>
   saveAiSettings: (settings: AiSettingsInput) => Promise<AiSettings>
   generateAiMapping: (request: AiGenerateRequest) => Promise<AiGenerateResponse>
@@ -574,17 +570,11 @@ export const desktopBridge: DesktopBridge = {
       await invokeTauri<void>('open_hidhide_client')
     }
   },
-  async listJsmControllers() {
+  async reconnectJsmControllers() {
     if (isTauriWindow()) {
-      return invokeTauri<ControllerCandidate[]>('list_jsm_controllers').catch(() => [])
+      return invokeTauri<ReconnectControllersResult>('reconnect_jsm_controllers')
     }
-    return []
-  },
-  async connectJsmControllers(deviceIds) {
-    if (isTauriWindow()) {
-      return invokeTauri<{ success: boolean }>('connect_jsm_controllers', { deviceIds })
-    }
-    return { success: false }
+    return { success: false, restarted: false }
   },
   async getAiSettings() {
     if (isTauriWindow()) {

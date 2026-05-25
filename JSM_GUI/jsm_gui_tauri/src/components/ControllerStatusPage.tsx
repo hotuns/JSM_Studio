@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next'
 import type { TelemetryDevice } from '../hooks/useTelemetry'
 import {
   desktopBridge,
-  type ControllerCandidate,
   type HidHideDevice,
   type HidHideStatus,
 } from '../platform/desktopBridge'
@@ -52,9 +51,6 @@ const getTelemetryMatchKey = (device: Pick<TelemetryDevice, 'vid' | 'pid'>) =>
   device.vid && device.pid ? `${device.vid}:${device.pid}` : null
 
 const getHidHideMatchKey = (device: Pick<HidHideDevice, 'vendorId' | 'productId'>) =>
-  device.vendorId && device.productId ? `${device.vendorId}:${device.productId}` : null
-
-const getCandidateMatchKey = (device: Pick<ControllerCandidate, 'vendorId' | 'productId'>) =>
   device.vendorId && device.productId ? `${device.vendorId}:${device.productId}` : null
 
 const getErrorMessage = (error: unknown) =>
@@ -203,163 +199,82 @@ function ControllerStatusDeviceCard({ device, ignoredDevices }: ControllerStatus
   )
 }
 
-function ControllerConnectionPanel({ connectedDevices, priority = false }: ControllerConnectionPanelProps) {
+function ControllerConnectionStatusPanel({ connectedDevices, priority = false }: ControllerConnectionPanelProps) {
   const { t } = useTranslation()
-  const [candidates, setCandidates] = useState<ControllerCandidate[]>([])
-  const [loading, setLoading] = useState(true)
-  const [connectingId, setConnectingId] = useState<number | null>(null)
-  const [connectedCandidateIds, setConnectedCandidateIds] = useState<Set<number>>(() => new Set())
+  const [reconnecting, setReconnecting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const connectedKeys = useMemo(() => {
-    const keys = new Set<string>()
-    for (const device of connectedDevices ?? []) {
-      const key = getTelemetryMatchKey(device)
-      if (key) {
-        keys.add(key)
-      }
-    }
-    return keys
-  }, [connectedDevices])
+  const connectedCount = connectedDevices?.length ?? 0
+  const connected = connectedCount > 0
 
-  const refreshCandidates = async (showSpinner = true) => {
-    if (showSpinner) {
-      setLoading(true)
-    }
-    try {
-      const nextCandidates = await desktopBridge.listJsmControllers()
-      setCandidates(nextCandidates)
-      setError(null)
-    } catch (refreshError) {
-      const message = getErrorMessage(refreshError)
-      setError(message)
-      showToast(t('messages.controllerListFailed', { error: message }), 'error')
-    } finally {
-      if (showSpinner) {
-        setLoading(false)
-      }
-    }
-  }
-
-  useEffect(() => {
-    void refreshCandidates()
-  }, [])
-
-  const connectCandidate = (candidate: ControllerCandidate) => {
-    if (connectingId !== null) {
+  const reconnectControllers = () => {
+    if (reconnecting) {
       return
     }
 
-    setConnectingId(candidate.deviceId)
-    void desktopBridge.connectJsmControllers([candidate.deviceId])
-      .then(() => {
+    setReconnecting(true)
+    void desktopBridge.reconnectJsmControllers()
+      .then(result => {
         setError(null)
-        setConnectedCandidateIds(previous => new Set(previous).add(candidate.deviceId))
-        showToast(t('messages.controllerConnected', { name: candidate.name }))
+        showToast(
+          result.restarted
+            ? t('messages.controllerReconnectRestarted')
+            : t('messages.controllerReconnectRequested'),
+        )
       })
-      .catch(connectError => {
-        const message = getErrorMessage(connectError)
+      .catch(reconnectError => {
+        const message = getErrorMessage(reconnectError)
         setError(message)
-        showToast(t('messages.controllerConnectFailed', { error: message }), 'error')
+        showToast(t('messages.controllerReconnectFailed', { error: message }), 'error')
       })
       .finally(() => {
-        setConnectingId(null)
+        setReconnecting(false)
       })
   }
-
-  const connectedCount = connectedDevices?.length ?? 0
-  const connecting = connectingId !== null
 
   return (
     <Card className={`${styles.pageCard} ${styles.connectionCard} ${priority ? styles.connectionCardPriority : ''}`}>
       <div className={styles.connectionHeader}>
         <div className={styles.connectionHeading}>
           <h2>
-            {priority
-              ? t('controllerStatus.connectionRequiredTitle')
-              : t('controllerStatus.connectionTitle')}
+            {connected
+              ? t('controllerStatus.connectionConnectedTitle')
+              : t('controllerStatus.connectionRequiredTitle')}
           </h2>
-          <p className="field-description">
-            {priority
-              ? t('controllerStatus.connectionRequiredDescription')
-              : t('controllerStatus.connectionDescription')}
-          </p>
+          <span className={`${styles.cardMetric} ${connected ? styles.cardMetricSuccess : styles.cardMetricWarn}`}>
+            {connected
+              ? t('controllerStatus.connectionConnectedCount', { count: connectedCount })
+              : t('controllerStatus.connectionDisconnected')}
+          </span>
         </div>
         <div className={styles.connectionActions}>
           <button
             type="button"
-            className="ghost-btn"
-            onClick={() => void refreshCandidates()}
-            disabled={loading || connecting}
+            className={connected ? 'secondary-btn' : 'primary-btn'}
+            onClick={reconnectControllers}
+            disabled={reconnecting}
           >
-            {loading ? t('common.refreshing') : t('controllerStatus.connectionRefresh')}
+            {reconnecting ? t('controllerStatus.connectionReconnecting') : t('controllerStatus.connectionReconnect')}
           </button>
         </div>
       </div>
 
-      <div className={styles.connectionSummary}>
-        <span className={`${styles.hidHideChip} ${connectedCount > 0 ? styles.hidHideChipPositive : styles.hidHideChipMuted}`}>
-          {t('controllerStatus.connectionConnectedCount', { count: connectedCount })}
-        </span>
-        <span className={`${styles.hidHideChip} ${styles.hidHideChipMuted}`}>
-          {t('controllerStatus.connectionCandidateCount', { count: candidates.length })}
-        </span>
+      <div className={`${styles.connectionStateBox} ${connected ? styles.connectionStateConnected : styles.connectionStateMissing}`}>
+        <div className={styles.connectionStateTitle}>
+          {connected
+            ? t('controllerStatus.connectionConnectedStateTitle', { count: connectedCount })
+            : t('controllerStatus.connectionMissingStateTitle')}
+        </div>
+        <p>
+          {connected
+            ? t('controllerStatus.connectionConnectedStateBody')
+            : t('controllerStatus.connectionMissingStateBody')}
+        </p>
       </div>
 
       {error && (
         <div className={`${styles.hidHideNotice} ${styles.hidHideNoticeError}`}>
           {t('controllerStatus.connectionError', { error })}
-        </div>
-      )}
-
-      {loading && candidates.length === 0 ? (
-        <div className={styles.emptyInline}>{t('common.refreshing')}</div>
-      ) : candidates.length === 0 ? (
-        <div className={`${styles.hidHideNotice} ${styles.hidHideNoticeMuted}`}>
-          {t('controllerStatus.connectionNoCandidates')}
-        </div>
-      ) : (
-        <div className={styles.connectionList}>
-          {candidates.map(candidate => {
-            const isConnecting = connectingId === candidate.deviceId
-            const matchKey = getCandidateMatchKey(candidate)
-            const isConnected = connectedCandidateIds.has(candidate.deviceId) || (matchKey ? connectedKeys.has(matchKey) : false)
-            const vidPid = formatVidPid(candidate.vendorId ?? undefined, candidate.productId ?? undefined)
-            return (
-              <button
-                type="button"
-                key={candidate.deviceId}
-                className={`${styles.connectionRow} ${
-                  isConnected || isConnecting ? styles.connectionRowSelected : ''
-                } ${isConnected ? styles.connectionRowConnected : ''}`}
-                onClick={() => connectCandidate(candidate)}
-                disabled={connecting || isConnected}
-              >
-                <span className={styles.connectionCheckmark} />
-                <span className={styles.connectionDeviceMain}>
-                  <span className={styles.connectionDeviceTitle}>
-                    <strong>{candidate.name}</strong>
-                    <span className={`${styles.hidHidePill} ${isConnecting ? styles.hidHidePillWarn : styles.hidHidePillMuted}`}>
-                      {isConnecting
-                        ? t('controllerStatus.connectionConnecting')
-                        : isConnected
-                          ? t('controllerStatus.connectionConnected')
-                        : t('controllerStatus.connectionClickToConnect')}
-                    </span>
-                  </span>
-                  <span className={styles.connectionDeviceMeta}>
-                    <span>{t('controllerStatus.connectionDeviceId', { id: candidate.deviceId })}</span>
-                    {vidPid && <span>{t('controllerStatus.vidPidLabel', { value: vidPid })}</span>}
-                    <span>
-                      {candidate.isGamepad
-                        ? t('controllerStatus.connectionGamepad')
-                        : t('controllerStatus.connectionJoystick')}
-                    </span>
-                  </span>
-                </span>
-              </button>
-            )
-          })}
         </div>
       )}
     </Card>
@@ -551,7 +466,15 @@ function HidHidePanel({ telemetryDevices }: HidHidePanelProps) {
       <div className={styles.hidHideHeader}>
         <div className={styles.hidHideHeading}>
           <h2>{t('controllerStatus.hidHideTitle')}</h2>
-          <p className="field-description">{t('controllerStatus.hidHideDescription')}</p>
+          {status && (
+            <span className={styles.cardMetric}>
+              {status.installed
+                ? status.active
+                  ? t('controllerStatus.hidHideActive')
+                  : t('controllerStatus.hidHideInactive')
+                : t('controllerStatus.hidHideNotInstalled')}
+            </span>
+          )}
         </div>
         <div className={styles.hidHideActions}>
           <button
@@ -575,7 +498,7 @@ function HidHidePanel({ telemetryDevices }: HidHidePanelProps) {
           {status?.installed && (
             <button
               type="button"
-              className="secondary-btn"
+              className={status.whitelistSynced ? 'secondary-btn' : 'primary-btn'}
               onClick={handleRepairWhitelist}
               disabled={hidHideControlsLocked}
             >
@@ -597,26 +520,8 @@ function HidHidePanel({ telemetryDevices }: HidHidePanelProps) {
         </div>
       </div>
 
-      {status && (
+      {status?.installed && (
         <div className={styles.hidHideSummary}>
-          <span
-            className={`${styles.hidHideChip} ${
-              status.installed ? styles.hidHideChipPositive : styles.hidHideChipMuted
-            }`}
-          >
-            {status.installed
-              ? t('controllerStatus.hidHideInstalled')
-              : t('controllerStatus.hidHideNotInstalled')}
-          </span>
-          <span
-            className={`${styles.hidHideChip} ${
-              status.active ? styles.hidHideChipPositive : styles.hidHideChipMuted
-            }`}
-          >
-            {status.active
-              ? t('controllerStatus.hidHideActive')
-              : t('controllerStatus.hidHideInactive')}
-          </span>
           <span
             className={`${styles.hidHideChip} ${
               status.whitelistSynced ? styles.hidHideChipPositive : styles.hidHideChipWarn
@@ -625,9 +530,6 @@ function HidHidePanel({ telemetryDevices }: HidHidePanelProps) {
             {status.whitelistSynced
               ? t('controllerStatus.hidHideWhitelistReady')
               : t('controllerStatus.hidHideWhitelistNeedsRepair')}
-          </span>
-          <span className={`${styles.hidHideChip} ${styles.hidHideChipMuted}`}>
-            {t('controllerStatus.hidHideManagedCount', { count: status.managedInstanceIds.length })}
           </span>
         </div>
       )}
@@ -714,31 +616,14 @@ function HidHidePanel({ telemetryDevices }: HidHidePanelProps) {
                               ? t('controllerStatus.hidHidePresent')
                               : t('controllerStatus.hidHideSavedOnly')}
                           </span>
-                          {device.likelyCurrentController && (
-                            <span className={`${styles.hidHidePill} ${styles.hidHidePillPositive}`}>
-                              {t('controllerStatus.hidHideLikelyCurrent')}
-                            </span>
-                          )}
-                          {device.managedByApp ? (
-                            <span className={`${styles.hidHidePill} ${styles.hidHidePillMuted}`}>
-                              {t('controllerStatus.hidHideManagedByApp')}
-                            </span>
-                          ) : device.hidden ? (
-                            <span className={`${styles.hidHidePill} ${styles.hidHidePillMuted}`}>
-                              {t('controllerStatus.hidHideManagedExternally')}
-                            </span>
-                          ) : null}
                         </div>
                       </div>
 
-                      <div className={styles.hidHideDeviceMeta}>
-                        {device.vendor && <span>{device.vendor}</span>}
-                        {device.product && <span>{device.product}</span>}
-                        {device.serialNumber && (
-                          <span>{t('controllerStatus.hidHideSerialLabel', { value: device.serialNumber })}</span>
-                        )}
-                      </div>
-                      <code className={styles.hidHideInstanceId}>{device.instanceId}</code>
+                      {device.likelyCurrentController && (
+                        <div className={styles.hidHideDeviceMeta}>
+                          {t('controllerStatus.hidHideLikelyCurrent')}
+                        </div>
+                      )}
                     </div>
 
                     <div className={styles.hidHideDeviceActions}>
@@ -772,27 +657,25 @@ export function ControllerStatusPage({
   devices,
   ignoredDevices,
 }: ControllerStatusPageProps) {
-  const { t } = useTranslation()
   const hasConnectedDevices = Boolean(devices?.length)
 
   if (!hasConnectedDevices) {
     return (
       <div className={styles.page}>
-        <ControllerConnectionPanel connectedDevices={devices} priority />
+        <div className={styles.controlGrid}>
+          <ControllerConnectionStatusPanel connectedDevices={devices} priority />
+          <HidHidePanel telemetryDevices={devices} />
+        </div>
       </div>
     )
   }
 
   return (
     <div className={styles.page}>
-      <Card className={`${styles.pageCard} ${styles.introCard}`}>
-        <h2>{t('controllerStatus.title')}</h2>
-        <p className="field-description">{t('controllerStatus.description')}</p>
-      </Card>
-
-      <ControllerConnectionPanel connectedDevices={devices} />
-
-      <HidHidePanel telemetryDevices={devices} />
+      <div className={styles.controlGrid}>
+        <ControllerConnectionStatusPanel connectedDevices={devices} />
+        <HidHidePanel telemetryDevices={devices} />
+      </div>
 
       {devices?.map(device => (
         <ControllerStatusDeviceCard key={device.handle} device={device} ignoredDevices={ignoredDevices} />
