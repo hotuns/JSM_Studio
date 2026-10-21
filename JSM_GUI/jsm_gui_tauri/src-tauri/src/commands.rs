@@ -4,7 +4,7 @@ use tauri::{AppHandle, State, Window};
 
 use crate::{
     runtime,
-    services::{ai, app_state::AppState, hidhide, input_debug, jsm_process, telemetry},
+    services::{app_state::AppState, jsm_process, telemetry},
 };
 
 type CommandResult<T> = Result<T, String>;
@@ -449,7 +449,6 @@ pub fn list_jsm_controllers(
     app: AppHandle,
     state: State<'_, AppState>,
 ) -> CommandResult<Vec<ControllerCandidate>> {
-    ensure_hidhide_visibility_for_jsm(&app, state.inner())?;
     jsm_process::launch_jsm(&app, state.inner())?;
 
     let mut last_error = None;
@@ -498,7 +497,6 @@ pub fn reconnect_jsm_controllers(
     app: AppHandle,
     state: State<'_, AppState>,
 ) -> CommandResult<ReconnectControllersResult> {
-    ensure_hidhide_visibility_for_jsm(&app, state.inner())?;
     jsm_process::launch_jsm(&app, state.inner())?;
 
     let autoconnect_enabled =
@@ -518,30 +516,6 @@ pub fn reconnect_jsm_controllers(
         success: true,
         restarted: true,
     })
-}
-
-fn ensure_hidhide_visibility_for_jsm(app: &AppHandle, state: &AppState) -> CommandResult<()> {
-    let latest_packet = telemetry::latest_packet(state)?;
-    let status = hidhide::get_status(app, latest_packet.as_ref())?;
-    if !status.supported || !status.installed {
-        return Ok(());
-    }
-    if status.requires_elevation {
-        return Err(
-            "HidHide is installed, but JSM Studio cannot repair the whitelist without administrator rights. Restart JSM Studio as administrator."
-                .to_string(),
-        );
-    }
-    if status.whitelist_synced {
-        return Ok(());
-    }
-
-    hidhide::sync_whitelist(app, latest_packet.as_ref())?;
-    if jsm_process::is_running(state)? {
-        jsm_process::terminate_jsm(app, state)?;
-    }
-
-    Ok(())
 }
 
 fn parse_controller_candidates(output: &str) -> CommandResult<Vec<ControllerCandidate>> {
@@ -673,59 +647,6 @@ pub fn get_latest_telemetry_sample(state: State<'_, AppState>) -> CommandResult<
 }
 
 #[tauri::command]
-pub fn get_hidhide_status(
-    app: AppHandle,
-    state: State<'_, AppState>,
-) -> CommandResult<hidhide::HidHideStatus> {
-    let latest_packet = telemetry::latest_packet(state.inner())?;
-    hidhide::get_status(&app, latest_packet.as_ref())
-}
-
-#[tauri::command]
-pub fn set_hidhide_active(
-    app: AppHandle,
-    state: State<'_, AppState>,
-    active: bool,
-) -> CommandResult<hidhide::HidHideStatus> {
-    let latest_packet = telemetry::latest_packet(state.inner())?;
-    hidhide::set_active(&app, active, latest_packet.as_ref())
-}
-
-#[tauri::command]
-pub fn set_hidhide_device_hidden(
-    app: AppHandle,
-    state: State<'_, AppState>,
-    instance_id: String,
-    hidden: bool,
-) -> CommandResult<hidhide::HidHideStatus> {
-    let latest_packet = telemetry::latest_packet(state.inner())?;
-    hidhide::set_device_hidden(&app, &instance_id, hidden, latest_packet.as_ref())
-}
-
-#[tauri::command]
-pub fn sync_hidhide_whitelist(
-    app: AppHandle,
-    state: State<'_, AppState>,
-) -> CommandResult<hidhide::HidHideStatus> {
-    let latest_packet = telemetry::latest_packet(state.inner())?;
-    hidhide::sync_whitelist(&app, latest_packet.as_ref())
-}
-
-#[tauri::command]
-pub fn install_bundled_hidhide(
-    app: AppHandle,
-    state: State<'_, AppState>,
-) -> CommandResult<hidhide::HidHideInstallResult> {
-    let latest_packet = telemetry::latest_packet(state.inner())?;
-    hidhide::install_bundled(&app, latest_packet.as_ref())
-}
-
-#[tauri::command]
-pub fn open_hidhide_client(app: AppHandle) -> CommandResult<()> {
-    hidhide::open_configuration_client(&app)
-}
-
-#[tauri::command]
 pub fn open_external(url: String) -> CommandResult<()> {
     open::that(url).map_err(|error| format!("Failed to open external link: {error}"))?;
     Ok(())
@@ -738,21 +659,6 @@ pub fn open_config_directory(app: AppHandle) -> CommandResult<()> {
     Ok(())
 }
 
-#[tauri::command]
-pub fn start_input_debug_hook(app: AppHandle) -> CommandResult<input_debug::InputDebugHookStatus> {
-    input_debug::start(app)
-}
-
-#[tauri::command]
-pub fn stop_input_debug_hook() -> CommandResult<input_debug::InputDebugHookStatus> {
-    input_debug::stop()
-}
-
-#[tauri::command]
-pub fn get_input_debug_hook_status() -> CommandResult<input_debug::InputDebugHookStatus> {
-    input_debug::status()
-}
-
 fn named_profile(path: String, content: String) -> NamedProfile {
     let name = runtime::profile_name_from_relative_path(&path);
     NamedProfile {
@@ -760,27 +666,6 @@ fn named_profile(path: String, content: String) -> NamedProfile {
         name,
         content,
     }
-}
-
-#[tauri::command]
-pub fn get_ai_settings(app: AppHandle) -> CommandResult<ai::AiSettings> {
-    ai::load_settings(&app)
-}
-
-#[tauri::command]
-pub fn save_ai_settings(
-    app: AppHandle,
-    settings: ai::AiSettingsInput,
-) -> CommandResult<ai::AiSettings> {
-    ai::save_settings(&app, settings)
-}
-
-#[tauri::command]
-pub async fn generate_ai_mapping(
-    app: AppHandle,
-    request: ai::GenerateMappingRequest,
-) -> CommandResult<ai::GenerateMappingResponse> {
-    ai::generate_mapping(&app, request).await
 }
 
 #[cfg(test)]

@@ -1,6 +1,6 @@
 [package]
 name = "jsm-gui-app-tauri"
-version = "0.2.2"
+version = "0.2.3"
 description = "Tauri shell for JSM Studio"
 authors = ["Evan McLean"]
 edition = "2021"
@@ -14,10 +14,9 @@ tauri-build = { version = "2.6.2", features = [] }
 
 [dependencies]
 open = "5.3.5"
-reqwest = { version = "0.12.24", default-features = false, features = ["json", "rustls-tls"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 tauri = { version = "2.11.2", features = [] }
 tauri-plugin-process = "2.3.1"
 tauri-plugin-updater = "2.10.1"
-windows-sys = { version = "0.61.2", features = ["Win32_Devices_DeviceAndDriverInstallation", "Win32_Devices_HumanInterfaceDevice", "Win32_Devices_Properties", "Win32_Foundation", "Win32_Security", "Win32_Storage_FileSystem", "Win32_System_IO", "Win32_System_JobObjects", "Win32_System_Threading", "Win32_UI_Input_KeyboardAndMouse", "Win32_UI_WindowsAndMessaging"] }
+windows-sys = { version = "0.61.2", features = ["Win32_Foundation", "Win32_Security", "Win32_System_JobObjects", "Win32_System_Threading", "Win32_UI_WindowsAndMessaging"] }

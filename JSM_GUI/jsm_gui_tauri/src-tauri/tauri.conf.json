@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "JSM Studio",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "identifier": "com.hotuns.jsmstudio",
   "build": {
     "beforeDevCommand": "npm run build:sidecars && npm run dev:web",
@@ -30,8 +30,7 @@
       "icons/icon.ico"
     ],
     "resources": {
-      "bin": "bin",
-      "third_party/HidHide": "third_party/HidHide"
+      "bin": "bin"
     },
     "targets": "all"
   },

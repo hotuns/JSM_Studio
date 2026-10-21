@@ -54,100 +54,9 @@ export type CalibrationCommandResult = {
   output: string
 }
 
-export type InputDebugHookStatus = {
-  supported: boolean
-  running: boolean
-  platform: string
-  message?: string
-}
-
-export type InputDebugEvent = {
-  id: number
-  timestamp: number
-  source: 'keyboard' | 'mouse' | 'wheel'
-  action: 'down' | 'up' | 'wheel'
-  keyCode?: number
-  scanCode?: number
-  keyLabel?: string
-  mouseButton?: 'left' | 'right' | 'middle' | 'x1' | 'x2' | 'x'
-  wheelDelta?: number
-  position?: { x: number; y: number }
-  injected: boolean
-  lowerIntegrityInjected?: boolean
-  captureSource: 'globalHook' | 'appWindow'
-  summary: string
-}
-
-export type HidHideDevice = {
-  instanceId: string
-  displayName: string
-  vendor: string
-  product: string
-  serialNumber?: string | null
-  present: boolean
-  hidden: boolean
-  likelyCurrentController: boolean
-  stale: boolean
-  managedByApp: boolean
-  vendorId?: number | null
-  productId?: number | null
-}
-
-export type HidHideStatus = {
-  supported: boolean
-  installed: boolean
-  active: boolean
-  devices: HidHideDevice[]
-  managedInstanceIds: string[]
-  whitelistSynced: boolean
-  requiresElevation: boolean
-}
-
-export type HidHideInstallResult = {
-  completed: boolean
-  installerPath?: string | null
-  status: HidHideStatus
-}
-
 export type ReconnectControllersResult = {
   success: boolean
   restarted: boolean
-}
-
-export type AiSettings = {
-  apiKey: string
-  model: string
-  baseUrl: string
-  temperature: number
-}
-
-export type AiSettingsInput = {
-  apiKey: string
-  model?: string
-  baseUrl?: string
-  temperature?: number
-}
-
-export type AiConversationMessage = {
-  role: 'user' | 'assistant'
-  content: string
-}
-
-export type AiGenerateRequest = {
-  userPrompt: string
-  currentConfig?: string
-  currentProfileName?: string | null
-  includeCurrentConfig?: boolean
-  conversationHistory?: AiConversationMessage[]
-  locale?: string
-}
-
-export type AiGenerateResponse = {
-  summary: string
-  configText: string
-  assumptions: string[]
-  warnings: string[]
-  model: string
 }
 
 type Unsubscribe = () => void
@@ -191,20 +100,7 @@ export interface DesktopBridge {
   downloadUpdate: () => Promise<void>
   installUpdate: () => Promise<void>
   onTelemetrySample: (callback: (payload: unknown) => void) => Unsubscribe
-  startInputDebugHook: () => Promise<InputDebugHookStatus>
-  stopInputDebugHook: () => Promise<InputDebugHookStatus>
-  getInputDebugHookStatus: () => Promise<InputDebugHookStatus>
-  onInputDebugEvent: (callback: (payload: InputDebugEvent) => void) => Unsubscribe
-  getHidHideStatus: () => Promise<HidHideStatus>
-  setHidHideActive: (active: boolean) => Promise<HidHideStatus>
-  setHidHideDeviceHidden: (instanceId: string, hidden: boolean) => Promise<HidHideStatus>
-  syncHidHideWhitelist: () => Promise<HidHideStatus>
-  installBundledHidHide: () => Promise<HidHideInstallResult>
-  openHidHideClient: () => Promise<void>
   reconnectJsmControllers: () => Promise<ReconnectControllersResult>
-  getAiSettings: () => Promise<AiSettings>
-  saveAiSettings: (settings: AiSettingsInput) => Promise<AiSettings>
-  generateAiMapping: (request: AiGenerateRequest) => Promise<AiGenerateResponse>
 }
 
 type TauriEventPayload<T> = { payload: T }
@@ -241,23 +137,6 @@ const invokeTauri = async <T>(command: string, args?: Record<string, unknown>) =
 
 const getLatestTauriTelemetrySample = () =>
   invokeTauri<unknown | null>('get_latest_telemetry_sample').catch(() => null)
-
-const unsupportedInputDebugStatus = (): InputDebugHookStatus => ({
-  supported: false,
-  running: false,
-  platform: typeof navigator === 'undefined' ? 'unknown' : navigator.platform,
-  message: 'Global input debug hook is only supported in the Tauri desktop app on Windows.',
-})
-
-const unsupportedHidHideStatus = (): HidHideStatus => ({
-  supported: typeof navigator !== 'undefined' ? navigator.platform.startsWith('Win') : false,
-  installed: false,
-  active: false,
-  devices: [],
-  managedInstanceIds: [],
-  whitelistSynced: false,
-  requiresElevation: false,
-})
 
 const listenTauri = <T>(eventName: string, callback: (payload: T) => void): Unsubscribe => {
   let disposed = false
@@ -577,112 +456,10 @@ export const desktopBridge: DesktopBridge = {
     }
     return getTelemetryAPI()?.onSample?.(callback) ?? noop
   },
-  async startInputDebugHook() {
-    if (isTauriWindow()) {
-      return invokeTauri<InputDebugHookStatus>('start_input_debug_hook')
-    }
-    return unsupportedInputDebugStatus()
-  },
-  async stopInputDebugHook() {
-    if (isTauriWindow()) {
-      return invokeTauri<InputDebugHookStatus>('stop_input_debug_hook')
-    }
-    return unsupportedInputDebugStatus()
-  },
-  async getInputDebugHookStatus() {
-    if (isTauriWindow()) {
-      return invokeTauri<InputDebugHookStatus>('get_input_debug_hook_status')
-    }
-    return unsupportedInputDebugStatus()
-  },
-  onInputDebugEvent(callback) {
-    if (isTauriWindow()) {
-      return listenTauri<InputDebugEvent>('input-debug-event', callback)
-    }
-    return noop
-  },
-  async getHidHideStatus() {
-    if (isTauriWindow()) {
-      return invokeTauri<HidHideStatus>('get_hidhide_status')
-    }
-    return unsupportedHidHideStatus()
-  },
-  async setHidHideActive(active) {
-    if (isTauriWindow()) {
-      return invokeTauri<HidHideStatus>('set_hidhide_active', { active })
-    }
-    return unsupportedHidHideStatus()
-  },
-  async setHidHideDeviceHidden(instanceId, hidden) {
-    if (isTauriWindow()) {
-      return invokeTauri<HidHideStatus>('set_hidhide_device_hidden', { instanceId, hidden })
-    }
-    return unsupportedHidHideStatus()
-  },
-  async syncHidHideWhitelist() {
-    if (isTauriWindow()) {
-      return invokeTauri<HidHideStatus>('sync_hidhide_whitelist')
-    }
-    return unsupportedHidHideStatus()
-  },
-  async installBundledHidHide() {
-    if (isTauriWindow()) {
-      return invokeTauri<HidHideInstallResult>('install_bundled_hidhide')
-    }
-    return {
-      completed: false,
-      installerPath: null,
-      status: unsupportedHidHideStatus(),
-    }
-  },
-  async openHidHideClient() {
-    if (isTauriWindow()) {
-      await invokeTauri<void>('open_hidhide_client')
-    }
-  },
   async reconnectJsmControllers() {
     if (isTauriWindow()) {
       return invokeTauri<ReconnectControllersResult>('reconnect_jsm_controllers')
     }
     return { success: false, restarted: false }
-  },
-  async getAiSettings() {
-    if (isTauriWindow()) {
-      return invokeTauri<AiSettings>('get_ai_settings').catch(() => ({
-        apiKey: '',
-        model: '',
-        baseUrl: '',
-        temperature: 0.2,
-      }))
-    }
-    return {
-      apiKey: '',
-      model: '',
-      baseUrl: '',
-      temperature: 0.2,
-    }
-  },
-  async saveAiSettings(settings) {
-    if (isTauriWindow()) {
-      return invokeTauri<AiSettings>('save_ai_settings', { settings })
-    }
-    return {
-      apiKey: settings.apiKey,
-      model: settings.model ?? '',
-      baseUrl: settings.baseUrl ?? '',
-      temperature: settings.temperature ?? 0.2,
-    }
-  },
-  async generateAiMapping(request) {
-    if (isTauriWindow()) {
-      return invokeTauri<AiGenerateResponse>('generate_ai_mapping', { request })
-    }
-    return {
-      summary: 'AI mapping generation is only available in the Tauri desktop app.',
-      configText: request.currentConfig ?? '',
-      assumptions: [],
-      warnings: ['AI mapping generation is unavailable in this environment.'],
-      model: '',
-    }
   },
 }

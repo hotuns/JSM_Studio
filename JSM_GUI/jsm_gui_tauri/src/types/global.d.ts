@@ -25,120 +25,12 @@ declare interface Window {
     getBackendChoice?: () => Promise<'SDL' | 'legacy'>
     setBackendChoice?: (choice: 'SDL' | 'legacy') => Promise<{ success: boolean; backend: 'SDL' | 'legacy' }>
     openExternal?: (url: string) => Promise<void>
-    getHidHideStatus?: () => Promise<{
-      supported: boolean
-      installed: boolean
-      active: boolean
-      devices: Array<{
-        instanceId: string
-        displayName: string
-        vendor: string
-        product: string
-        serialNumber?: string | null
-        present: boolean
-        hidden: boolean
-        likelyCurrentController: boolean
-        stale: boolean
-        managedByApp: boolean
-        vendorId?: number | null
-        productId?: number | null
-      }>
-      managedInstanceIds: string[]
-      whitelistSynced: boolean
-      requiresElevation: boolean
-    }>
-    setHidHideActive?: (active: boolean) => Promise<{
-      supported: boolean
-      installed: boolean
-      active: boolean
-      devices: Array<{
-        instanceId: string
-        displayName: string
-        vendor: string
-        product: string
-        serialNumber?: string | null
-        present: boolean
-        hidden: boolean
-        likelyCurrentController: boolean
-        stale: boolean
-        managedByApp: boolean
-        vendorId?: number | null
-        productId?: number | null
-      }>
-      managedInstanceIds: string[]
-      whitelistSynced: boolean
-      requiresElevation: boolean
-    }>
-    setHidHideDeviceHidden?: (instanceId: string, hidden: boolean) => Promise<{
-      supported: boolean
-      installed: boolean
-      active: boolean
-      devices: Array<{
-        instanceId: string
-        displayName: string
-        vendor: string
-        product: string
-        serialNumber?: string | null
-        present: boolean
-        hidden: boolean
-        likelyCurrentController: boolean
-        stale: boolean
-        managedByApp: boolean
-        vendorId?: number | null
-        productId?: number | null
-      }>
-      managedInstanceIds: string[]
-      whitelistSynced: boolean
-      requiresElevation: boolean
-    }>
-    syncHidHideWhitelist?: () => Promise<{
-      supported: boolean
-      installed: boolean
-      active: boolean
-      devices: Array<{
-        instanceId: string
-        displayName: string
-        vendor: string
-        product: string
-        serialNumber?: string | null
-        present: boolean
-        hidden: boolean
-        likelyCurrentController: boolean
-        stale: boolean
-        managedByApp: boolean
-        vendorId?: number | null
-        productId?: number | null
-      }>
-      managedInstanceIds: string[]
-      whitelistSynced: boolean
-      requiresElevation: boolean
-    }>
     onUpdateAvailable?: (callback: (version: string) => void) => () => void
     onUpdateDownloaded?: (callback: () => void) => () => void
     onUpdateDownloadProgress?: (callback: (percent: number) => void) => () => void
     downloadUpdate?: () => Promise<void>
     installUpdate?: () => Promise<void>
-    getAiSettings?: () => Promise<{ apiKey: string; model: string; baseUrl: string; temperature: number }>
-    saveAiSettings?: (settings: {
-      apiKey: string
-      model?: string
-      baseUrl?: string
-      temperature?: number
-    }) => Promise<{ apiKey: string; model: string; baseUrl: string; temperature: number }>
-    generateAiMapping?: (request: {
-      userPrompt: string
-      currentConfig?: string
-      currentProfileName?: string | null
-      includeCurrentConfig?: boolean
-      conversationHistory?: Array<{ role: 'user' | 'assistant'; content: string }>
-      locale?: string
-    }) => Promise<{
-      summary: string
-      configText: string
-      assumptions: string[]
-      warnings: string[]
-      model: string
-    }>
+
   }
   telemetry?: {
     onSample?: (callback: (payload: unknown) => void) => () => void

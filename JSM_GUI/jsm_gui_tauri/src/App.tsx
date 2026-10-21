@@ -19,7 +19,7 @@ import { showToast } from './utils/toast'
 import { LanguageSelect } from './components/LanguageSelect'
 
 
-type PrimaryTab = 'gyro' | 'keybinds' | 'touchpad' | 'controllerStatus' | 'debugConsole' | 'ai' | 'help'
+type PrimaryTab = 'gyro' | 'keybinds' | 'touchpad' | 'controllerStatus' | 'help'
 type GyroSubTab = 'behavior' | 'sensitivity' | 'noise'
 const QQ_GROUP_URL = 'https://qm.qq.com/q/OyPvwoBSkU'
 const QQ_GROUP_NUMBER = '855488128'
@@ -100,16 +100,6 @@ const HelpDocsPage = lazy(async () => {
   return { default: module.HelpDocsPage }
 })
 
-const MappingDebugPage = lazy(async () => {
-  const module = await import('./components/MappingDebugPage')
-  return { default: module.MappingDebugPage }
-})
-
-const AiMappingPage = lazy(async () => {
-  const module = await import('./components/AiMappingPage')
-  return { default: module.AiMappingPage }
-})
-
 const UpdateBanner = lazy(async () => {
   const module = await import('./components/UpdateBanner')
   return { default: module.UpdateBanner }
@@ -140,6 +130,11 @@ type PrimaryNavProps = {
 
 const PrimaryNav = ({ primaryTab, setPrimaryTab, includeHelp = false }: PrimaryNavProps) => {
   const { t } = useTranslation()
+  const controls: { tab: PrimaryTab; label: string }[] = [
+    { tab: 'gyro', label: 'app.nav.motionControl' },
+    { tab: 'keybinds', label: 'app.nav.keybinds' },
+    { tab: 'touchpad', label: 'app.nav.touchpad' },
+  ]
 
   return (
     <div className={sideNavStyles.navGroup}>
@@ -151,42 +146,18 @@ const PrimaryNav = ({ primaryTab, setPrimaryTab, includeHelp = false }: PrimaryN
         >
           {t('app.nav.controllerStatus')}
         </button>
-        <button
-          className={`${sideNavStyles.navItem} ${primaryTab === 'debugConsole' ? sideNavStyles.active : ''}`}
-          onClick={() => setPrimaryTab('debugConsole')}
-        >
-          {t('app.nav.debugConsole')}
-        </button>
       </div>
       <div className={sideNavStyles.navSection}>
-        <div className={sideNavStyles.navSectionLabel}>{t('app.nav.mappingGroup')}</div>
-        <button
-          className={`${sideNavStyles.navItem} ${primaryTab === 'keybinds' ? sideNavStyles.active : ''}`}
-          onClick={() => setPrimaryTab('keybinds')}
-        >
-          {t('app.nav.keybinds')}
-        </button>
-        <button
-          className={`${sideNavStyles.navItem} ${primaryTab === 'touchpad' ? sideNavStyles.active : ''}`}
-          onClick={() => setPrimaryTab('touchpad')}
-        >
-          {t('app.nav.touchpad')}
-        </button>
-        <button
-          className={`${sideNavStyles.navItem} ${primaryTab === 'ai' ? sideNavStyles.active : ''}`}
-          onClick={() => setPrimaryTab('ai')}
-        >
-          {t('app.nav.aiAssistant')}
-        </button>
-      </div>
-      <div className={sideNavStyles.navSection}>
-        <div className={sideNavStyles.navSectionLabel}>{t('app.nav.tuningGroup')}</div>
-        <button
-          className={`${sideNavStyles.navItem} ${primaryTab === 'gyro' ? sideNavStyles.active : ''}`}
-          onClick={() => setPrimaryTab('gyro')}
-        >
-          {t('app.nav.gyroAndSensitivity')}
-        </button>
+        <div className={sideNavStyles.navSectionLabel}>{t('app.nav.controlsGroup')}</div>
+        {controls.map(({ tab, label }) => (
+          <button
+            key={tab}
+            className={`${sideNavStyles.navItem} ${primaryTab === tab ? sideNavStyles.active : ''}`}
+            onClick={() => setPrimaryTab(tab)}
+          >
+            {t(label)}
+          </button>
+        ))}
       </div>
       {includeHelp && (
         <button
@@ -246,7 +217,6 @@ function App() {
   const [primaryTab, setPrimaryTab] = useState<PrimaryTab>('controllerStatus')
   const [gyroSubTab, setGyroSubTab] = useState<GyroSubTab>('behavior')
   const [selectedMappingCommand, setSelectedMappingCommand] = useState<string | null>('N')
-  const [showHidHideElevationModal, setShowHidHideElevationModal] = useState(false)
   const configWindowRef = useRef<HTMLDivElement | null>(null)
   const configWindowDragRef = useRef<{ pointerId: number; offsetX: number; offsetY: number } | null>(null)
   const {
@@ -557,21 +527,6 @@ function App() {
       setAutoloadEnabled(state.autoloadEnabled)
     }).catch(error => {
       console.error('Failed to load runtime mapping state', error)
-    })
-    return () => {
-      disposed = true
-    }
-  }, [])
-
-  useEffect(() => {
-    let disposed = false
-    void desktopBridge.getHidHideStatus().then(status => {
-      if (disposed) return
-      if (status.requiresElevation) {
-        setShowHidHideElevationModal(true)
-      }
-    }).catch(error => {
-      console.error('Failed to probe HidHide status', error)
     })
     return () => {
       disposed = true
@@ -1057,34 +1012,6 @@ function App() {
       )
     }
 
-    if (primaryTab === 'debugConsole') {
-      return (
-        <Suspense fallback={<LazyPanelFallback title={t('app.nav.debugConsole')} />}>
-          <MappingDebugPage
-            configText={configText}
-            appliedConfig={appliedConfig}
-            hasPendingChanges={hasPendingChanges}
-          />
-        </Suspense>
-      )
-    }
-
-    if (primaryTab === 'ai') {
-      return (
-        <Suspense fallback={<LazyPanelFallback title={t('app.nav.aiAssistant')} />}>
-          <AiMappingPage
-            configText={configText}
-            currentProfileName={currentLibraryProfile}
-            hasPendingChanges={hasPendingChanges}
-            onReplaceConfig={setConfigText}
-            onApplyGeneratedConfig={async (nextConfig) => {
-              await applyConfig({ textOverride: nextConfig })
-            }}
-          />
-        </Suspense>
-      )
-    }
-
     if (primaryTab === 'help') {
       return (
         <Suspense fallback={<LazyPanelFallback title={t('app.nav.documentation')} />}>
@@ -1261,35 +1188,6 @@ function App() {
                 </div>
               </>
             )}
-          </div>
-        </div>
-      )}
-      {showHidHideElevationModal && (
-        <div className="modal-overlay">
-          <div className="modal-card">
-            <div className="modal-header">
-              <h3>{t('controllerStatus.hidHideElevationTitle')}</h3>
-            </div>
-            <p className="modal-description">{t('controllerStatus.hidHideElevationStartupBody')}</p>
-            <div className="modal-actions">
-              <button
-                type="button"
-                className="primary-btn"
-                onClick={() => {
-                  setPrimaryTab('controllerStatus')
-                  setShowHidHideElevationModal(false)
-                }}
-              >
-                {t('controllerStatus.hidHideOpenStatusPage')}
-              </button>
-              <button
-                type="button"
-                className="ghost-btn"
-                onClick={() => setShowHidHideElevationModal(false)}
-              >
-                {t('common.close')}
-              </button>
-            </div>
           </div>
         </div>
       )}

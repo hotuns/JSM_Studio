@@ -104,6 +104,14 @@ const findButton = (collection: ButtonDefinition[], command: string) => {
   return button
 }
 
+export const EXTENDED_CONTROLLER_BUTTONS: ButtonDefinition[] = [
+  ...PADDLE_BUTTONS,
+  ...MINI_BUTTONS,
+  findButton(LEFT_STICK_BUTTONS, 'LTOUCH'),
+  findButton(RIGHT_STICK_BUTTONS, 'RTOUCH'),
+  ...MISC_BUTTONS,
+]
+
 const BUTTON_ORDER: ButtonDefinition[] = [
   ...FACE_BUTTONS,
   ...DPAD_BUTTONS,
@@ -252,6 +260,11 @@ export const getPressedControllerCommandSet = (device?: TelemetryDevice) => {
   }
 
   const commands = new Set<string>()
+  // These telemetry bits have the same meaning for every controller family.
+  // Do not hide reported inputs just because the model is unknown or generic.
+  for (const command of ['LMINI', 'RMINI', 'LTOUCH', 'RTOUCH', 'MISC1', 'MISC2', 'MISC3', 'MISC4', 'MISC5', 'MISC6'] as const) {
+    addIfPressed(commands, buttons, command, RAW_BUTTONS[command])
+  }
   const controllerType = device?.type ?? 0
   const splitType = device?.split ?? 0
 

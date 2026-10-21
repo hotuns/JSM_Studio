@@ -2,11 +2,18 @@
 
 [`Chinese Documentation`](./README_zh.md)
 
-JSM Studio is a graphical tool for JoyShockMapper on Windows. It integrates JoyShockMapper’s gyro aiming, key mapping, config management, and HidHide controller-hiding workflow into a single desktop application, aiming to enable users to complete common configuration tasks without using the command line.
+JSM Studio is a graphical tool for JoyShockMapper on Windows. It integrates JoyShockMapper’s gyro aiming, key mapping, config management into a single desktop application, with a link to the official HidHide download, aiming to enable users to complete common configuration tasks without using the command line.
 
 ![alt text](docs/1.png)
 
 This repository is a fork of [`evan1mclean/JSM_custom_curve`](https://github.com/evan1mclean/JSM_custom_curve), with JoyShockMapper maintained separately in [`hotuns/JoyShockMapper`](https://github.com/hotuns/JoyShockMapper). The JSM Studio repository pins that fork as the `JoyShockMapper` submodule on its `jsm-studio` branch. The fork's `main` branch tracks [`Electronicks/JoyShockMapper`](https://github.com/Electronicks/JoyShockMapper), while the integration branch preserves custom curves and the telemetry/controller interfaces required by this desktop application.
+
+Future maintenance follows `Electronicks/JoyShockMapper` as the sole engine
+upstream; this project no longer tracks updates from
+`evan1mclean/JSM_custom_curve`. Existing custom curves are retained, the GUI is
+developed independently, and SDL is upgraded independently when needed. Engine
+updates are integrated from source, tested, and rebuilt to preserve Studio's
+required interfaces. See the [upstream workflow](docs/joyshockmapper-upstream.md).
 
 ## Download
 
@@ -27,12 +34,11 @@ Compared to [`evan1mclean/JSM_custom_curve`](https://github.com/evan1mclean/JSM_
 - **Tauri Desktop App**: GUI has moved to Tauri; backend directly manages JoyShockMapper processes, config files, runtime directories, and system-level operations.
 - **Bundled JoyShockMapper Runtime**: The application includes both SDL / legacy backends, switchable via the interface. Users do not need to locate or launch `JoyShockMapper.exe` manually.
 - **Reworked Controller Connection Flow**: On launch, JSM Studio no longer connects to all controllers automatically. Instead, it shows available SDL controllers for the user to select and connect.
-- **HidHide Integration**: Bundled with the HidHide installer. When you need to hide physical controllers, you can install, open HidHide, hide devices, and fix the whitelist via the app.
-- **HidHide Whitelist Fix**: The whitelist will prioritize the path to the currently running `JoyShockMapper.exe`, avoiding scenarios where controllers are hidden from both the game and JSM itself.
-- **Runs as Administrator by Default**: Windows manifest requests admin privileges to prevent failures in HidHide, input injection, and whitelist fix system operations.
+- **HidHide Download**: Links to the official download page for optional, separately installed controller hiding.
+- **Standard Permissions by Default**: The app no longer requires elevation. Run as administrator only when needed, such as sending keyboard/mouse input to an elevated game.
 - **Enhanced Config Management**: Provides config directories, text editing, management, fast switching, and automatic per-game switching panels.
 - **Redesigned Auto-Switch Panel**: Supports loading configs based on game process rules; rules and their enabled status are managed in the GUI.
-- **Redesigned Controller Status Page**: Prompts for controller selection when not connected; after connecting, shows real-time input status and HidHide actions.
+- **Redesigned Controller Status Page**: Prompts for controller selection when not connected; after connecting, shows real-time input status and a HidHide download link.
 - **Reworked Touchpad Interaction**: Select touchpad mode/dividing method first, then assign mappings to different touch areas.
 - **Overall UI Refactor**: Redundant top bar removed, clearer tooltips, unified left navigation bar, language/appearance switch, and global controls’ styling.
 - **Automated Release Build**: GitHub Actions workflows build and upload Windows installers to Releases automatically when pushing a `v*` tag.
@@ -44,7 +50,7 @@ Compared to [`evan1mclean/JSM_custom_curve`](https://github.com/evan1mclean/JSM_
 - Button mapping, touchpad mapping, gyro & sensitivity configuration
 - Config file management, editing, and quick switching
 - Auto-switch profiles by game process
-- Built-in installation, access, and fixing for HidHide and whitelist
+- Official HidHide download link
 - Embedded JSM documentation links
 - Simplified Chinese / English interface
 - Dark theme
@@ -56,9 +62,9 @@ Compared to [`evan1mclean/JSM_custom_curve`](https://github.com/evan1mclean/JSM_
 
 1. Install and run JSM Studio as administrator.
 2. On the "Controller Status" page, refresh device list and connect your preferred controller.
-3. In the "Button Mapping", "Touchpad", or "Gyro & Sensitivity" pages, configure your mappings.
+3. In the "Button Mapping", "Touchpad", or "Motion Control" pages, configure your mappings.
 4. Toggle "Enable Mapping" to let JoyShockMapper output your configuration.
-5. If your game sees both the physical controller and causes double input, install HidHide in the "HidHide" section and hide the physical controller.
+5. If your game sees both the physical controller and causes double input, use the HidHide download link, install it separately, and configure its application allowlist and device hiding.
 6. Test in game. For automatic profile switching, add the relevant rule in the "Auto-Switch" panel.
 
 ## Data Flow
@@ -179,16 +185,9 @@ This prevents double input: the game receives JSM's mapped keyboard/mouse or vir
 
 ## About HidHide
 
-HidHide is used to hide physical controllers from games, letting only JoyShockMapper read the controller input. This avoids double input caused by both the real controller and JSM being recognized together.
+JSM Studio continues to use the Tauri desktop architecture. HidHide is an optional external tool. The app only links to the [official download page](https://github.com/nefarius/HidHide/releases/latest); it does not bundle an installer or manage device hiding, filtering, or the application allowlist.
 
-JSM Studio will always add the currently running `JoyShockMapper.exe` to the HidHide whitelist. If you reinstall, switch backend, or move directories, the app will check and repair the whitelist on startup, device refresh, or when hiding a device.
-
-If JSM Studio can't see controllers after hiding, check these:
-
-- JSM Studio is running as administrator.
-- HidHide is enabled.
-- HidHide whitelist includes the current internal `JoyShockMapper.exe`.
-- The "Fix Whitelist" button has been clicked or JSM Studio has been restarted.
+Install and configure HidHide separately when needed to prevent double input. Allow the current JoyShockMapper.exe to read devices before hiding the physical controller from games. Check the allowlist path after reinstalling, switching backends, or moving the application.
 
 ## Auto-Switch Configuration
 
@@ -219,7 +218,7 @@ Note: The rule name should match the actual game process, e.g. `game.exe`. If yo
 cd JSM_GUI/jsm_gui_tauri
 git -C ..\.. submodule update --init --recursive
 npm install
-npm run tauri:dev:admin
+npm run tauri:dev
 ```
 
 When the JoyShockMapper submodule changes, rebuild the bundled SDL runtime
@@ -232,7 +231,11 @@ npm run build:joyshockmapper
 See [the JoyShockMapper upstream workflow](docs/joyshockmapper-upstream.md)
 for the fork synchronization procedure.
 
-`tauri:dev:admin` starts the dev version with admin rights for testing HidHide, input injection, and whitelist fix features.
+For daily development, run `npm run tauri:dev` (or `npm run dev`) from a standard terminal. The Windows manifest uses `asInvoker`: it does not request elevation, but inherits the launcher's permissions. Close an elevated terminal and open a standard one to run without elevation.
+
+Use `npm run tauri:dev:admin` only when testing scenarios such as keyboard/mouse injection into an elevated game. This explicit command still requests administrator access. Driver installation and updates to an application installed in a protected directory may separately require installer elevation.
+
+Profile management, controller reading, gyro calibration, and telemetry do not require default elevation. Automatic profile switching queries the foreground process; the current engine may be unable to query elevated or protected processes. Virtual controller use requires an installed, accessible driver; installing that driver is a separate permission requirement.
 
 ### Build Installer
 

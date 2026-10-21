@@ -34,6 +34,20 @@ jobs:
         working-directory: JSM_GUI/jsm_gui_tauri
         run: npm ci
 
+      - name: Verify bundled engine provenance
+        shell: pwsh
+        run: |
+          $runtimeDir = 'JSM_GUI/jsm_gui_tauri/src-tauri/bin/SDL'
+          $manifest = Get-Content "$runtimeDir/runtime-manifest.json" -Raw | ConvertFrom-Json
+          $engineCommit = (git -C JoyShockMapper rev-parse HEAD).Trim()
+          if ($manifest.sourceDirty -or $manifest.sourceCommit -ne $engineCommit) {
+            throw 'Bundled runtime does not match the committed engine source.'
+          }
+          foreach ($file in $manifest.files) {
+            $hash = (Get-FileHash -LiteralPath "$runtimeDir/$($file.name)" -Algorithm SHA256).Hash
+            if ($hash -ne $file.sha256) { throw "Runtime hash mismatch: $($file.name)" }
+          }
+
       - name: Build, sign, and publish Tauri release
         uses: tauri-apps/tauri-action@v1
         env:

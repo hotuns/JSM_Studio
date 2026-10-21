@@ -14,6 +14,8 @@ set_target_properties(jsm-console-injector PROPERTIES
 )
 
 if(MSVC)
+  set_property(TARGET jsm-console-injector PROPERTY
+    MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
   target_compile_options(jsm-console-injector PRIVATE /W4 /EHsc /utf-8)
 else()
   target_compile_options(jsm-console-injector PRIVATE -Wall -Wextra -pedantic)

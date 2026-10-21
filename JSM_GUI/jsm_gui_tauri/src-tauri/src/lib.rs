@@ -4,7 +4,7 @@ mod services;
 
 use tauri::{Manager, RunEvent};
 
-use services::{app_state::AppState, hidhide, input_debug, jsm_process, telemetry};
+use services::{app_state::AppState, jsm_process, telemetry};
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -18,11 +18,6 @@ pub fn run() {
                 eprintln!("Failed to initialize Tauri runtime files: {error}");
             }
             telemetry::start(app.handle().clone(), state.clone());
-            if let Err(error) = sync_hidhide_whitelist_if_available(&app.handle()) {
-                eprintln!(
-                    "Failed to sync HidHide whitelist before launching JoyShockMapper: {error}"
-                );
-            }
             if let Err(error) = jsm_process::launch_jsm(&app.handle(), &state) {
                 eprintln!("Failed to auto-launch JoyShockMapper from Tauri: {error}");
             }
@@ -60,20 +55,8 @@ pub fn run() {
             commands::get_backend_choice,
             commands::set_backend_choice,
             commands::get_latest_telemetry_sample,
-            commands::get_hidhide_status,
-            commands::set_hidhide_active,
-            commands::set_hidhide_device_hidden,
-            commands::sync_hidhide_whitelist,
-            commands::install_bundled_hidhide,
-            commands::open_hidhide_client,
             commands::open_external,
             commands::open_config_directory,
-            commands::start_input_debug_hook,
-            commands::stop_input_debug_hook,
-            commands::get_input_debug_hook_status,
-            commands::get_ai_settings,
-            commands::save_ai_settings,
-            commands::generate_ai_mapping,
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application");
@@ -84,21 +67,6 @@ pub fn run() {
             if let Err(error) = jsm_process::terminate_jsm(app_handle, state.inner()) {
                 eprintln!("Failed to terminate JoyShockMapper during Tauri shutdown: {error}");
             }
-            if let Err(error) = input_debug::stop() {
-                eprintln!("Failed to stop input debug hook during Tauri shutdown: {error}");
-            }
         }
     });
-}
-
-fn sync_hidhide_whitelist_if_available(app: &tauri::AppHandle) -> Result<(), String> {
-    let status = hidhide::get_status(app, None)?;
-    if status.supported
-        && status.installed
-        && !status.requires_elevation
-        && !status.whitelist_synced
-    {
-        let _ = hidhide::sync_whitelist(app, None)?;
-    }
-    Ok(())
 }

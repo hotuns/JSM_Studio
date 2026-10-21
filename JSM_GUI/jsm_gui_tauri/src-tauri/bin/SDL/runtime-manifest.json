@@ -1,0 +1,15 @@
+﻿{
+    "sourceCommit":  "9c020434ebe95bd639f9192020935592d924f396",
+    "sourceDirty":  false,
+    "sdlVersion":  "3.4.18",
+    "files":  [
+                  {
+                      "name":  "JoyShockMapper.exe",
+                      "sha256":  "115D44AACD165E66D192F0B875B83E4CDDBAB5D230EB51D009808B32DF7D01BD"
+                  },
+                  {
+                      "name":  "SDL3.dll",
+                      "sha256":  "6AF0A4490CD5C8CAE4B5038CB0A6442BC5018668DA4240B3DE394E48CA17317F"
+                  }
+              ]
+}

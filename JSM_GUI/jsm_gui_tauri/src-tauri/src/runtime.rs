@@ -16,8 +16,6 @@ const DEFAULT_BACKEND_CHOICE: &str = "SDL";
 const DEFAULT_CALIBRATION_SECONDS: u32 = 5;
 const BACKEND_FILE_NAME: &str = "backend.json";
 const GUI_STATE_FILE_NAME: &str = "gui-state.json";
-const HIDHIDE_STATE_FILE_NAME: &str = "hidhide-state.json";
-const AI_SETTINGS_FILE_NAME: &str = "ai-settings.json";
 const LEGACY_APP_IDENTIFIER: &str = "com.evanmclean.jsmcustomcurve";
 const STARTUP_FILE_NAME: &str = "OnStartUp.txt";
 const CALIBRATION_COMMAND_FILE_NAME: &str = "RecalibrateGyro.txt";
@@ -57,13 +55,6 @@ pub struct AutoloadRule {
     pub profile_name: Option<String>,
     pub profile_path: Option<String>,
     pub missing_profile: bool,
-}
-
-#[derive(Clone, Debug, Default, Deserialize, Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct HidHideState {
-    #[serde(default)]
-    pub managed_instance_ids: Vec<String>,
 }
 
 pub fn ensure_required_files(app: &AppHandle) -> Result<(), String> {
@@ -506,26 +497,6 @@ pub fn console_injector_path(app: &AppHandle, backend: &str) -> Result<PathBuf, 
     Ok(backend_bin_dir(app, backend)?.join(file_name))
 }
 
-pub fn bundled_jsm_executable_paths(app: &AppHandle) -> Result<Vec<PathBuf>, String> {
-    let file_name = if cfg!(target_os = "windows") {
-        "JoyShockMapper.exe"
-    } else {
-        "JoyShockMapper"
-    };
-
-    let mut paths = Vec::new();
-    for root in bundled_shared_dir_candidates(app) {
-        for backend in ["SDL", "legacy"] {
-            let path = root.join(normalize_backend_choice(backend)).join(file_name);
-            if path.exists() && !paths.iter().any(|existing| existing == &path) {
-                paths.push(path);
-            }
-        }
-    }
-
-    Ok(paths)
-}
-
 fn source_bundled_shared_dir() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("bin")
 }
@@ -555,25 +526,6 @@ fn bundled_shared_dir(app: &AppHandle) -> Result<PathBuf, String> {
         })
 }
 
-pub fn read_hidhide_state(app: &AppHandle) -> Result<HidHideState, String> {
-    let path = hidhide_state_file(app)?;
-    let raw = match fs::read_to_string(path) {
-        Ok(value) => value,
-        Err(_) => return Ok(HidHideState::default()),
-    };
-
-    serde_json::from_str::<HidHideState>(&raw)
-        .map_err(|error| format!("Failed to parse HidHide state: {error}"))
-}
-
-pub fn write_hidhide_state(app: &AppHandle, state: &HidHideState) -> Result<(), String> {
-    let path = hidhide_state_file(app)?;
-    ensure_parent_dir(&path)?;
-    let content = serde_json::to_string_pretty(state)
-        .map_err(|error| format!("Failed to serialize HidHide state: {error}"))?;
-    fs::write(path, content).map_err(|error| format!("Failed to write HidHide state: {error}"))
-}
-
 fn backend_file(app: &AppHandle) -> Result<PathBuf, String> {
     Ok(app_data_dir(app)?.join(BACKEND_FILE_NAME))
 }
@@ -600,10 +552,6 @@ fn startup_file(app: &AppHandle) -> Result<PathBuf, String> {
 
 fn gui_state_file(app: &AppHandle) -> Result<PathBuf, String> {
     Ok(app_data_dir(app)?.join(GUI_STATE_FILE_NAME))
-}
-
-fn hidhide_state_file(app: &AppHandle) -> Result<PathBuf, String> {
-    Ok(app_data_dir(app)?.join(HIDHIDE_STATE_FILE_NAME))
 }
 
 fn mapping_disabled_file(app: &AppHandle) -> Result<PathBuf, String> {
@@ -675,10 +623,6 @@ fn migrate_legacy_app_data(app: &AppHandle) -> Result<(), String> {
     copy_file_if_missing(
         &legacy_root.join(GUI_STATE_FILE_NAME),
         &gui_state_file(app)?,
-    )?;
-    copy_file_if_missing(
-        &legacy_root.join(AI_SETTINGS_FILE_NAME),
-        &current_root.join(AI_SETTINGS_FILE_NAME),
     )?;
 
     let legacy_runtime_root = legacy_root.join("jsm-runtime");
