@@ -1,0 +1,33 @@
+.page { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+.heading h1 { margin: 0 0 8px; font-size: 25px; }
+.heading p, .description { color: var(--text-mid); font-size: 13px; line-height: 1.7; margin: 0; font-weight: 400; }
+.nav { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.nav button { display: flex; align-items: center; gap: 12px; text-align: left; padding: 15px; border: 1px solid var(--border-1); border-radius: 12px; background: var(--bg-1); color: var(--text-mid); cursor: pointer; }
+.nav button[aria-current='page'] { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 8%, var(--bg-1)); color: var(--text-strong); }
+.nav button:hover { background: var(--bg-btn-hover); }
+.number { color: var(--accent); font-size: 18px; font-variant-numeric: tabular-nums; }
+.nav strong, .nav small { display: block; }
+.nav small { margin-top: 5px; font-size: 12px; color: var(--text-muted); font-weight: 400; }
+.panel { display: flex; flex-direction: column; gap: 18px; }
+.panel > h2 { margin-bottom: 0; }
+.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; gap: 16px; }
+.group { padding: 20px; border: 1px solid var(--border-1); border-radius: 12px; background: var(--bg-1); min-width: 0; }
+.groupHeading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+.groupHeading h3 { display: flex; align-items: center; gap: 8px; font-size: 15px; margin: 0; }
+.group .description { margin-bottom: 16px; }
+.group :global(.flex-inputs) { margin-top: 14px; margin-bottom: 0; gap: 16px; flex-wrap: wrap; }
+.label { display: inline-flex; align-items: center; gap: 7px; line-height: 1.5; }
+.helpButton { display: inline-flex; flex: 0 0 20px; align-items: center; justify-content: center; width: 20px; height: 20px; padding: 0; border-radius: 50%; border: 1px solid var(--border-1); color: var(--text-mid); background: var(--bg-btn); font: 600 12px system-ui; cursor: pointer; vertical-align: middle; }
+.helpButton:hover { color: var(--accent); border-color: var(--accent); }
+.helpButton:focus-visible, .nav button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.status { flex-shrink: 0; border: 1px solid var(--border-1); border-radius: 20px; padding: 3px 9px; color: var(--text-muted); font-size: 11px; }
+.active { color: var(--accent); background: color-mix(in srgb, var(--accent) 8%, transparent); }
+.notice { margin: 0; padding: 13px 16px; border-left: 3px solid var(--accent); background: var(--bg-1); color: var(--text-mid); font-size: 13px; line-height: 1.7; }
+.hint { color: var(--text-muted); font-size: 12px; line-height: 1.6; margin: 12px 0 0; }
+.actions { position: sticky; bottom: 0; z-index: 3; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 14px; border: 1px solid var(--border-1); border-radius: 12px; background: var(--bg-2); box-shadow: 0 -6px 20px #00000018; }
+.helpDialog { width: min(460px, calc(100vw - 48px)); box-sizing: border-box; border: 1px solid var(--border-strong); border-radius: 16px; padding: 26px; background: var(--bg-2); color: var(--text-strong); box-shadow: 0 22px 80px #0008; }
+.helpDialog::backdrop { background: #0009; }
+.helpDialog h2 { font-size: 18px; margin: 0 0 16px; }
+.helpDialog p { color: var(--text-mid); line-height: 1.9; margin: 0 0 24px; font-size: 14px; }
+@media (max-width: 1100px) { .grid { grid-template-columns: 1fr; } }
+@media (max-width: 680px) { .nav { grid-template-columns: 1fr; } .nav button { padding: 12px; } .group { padding: 15px; } }

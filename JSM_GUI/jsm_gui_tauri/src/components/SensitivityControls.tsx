@@ -1,3 +1,5 @@
+import { MotionHelp, MotionLabel, MotionSection } from './MotionHelp'
+import motionStyles from './MotionControls.module.css'
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { buildModifierOptions, resolveModifierOptionLabel } from '../utils/modifierOptions'
@@ -111,8 +113,9 @@ export function SensitivityControls({
   )
 
   return (
-    <Card className="control-panel" lockable locked={isCalibrating} lockMessage={lockMessage ?? t('messages.lockMessage')}>
+    <Card className={`control-panel ${motionStyles.panel}`} lockable locked={isCalibrating} lockMessage={lockMessage ?? t('messages.lockMessage')}>
       <h2>{t('sensitivity.title')}</h2>
+      <MotionSection title={t('motion.response')} description={t('motion.responseDesc')}>
       <div className="mode-toggle">
         <button className={`pill-tab ${mode === 'static' ? 'active' : ''}`} onClick={() => onModeChange('static')}>
           {t('sensitivity.staticSensitivity')}
@@ -121,8 +124,13 @@ export function SensitivityControls({
           {t('sensitivity.accelerationCurve')}
         </button>
       </div>
+      <p className={motionStyles.hint}>{t(mode === 'static' ? 'motion.helpText.staticSensitivity' : 'motion.helpText.accelerationCurve')}
+        {' '}<MotionHelp title={t(mode === 'static' ? 'sensitivity.staticSensitivity' : 'sensitivity.accelerationCurve')} topic={mode === 'static' ? 'staticSensitivity' : 'accelerationCurve'} />
+      </p>
+      </MotionSection>
+      <MotionSection title={t('motion.shift')} description={t('motion.shiftDesc')}>
       <div className="sensitivity-shift-row">
-        <label>{t('sensitivity.modeShiftButton')}</label>
+        <label><MotionLabel title={t('sensitivity.modeShiftButton')} topic="modeShiftButton" /></label>
         <select value={modeshiftButton ?? ''} onChange={(event) => onModeshiftButtonChange(event.target.value)} data-testid="sensitivity-shift-select">
           {modeshiftOptions.map(option => (
             <option key={option.value || 'none'} value={option.value} disabled={option.disabled}>
@@ -141,6 +149,8 @@ export function SensitivityControls({
           </button>
         </div>
       )}
+      </MotionSection>
+      <MotionSection title={t(mode === 'static' ? 'sensitivity.staticSensitivity' : 'sensitivity.accelerationCurve')} description={t('motion.responseDesc')}>
       {mode === 'static' ? (
         <StaticSensForm
           sensitivity={displaySensitivity}
@@ -167,15 +177,17 @@ export function SensitivityControls({
           onRollContributionChange={onRollContributionChange}
         />
       )}
+      </MotionSection>
+      <CurvePreview sensitivity={sensitivity} sample={sample} hasPendingChanges={hasPendingChanges} telemetry={telemetry} />
       <SectionActions
         hasPendingChanges={hasPendingChanges}
         statusMessage={statusMessage}
         onApply={onApply}
         onCancel={onCancel}
         applyDisabled={isCalibrating}
-        className="control-actions"
+        className={motionStyles.actions}
       />
-      <CurvePreview sensitivity={sensitivity} sample={sample} hasPendingChanges={hasPendingChanges} telemetry={telemetry} />
+
     </Card>
   )
 }

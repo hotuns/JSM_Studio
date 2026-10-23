@@ -1,4 +1,7 @@
+import { motionZh } from '../motion'
+
 export const zhCN = {
+  motion: motionZh,
   common: {
     appName: 'JSM Studio',
     applyChanges: '应用更改',
@@ -346,13 +349,13 @@ export const zhCN = {
     title: '噪声与稳定',
     caption: '提高死区 / 稳定参数可抑制下方实时显示的陀螺仪噪声；数值越高，控制器静止时的微小抖动越少。',
     deadzone: '死区（°/s）',
-    steadying: '稳定（°/s）',
+    steadying: '恢复完整输出（°/s）',
     smoothTime: '陀螺仪平滑时间（秒）',
-    smoothThreshold: '陀螺仪平滑阈值（RWS）',
+    smoothThreshold: '平滑阈值（°/s）',
     smoothingDecay: '陀螺仪平滑衰减',
     oneEuroFilter: 'One Euro 滤波器',
-    oneEuroMinCutoff: 'One Euro 最小截止频率（默认 6.0）',
-    oneEuroSpeedCoeff: 'One Euro 速度系数（默认 0.3）',
+    oneEuroMinCutoff: '最低截止频率（Hz）',
+    oneEuroSpeedCoeff: '速度响应系数',
     angleSnapping: '角度吸附（度）',
     easeAngleSnapping: '平滑角度吸附',
     decelBrakeStrength: '减速制动力度',

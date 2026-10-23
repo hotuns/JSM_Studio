@@ -1,4 +1,7 @@
+import { motionEn } from '../motion'
+
 export const en = {
+  motion: motionEn,
   common: {
     appName: 'JSM Studio',
     applyChanges: 'Apply Changes',
@@ -347,13 +350,13 @@ export const en = {
     caption:
       'Increase deadzone/steadying to damp the live gyro noise shown below; higher values reduce tiny movements when the controller is at rest.',
     deadzone: 'Deadzone (°/s)',
-    steadying: 'Steadying (°/s)',
+    steadying: 'Full output recovery (°/s)',
     smoothTime: 'Gyro Smooth Time (sec)',
-    smoothThreshold: 'Gyro Smooth Threshold (RWS)',
+    smoothThreshold: 'Smoothing threshold (°/s)',
     smoothingDecay: 'Gyro Smoothing Decay',
     oneEuroFilter: 'One Euro Filter',
-    oneEuroMinCutoff: 'One Euro Min Cutoff (default 6.0)',
-    oneEuroSpeedCoeff: 'One Euro Speed Coeff (default 0.3)',
+    oneEuroMinCutoff: 'Minimum cutoff (Hz)',
+    oneEuroSpeedCoeff: 'Speed response coefficient',
     angleSnapping: 'Angle Snapping (degrees)',
     easeAngleSnapping: 'Ease Angle Snapping',
     decelBrakeStrength: 'Decel Brake Strength',

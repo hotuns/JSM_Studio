@@ -1,3 +1,4 @@
+import { MotionLabel } from './MotionHelp'
 import { useTranslation } from 'react-i18next'
 import { SensitivityValues } from '../utils/keymap'
 
@@ -21,7 +22,7 @@ export function StaticSensForm({ sensitivity, onChangeX, onChangeY, onRollContri
     <>
       <div className="flex-inputs">
         <label>
-          {t('sensitivity.staticSensX')}
+          <MotionLabel title={t('sensitivity.staticSensX')} topic="staticSensitivity" />
           <input
             type="number"
             step="0.1"
@@ -33,7 +34,7 @@ export function StaticSensForm({ sensitivity, onChangeX, onChangeY, onRollContri
           <input type="range" min="0" max="30" step="0.1" value={sensitivity.gyroSensX ?? 0} onChange={(e) => onChangeX(e.target.value)} />
         </label>
         <label>
-          {t('sensitivity.staticSensY')}
+          <MotionLabel title={t('sensitivity.staticSensY')} topic="staticSensitivity" />
           <input
             type="number"
             step="0.1"
@@ -48,7 +49,7 @@ export function StaticSensForm({ sensitivity, onChangeX, onChangeY, onRollContri
       {showRollContribution && (
         <div className="flex-inputs">
           <label>
-            {t('sensitivity.rollContribution')}
+            <MotionLabel title={t('sensitivity.rollContribution')} topic="rollContribution" />
             <input
               type="number"
               step="1"

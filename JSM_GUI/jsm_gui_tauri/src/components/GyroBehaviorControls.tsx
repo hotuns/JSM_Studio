@@ -7,6 +7,8 @@ import { Card } from './Card'
 import { SectionActions } from './SectionActions'
 import { controllerLabel, formatVidPid } from '../utils/controllers'
 import styles from './Gyro.module.css'
+import { MotionLabel, MotionSection } from './MotionHelp'
+import motionStyles from './MotionControls.module.css'
 
 const TICK_TIME_OPTIONS = [
   { value: '1', label: '1 ms' },
@@ -114,25 +116,12 @@ export function GyroBehaviorControls({
   const usesActivationButton = gyroActivationMode === 'hold_on' || gyroActivationMode === 'hold_off'
 
   return (
-    <Card className="control-panel" lockable locked={isCalibrating} lockMessage={lockMessage ?? t('messages.lockMessage')}>
+    <Card className={`control-panel ${motionStyles.panel}`} lockable locked={isCalibrating} lockMessage={lockMessage ?? t('messages.lockMessage')}>
       <h2>{t('gyro.title')}</h2>
-      {(onOpenCalibration || onOpenRwcGuide) && (
-        <div className="flex-inputs">
-          {onOpenRwcGuide && (
-            <button type="button" className="primary-btn full-width-btn" onClick={onOpenRwcGuide} disabled={isCalibrating}>
-              {t('gyro.easyCalibrationMethod')}
-            </button>
-          )}
-          {onOpenCalibration && (
-            <button type="button" className="secondary-btn full-width-btn" onClick={onOpenCalibration} disabled={isCalibrating}>
-              {t('gyro.manualCalibration')}
-            </button>
-          )}
-        </div>
-      )}
+      <MotionSection title={t('motion.activation')} description={t('motion.activationDesc')}>
       <div className="flex-inputs">
         <label>
-          {t('gyro.activationMode')}
+          <MotionLabel title={t('gyro.activationMode')} topic="activationMode" />
           <p className="field-description">{t('gyro.activationHint')}</p>
           <select
             className="app-select"
@@ -150,7 +139,7 @@ export function GyroBehaviorControls({
           </select>
         </label>
         <label>
-          {t('gyro.activationButton')}
+          <MotionLabel title={t('gyro.activationButton')} topic="activationButton" />
           <p className="field-description">{t('gyro.activationButtonHint')}</p>
           <select
             className="app-select"
@@ -168,36 +157,7 @@ export function GyroBehaviorControls({
       </div>
       <div className="flex-inputs">
         <label>
-          {t('gyro.realWorldCalibration')}
-          <input
-            type="number"
-            step="0.1"
-            value={sensitivity.realWorldCalibration ?? ''}
-            onChange={(e) => onRealWorldCalibrationChange(e.target.value)}
-          />
-        </label>
-        <label>
-          {t('gyro.inGameSensitivity')}
-          <input type="number" step="0.1" value={sensitivity.inGameSens ?? ''} onChange={(e) => onInGameSensChange(e.target.value)} />
-        </label>
-      </div>
-      <div className="flex-inputs">
-        <label>
-          <div className="label-row">
-            <span>{t('gyro.pollingTickTime')}</span>
-            {appliedSampleHz && <span className="field-description inline-helper">{appliedSampleHz} Hz</span>}
-          </div>
-          <select value={sensitivity.tickTime?.toString() ?? ''} onChange={(e) => onTickTimeChange(e.target.value)}>
-            <option value="">{t('common.useDefault')}</option>
-            {TICK_TIME_OPTIONS.map(option => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          {t('gyro.gyroSpace')}
+          <MotionLabel title={t('gyro.gyroSpace')} topic="gyroSpace" />
           <select value={sensitivity.gyroSpace ?? ''} onChange={(e) => onGyroSpaceChange(e.target.value)}>
             <option value="">{t('common.useDefault')}</option>
             {GYRO_SPACE_OPTIONS.map(option => (
@@ -210,23 +170,70 @@ export function GyroBehaviorControls({
       </div>
       <div className="flex-inputs">
         <label>
-          {t('gyro.gyroAxisX')}
+          <MotionLabel title={t('gyro.gyroAxisX')} topic="gyroAxisX" />
           <select value={sensitivity.gyroAxisX ?? ''} onChange={(e) => onGyroAxisXChange(e.target.value)}>
             <option value="">{t('common.default')}</option>
             <option value="INVERTED">{t('gyro.inverted')}</option>
           </select>
         </label>
         <label>
-          {t('gyro.gyroAxisY')}
+          <MotionLabel title={t('gyro.gyroAxisY')} topic="gyroAxisY" />
           <select value={sensitivity.gyroAxisY ?? ''} onChange={(e) => onGyroAxisYChange(e.target.value)}>
             <option value="">{t('common.default')}</option>
             <option value="INVERTED">{t('gyro.inverted')}</option>
           </select>
         </label>
       </div>
+      </MotionSection>
+      <MotionSection title={t('motion.calibration')} description={t('motion.calibrationDesc')}>
+      {(onOpenCalibration || onOpenRwcGuide) && (
+        <div className="flex-inputs">
+          {onOpenRwcGuide && (
+            <button type="button" className="primary-btn full-width-btn" onClick={onOpenRwcGuide} disabled={isCalibrating}>
+              {t('gyro.easyCalibrationMethod')}
+            </button>
+          )}
+          {onOpenCalibration && (
+            <button type="button" className="secondary-btn full-width-btn" onClick={onOpenCalibration} disabled={isCalibrating}>
+              {t('gyro.manualCalibration')}
+            </button>
+          )}
+        </div>
+      )}
       <div className="flex-inputs">
         <label>
-          {t('gyro.counterOsMouseSpeed')}
+          <MotionLabel title={t('gyro.realWorldCalibration')} topic="realWorldCalibration" />
+          <input
+            type="number"
+            step="0.1"
+            value={sensitivity.realWorldCalibration ?? ''}
+            onChange={(e) => onRealWorldCalibrationChange(e.target.value)}
+          />
+        </label>
+        <label>
+          <MotionLabel title={t('gyro.inGameSensitivity')} topic="inGameSensitivity" />
+          <input type="number" step="0.1" value={sensitivity.inGameSens ?? ''} onChange={(e) => onInGameSensChange(e.target.value)} />
+        </label>
+      </div>
+      <div className="flex-inputs">
+        <label>
+          <div className="label-row">
+            <span><MotionLabel title={t('gyro.pollingTickTime')} topic="pollingTickTime" /></span>
+            {appliedSampleHz && <span className="field-description inline-helper">{appliedSampleHz} Hz</span>}
+          </div>
+          <select value={sensitivity.tickTime?.toString() ?? ''} onChange={(e) => onTickTimeChange(e.target.value)}>
+            <option value="">{t('common.useDefault')}</option>
+            {TICK_TIME_OPTIONS.map(option => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+      <div className="flex-inputs">
+        <label>
+          <MotionLabel title={t('gyro.counterOsMouseSpeed')} topic="counterOsMouseSpeed" />
           <p className="field-description">{t('gyro.counterOsMouseSpeedHint')}</p>
           <select
             className="app-select"
@@ -239,6 +246,8 @@ export function GyroBehaviorControls({
           </select>
         </label>
       </div>
+      </MotionSection>
+      {devices && devices.length > 0 && <MotionSection title={t('motion.devices')} description={t('motion.devicesDesc')}>
       {devices && devices.length > 0 && (
         <div className="flex-inputs">
           <label>
@@ -256,7 +265,7 @@ export function GyroBehaviorControls({
                       {id && <span className={styles.controllerVidpid}>: {id}</span>}
                     </div>
                     <label className={styles.toggleSwitch}>
-                      <span className={styles.toggleLabel}>{t('gyro.ignoreGyroOutput')}</span>
+                      <span className={styles.toggleLabel}><MotionLabel title={t('gyro.ignoreGyroOutput')} topic="ignoreGyroOutput" /></span>
                       <div className={styles.toggleWrapper}>
                         <input
                           type="checkbox"
@@ -277,13 +286,14 @@ export function GyroBehaviorControls({
           </label>
         </div>
       )}
+      </MotionSection>}
       <SectionActions
         hasPendingChanges={hasPendingChanges}
         statusMessage={statusMessage}
         onApply={onApply}
         onCancel={onCancel}
         applyDisabled={isCalibrating}
-        className="control-actions"
+        className={motionStyles.actions}
       />
     </Card>
   )

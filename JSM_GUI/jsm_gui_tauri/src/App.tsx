@@ -1,3 +1,4 @@
+import motionStyles from './components/MotionControls.module.css'
 import './App.css'
 import { version as APP_VERSION } from '../package.json'
 import sideNavStyles from './components/SideNav.module.css'
@@ -635,17 +636,14 @@ function App() {
   }
 
   const renderGyroNav = () => (
-    <div className="subnav">
-      <button className={`pill-tab ${gyroSubTab === 'behavior' ? 'active' : ''}`} onClick={() => setGyroSubTab('behavior')}>
-        {t('app.tabs.gyroBehavior')}
-      </button>
-      <button className={`pill-tab ${gyroSubTab === 'sensitivity' ? 'active' : ''}`} onClick={() => setGyroSubTab('sensitivity')}>
-        {t('app.tabs.sensitivity')}
-      </button>
-      <button className={`pill-tab ${gyroSubTab === 'noise' ? 'active' : ''}`} onClick={() => setGyroSubTab('noise')}>
-        {t('app.tabs.noiseAndSteadying')}
-      </button>
-    </div>
+    <nav className={motionStyles.nav} aria-label={t('motion.title')}>
+      {(['behavior', 'sensitivity', 'noise'] as const).map((tab, index) => (
+        <button type="button" key={tab} aria-current={gyroSubTab === tab ? 'page' : undefined} onClick={() => setGyroSubTab(tab)}>
+          <span className={motionStyles.number}>{String(index + 1).padStart(2, '0')}</span>
+          <span><strong>{t(`motion.${tab}`)}</strong><small>{t(`motion.${tab}Hint`)}</small></span>
+        </button>
+      ))}
+    </nav>
   )
 
   const renderUtilityBar = () => (
@@ -728,8 +726,9 @@ function App() {
   const renderPrimaryContent = () => {
     if (primaryTab === 'gyro') {
       return (
-        <div className="page-with-subnav">
-          <div className="page-subnav">{renderGyroNav()}</div>
+        <div className={motionStyles.page}>
+          <header className={motionStyles.heading}><h1>{t('motion.title')}</h1><p>{t('motion.intro')}</p></header>
+          {renderGyroNav()}
           {gyroSubTab === 'behavior' && (
             <Suspense fallback={<LazyPanelFallback title={t('app.tabs.gyroBehavior')} />}>
               <GyroBehaviorControls

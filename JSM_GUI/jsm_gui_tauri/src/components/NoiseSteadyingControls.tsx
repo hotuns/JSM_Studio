@@ -3,7 +3,8 @@ import { SensitivityValues } from '../utils/keymap'
 import { Card } from './Card'
 import { SectionActions } from './SectionActions'
 import { TelemetryBanner } from './TelemetryBanner'
-import telemetryStyles from './Telemetry.module.css'
+import { MotionLabel, MotionSection } from './MotionHelp'
+import styles from './MotionControls.module.css'
 
 type NoiseSteadyingControlsProps = {
   sensitivity: SensitivityValues
@@ -56,103 +57,77 @@ export function NoiseSteadyingControls({
 }: NoiseSteadyingControlsProps) {
   const { t } = useTranslation()
 
+  const numberField = (name: string, value: number | undefined, fallback: number, max: number, step: number, onChange: (value: string) => void, min = 0, disabled = false) => (
+    <label>
+      <MotionLabel title={t(`noise.${name}`)} topic={name} />
+      <input type="number" disabled={disabled} aria-label={t(`noise.${name}`)} min={min} step={step} max={name === 'angleSnapping' || name === 'decelBrakeStrength' ? max : undefined}
+        value={value ?? fallback} onChange={event => onChange(event.target.value)} />
+      <input type="range" disabled={disabled} aria-label={t(`noise.${name}`)} min={min} max={Math.max(max, value ?? fallback)} step={step}
+        value={value ?? fallback} onChange={event => onChange(event.target.value)} />
+    </label>
+  )
+  const switchField = (name: string, value: string, onChange: (value: string) => void, disabled = false) => (
+    <label><MotionLabel title={t(`noise.${name}`)} topic={name} />
+      <select aria-label={t(`noise.${name}`)} value={value} onChange={event => onChange(event.target.value)} disabled={disabled}>
+        <option value="OFF">{t('common.off')}</option><option value="ON">{t('common.on')}</option>
+      </select>
+    </label>
+  )
+
   return (
-    <Card className="control-panel" lockable locked={isCalibrating} lockMessage={lockMessage ?? t('messages.lockMessage')}>
+    <Card className={`control-panel ${styles.panel}`} lockable locked={isCalibrating} lockMessage={lockMessage ?? t('messages.lockMessage')}>
       <div className="section-header">
-        <h2 className="section-title">{t('noise.title')}</h2>
-        <p className="section-caption compact">{t('noise.caption')}</p>
+        <h2 className="section-title">{t('motion.noise')}</h2>
+        <p className={styles.description}>{t('motion.pendingHint')}</p>
       </div>
-      <div className={telemetryStyles.telemetryInline}>
+      <p className={styles.notice}>{t('motion.notice')}</p>
+      <MotionSection title={t('motion.telemetry')} description={t('motion.telemetryDesc')}>
         <TelemetryBanner {...telemetry} />
+      </MotionSection>
+      <div className={styles.grid}>
+        <MotionSection title={t('motion.filter')} description={t('motion.filterDesc')} active={sensitivity.oneEuroFilter ?? false} help="oneEuroFilter">
+          <div className="flex-inputs">{switchField('oneEuroFilter', sensitivity.oneEuroFilter ? 'ON' : 'OFF', onOneEuroFilterChange)}</div>
+          {sensitivity.oneEuroFilter && <div className="flex-inputs">
+            {numberField('oneEuroMinCutoff', sensitivity.oneEuroMinCutoff, 6, 20, 0.1, onOneEuroMinCutoffChange, 0.1)}
+            {numberField('oneEuroSpeedCoeff', sensitivity.oneEuroSpeedCoeff, 0.3, 2, 0.01, onOneEuroSpeedCoeffChange)}
+          </div>}
+        </MotionSection>
+        <MotionSection title={t('motion.smoothing')} description={t('motion.smoothingDesc')}
+          active={(sensitivity.smoothThreshold ?? 0) > 0 && (sensitivity.smoothTime ?? 0.125) > 0} help="smoothingDecay">
+          <div className="flex-inputs"><label>
+            <MotionLabel title={t('motion.smoothMethod')} topic="smoothingDecay" />
+            <select value={sensitivity.smoothingDecay ?? 'OFF'} onChange={event => onSmoothingDecayChange(event.target.value)}>
+              <option value="OFF">{t('motion.average')}</option><option value="ON">{t('motion.decay')}</option>
+            </select>
+          </label></div>
+          <div className="flex-inputs">
+            {numberField('smoothTime', sensitivity.smoothTime, 0.125, 0.25, 0.001, onSmoothTimeChange)}
+            {numberField('smoothThreshold', sensitivity.smoothThreshold, 0, 50, 1, onSmoothThresholdChange)}
+          </div>
+          <p className={styles.hint}>{t('motion.smoothHint')}</p>
+        </MotionSection>
+        <MotionSection title={t('motion.deadzone')} description={t('motion.deadzoneDesc')} active={(sensitivity.cutoffSpeed ?? 0) > 0 || (sensitivity.cutoffRecovery ?? 0) > 0} help="deadzone">
+          <div className="flex-inputs">
+            {numberField('deadzone', sensitivity.cutoffSpeed, 0, 5, 0.01, onCutoffSpeedChange)}
+            {numberField('steadying', sensitivity.cutoffRecovery, 0, 5, 0.01, onCutoffRecoveryChange)}
+          </div>
+          <p className={styles.hint}>{t('motion.offHint')}</p>
+        </MotionSection>
+        <MotionSection title={t('noise.angleSnapping')} description={t('motion.angleDesc')} active={(sensitivity.angleSnap ?? 0) > 0} help="angleSnapping">
+          <div className="flex-inputs">
+            {numberField('angleSnapping', sensitivity.angleSnap, 0, 45, 0.1, onAngleSnapChange)}
+            {switchField('easeAngleSnapping', sensitivity.angleSnapEase ?? 'OFF', onAngleSnapSmoothChange, !(sensitivity.angleSnap && sensitivity.angleSnap > 0))}
+          </div>
+        </MotionSection>
+        <MotionSection title={t('noise.decelBrakeStrength')} description={t('motion.brakeDesc')} active={(sensitivity.decelBrakeStrength ?? 0) > 0} help="decelBrakeStrength">
+          <div className="flex-inputs">
+            {numberField('decelBrakeStrength', sensitivity.decelBrakeStrength, 0, 1, 0.01, onDecelBrakeStrengthChange)}
+            {numberField('decelBrakeThreshold', sensitivity.decelBrakeThreshold, 25, 60, 0.1, onDecelBrakeThresholdChange, 0, !(sensitivity.decelBrakeStrength && sensitivity.decelBrakeStrength > 0))}
+          </div>
+        </MotionSection>
       </div>
-      <div className="flex-inputs">
-        <label>
-          {t('noise.deadzone')}
-          <input type="number" step="0.01" min="0" value={sensitivity.cutoffSpeed ?? ''} onChange={(e) => onCutoffSpeedChange(e.target.value)} />
-          <input type="range" min="0" max="5" step="0.01" value={sensitivity.cutoffSpeed ?? 0} onChange={(e) => onCutoffSpeedChange(e.target.value)} />
-        </label>
-        <label>
-          {t('noise.steadying')}
-          <input type="number" step="0.01" min="0" value={sensitivity.cutoffRecovery ?? ''} onChange={(e) => onCutoffRecoveryChange(e.target.value)} />
-          <input type="range" min="0" max="5" step="0.01" value={sensitivity.cutoffRecovery ?? 0} onChange={(e) => onCutoffRecoveryChange(e.target.value)} />
-        </label>
-      </div>
-      <div className="flex-inputs">
-        <label>
-          {t('noise.smoothTime')}
-          <input type="number" step="0.001" min="0" value={sensitivity.smoothTime ?? ''} onChange={(e) => onSmoothTimeChange(e.target.value)} />
-          <input type="range" min="0" max="0.03" step="0.001" value={sensitivity.smoothTime ?? 0} onChange={(e) => onSmoothTimeChange(e.target.value)} />
-        </label>
-        <label>
-          {t('noise.smoothThreshold')}
-          <input type="number" step="1" min="0" value={sensitivity.smoothThreshold ?? ''} onChange={(e) => onSmoothThresholdChange(e.target.value)} />
-          <input type="range" min="0" max="50" step="1" value={sensitivity.smoothThreshold ?? 0} onChange={(e) => onSmoothThresholdChange(e.target.value)} />
-        </label>
-      </div>
-      <div className="flex-inputs">
-        <label>
-          {t('noise.smoothingDecay')}
-          <select value={sensitivity.smoothingDecay ?? 'OFF'} onChange={(e) => onSmoothingDecayChange(e.target.value)}>
-            <option value="OFF">{t('common.off')}</option>
-            <option value="ON">{t('common.on')}</option>
-          </select>
-        </label>
-        <label>
-          {t('noise.oneEuroFilter')}
-          <select value={sensitivity.oneEuroFilter ? 'ON' : 'OFF'} onChange={(e) => onOneEuroFilterChange(e.target.value)}>
-            <option value="OFF">{t('common.off')}</option>
-            <option value="ON">{t('common.on')}</option>
-          </select>
-        </label>
-      </div>
-      {sensitivity.oneEuroFilter && (
-        <div className="flex-inputs">
-          <label>
-            {t('noise.oneEuroMinCutoff')}
-            <input type="number" step="0.1" min="0" value={sensitivity.oneEuroMinCutoff ?? ''} onChange={(e) => onOneEuroMinCutoffChange(e.target.value)} />
-            <input type="range" min="0" max="20" step="0.1" value={sensitivity.oneEuroMinCutoff ?? 6} onChange={(e) => onOneEuroMinCutoffChange(e.target.value)} />
-          </label>
-          <label>
-            {t('noise.oneEuroSpeedCoeff')}
-            <input type="number" step="0.01" min="0" value={sensitivity.oneEuroSpeedCoeff ?? ''} onChange={(e) => onOneEuroSpeedCoeffChange(e.target.value)} />
-            <input type="range" min="0" max="2" step="0.01" value={sensitivity.oneEuroSpeedCoeff ?? 0.3} onChange={(e) => onOneEuroSpeedCoeffChange(e.target.value)} />
-          </label>
-        </div>
-      )}
-      <div className="flex-inputs">
-        <label>
-          {t('noise.angleSnapping')}
-          <input type="number" step="0.1" min="0" max="45" value={sensitivity.angleSnap ?? ''} onChange={(e) => onAngleSnapChange(e.target.value)} />
-          <input type="range" min="0" max="45" step="0.1" value={sensitivity.angleSnap ?? 0} onChange={(e) => onAngleSnapChange(e.target.value)} />
-        </label>
-        <label>
-          {t('noise.easeAngleSnapping')}
-          <select value={sensitivity.angleSnapEase ?? 'OFF'} onChange={(e) => onAngleSnapSmoothChange(e.target.value)}>
-            <option value="OFF">{t('common.off')}</option>
-            <option value="ON">{t('common.on')}</option>
-          </select>
-        </label>
-      </div>
-      <div className="flex-inputs">
-        <label>
-          {t('noise.decelBrakeStrength')}
-          <input type="number" step="0.01" min="0" max="1" value={sensitivity.decelBrakeStrength ?? ''} onChange={(e) => onDecelBrakeStrengthChange(e.target.value)} />
-          <input type="range" min="0" max="1" step="0.01" value={sensitivity.decelBrakeStrength ?? 0} onChange={(e) => onDecelBrakeStrengthChange(e.target.value)} />
-        </label>
-        <label>
-          {t('noise.decelBrakeThreshold')}
-          <input type="number" step="0.1" min="1" max="60" value={sensitivity.decelBrakeThreshold ?? ''} onChange={(e) => onDecelBrakeThresholdChange(e.target.value)} />
-          <input type="range" min="1" max="60" step="0.5" value={sensitivity.decelBrakeThreshold ?? 25} onChange={(e) => onDecelBrakeThresholdChange(e.target.value)} />
-        </label>
-      </div>
-      <SectionActions
-        hasPendingChanges={hasPendingChanges}
-        statusMessage={statusMessage}
-        onApply={onApply}
-        onCancel={onCancel}
-        applyDisabled={isCalibrating}
-        className="control-actions"
-      />
+      <SectionActions hasPendingChanges={hasPendingChanges} statusMessage={statusMessage} onApply={onApply}
+        onCancel={onCancel} applyDisabled={isCalibrating} className={styles.actions} />
     </Card>
   )
 }

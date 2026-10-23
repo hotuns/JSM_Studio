@@ -1,3 +1,4 @@
+import { MotionLabel } from './MotionHelp'
 import { useTranslation } from 'react-i18next'
 import { SensitivityValues } from '../utils/keymap'
 
@@ -68,7 +69,7 @@ export function AccelSensForm({
     <>
       <div className="flex-inputs">
         <label>
-          {t('sensitivity.accelerationCurveLabel')}
+          <MotionLabel title={t('sensitivity.accelerationCurveLabel')} topic="accelerationCurve" />
           <select value={curveValue} onChange={(e) => onCurveChange(e.target.value)}>
             <option value="LINEAR">{t('sensitivity.curves.linear')}</option>
             <option value="NATURAL">{t('sensitivity.curves.natural')}</option>
@@ -81,22 +82,22 @@ export function AccelSensForm({
       </div>
       <div className="flex-inputs">
         <label>
-          {t('sensitivity.minSensX')}
+          <MotionLabel title={t('sensitivity.minSensX')} topic="lowSensitivity" />
           <input type="number" step="0.1" min="0" value={minSensXValue} onChange={(e) => onMinSensXChange(e.target.value)} />
           <input type="range" min="0" max="30" step="0.1" value={minSensXRange} onChange={(e) => onMinSensXChange(e.target.value)} />
         </label>
         <label>
-          {t('sensitivity.minSensY')}
+          <MotionLabel title={t('sensitivity.minSensY')} topic="lowSensitivity" />
           <input type="number" step="0.1" min="0" value={minSensYValue} onChange={(e) => onMinSensYChange(e.target.value)} />
           <input type="range" min="0" max="30" step="0.1" value={minSensYRange} onChange={(e) => onMinSensYChange(e.target.value)} />
         </label>
         <label>
-          {t('sensitivity.maxSensX')}
+          <MotionLabel title={t('sensitivity.maxSensX')} topic="highSensitivity" />
           <input type="number" step="0.1" min="0" value={maxSensXValue} onChange={(e) => onMaxSensXChange(e.target.value)} />
           <input type="range" min="0" max="30" step="0.1" value={maxSensXRange} onChange={(e) => onMaxSensXChange(e.target.value)} />
         </label>
         <label>
-          {t('sensitivity.maxSensY')}
+          <MotionLabel title={t('sensitivity.maxSensY')} topic="highSensitivity" />
           <input type="number" step="0.1" min="0" value={maxSensYValue} onChange={(e) => onMaxSensYChange(e.target.value)} />
           <input type="range" min="0" max="30" step="0.1" value={maxSensYRange} onChange={(e) => onMaxSensYChange(e.target.value)} />
         </label>
@@ -104,7 +105,7 @@ export function AccelSensForm({
       {showRollContribution && (
         <div className="flex-inputs">
           <label>
-            {t('sensitivity.rollContribution')}
+            <MotionLabel title={t('sensitivity.rollContribution')} topic="rollContribution" />
             <input
               type="number"
               step="1"
@@ -127,13 +128,13 @@ export function AccelSensForm({
       )}
       <div className="flex-inputs">
         <label>
-          {t('sensitivity.minThreshold')}
+          <MotionLabel title={t('sensitivity.minThreshold')} topic="threshold" />
           <input type="number" step="1" min="0" value={sensitivity.minThreshold ?? ''} onChange={(e) => onMinThresholdChange(e.target.value)} />
           <input type="range" min="0" max="500" step="1" value={sensitivity.minThreshold ?? 0} onChange={(e) => onMinThresholdChange(e.target.value)} />
         </label>
         {isNatural ? (
           <label>
-            {t('sensitivity.naturalMidpoint')}
+            <MotionLabel title={t('sensitivity.naturalMidpoint')} topic="curveShape" />
             <input
               type="number"
               step="1"
@@ -147,7 +148,7 @@ export function AccelSensForm({
         ) : isSigmoid ? (
           <>
             <label>
-              {t('sensitivity.sigmoidMidpoint')}
+              <MotionLabel title={t('sensitivity.sigmoidMidpoint')} topic="curveShape" />
               <input
                 type="number"
                 step="1"
@@ -159,7 +160,7 @@ export function AccelSensForm({
               <input type="range" min="0" max="1000" step="1" value={sigmoidMidValue || 0} onChange={(e) => onSigmoidMidChange(e.target.value)} />
             </label>
             <label>
-              {t('sensitivity.sigmoidWidth')}
+              <MotionLabel title={t('sensitivity.sigmoidWidth')} topic="curveShape" />
               <input type="number" step="0.1" min="0" value={sigmoidWidthValue} onChange={(e) => onSigmoidWidthChange(e.target.value)} />
               <input type="range" min="0.1" max="500" step="0.1" value={sigmoidWidthValue || 0} onChange={(e) => onSigmoidWidthChange(e.target.value)} />
             </label>
@@ -167,12 +168,12 @@ export function AccelSensForm({
         ) : isJump ? (
           <>
             <label>
-              {t('sensitivity.jumpTau')}
+              <MotionLabel title={t('sensitivity.jumpTau')} topic="curveShape" />
               <input type="number" step="0.1" min="0" value={jumpTauValue} onChange={(e) => onJumpTauChange(e.target.value)} />
               <input type="range" min="0" max="500" step="0.1" value={jumpTauValue || 0} onChange={(e) => onJumpTauChange(e.target.value)} />
             </label>
             <label>
-              {t('sensitivity.maxThresholdJumpPoint')}
+              <MotionLabel title={t('sensitivity.maxThresholdJumpPoint')} topic="threshold" />
               <input type="number" step="1" min="0" value={sensitivity.maxThreshold ?? ''} onChange={(e) => onMaxThresholdChange(e.target.value)} />
               <input type="range" min="0" max="500" step="1" value={sensitivity.maxThreshold ?? 0} onChange={(e) => onMaxThresholdChange(e.target.value)} />
             </label>
@@ -180,7 +181,7 @@ export function AccelSensForm({
         ) : isPower ? (
           <>
             <label>
-              {t('sensitivity.powerVRef')}
+              <MotionLabel title={t('sensitivity.powerVRef')} topic="curveShape" />
               <input
                 type="number"
                 step="1"
@@ -192,14 +193,14 @@ export function AccelSensForm({
               <input type="range" min="1" max="1000" step="1" value={powerVRefValue || 0} onChange={(e) => onPowerVRefChange(e.target.value)} />
             </label>
             <label>
-              {t('sensitivity.powerExponent')}
+              <MotionLabel title={t('sensitivity.powerExponent')} topic="curveShape" />
               <input type="number" step="0.1" min="0" value={powerExponentValue} onChange={(e) => onPowerExponentChange(e.target.value)} />
               <input type="range" min="0.1" max="5" step="0.1" value={powerExponentValue || 0} onChange={(e) => onPowerExponentChange(e.target.value)} />
             </label>
           </>
         ) : (
           <label>
-            {t('sensitivity.maxThreshold')}
+            <MotionLabel title={t('sensitivity.maxThreshold')} topic="threshold" />
             <input type="number" step="1" min="0" value={sensitivity.maxThreshold ?? ''} onChange={(e) => onMaxThresholdChange(e.target.value)} />
             <input type="range" min="0" max="500" step="1" value={sensitivity.maxThreshold ?? 0} onChange={(e) => onMaxThresholdChange(e.target.value)} />
           </label>
