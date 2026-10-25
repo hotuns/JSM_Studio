@@ -64,3 +64,11 @@ jobs:
           uploadUpdaterJson: true
           uploadUpdaterSignatures: true
           uploadWorkflowArtifacts: true
+
+      - name: Publish and verify public updater download URLs
+        working-directory: JSM_GUI/jsm_gui_tauri
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          node --test scripts/finalize-updater.test.mjs
+          node scripts/finalize-updater.mjs
