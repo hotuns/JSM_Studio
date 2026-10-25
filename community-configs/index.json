@@ -1,0 +1,62 @@
+{
+  "version": 1,
+  "profiles": [
+    {
+      "id": "delta-force-basic",
+      "name": "三角洲行动 · 键鼠起步示例",
+      "game": "三角洲行动",
+      "file": "profiles/delta-force-basic.txt",
+      "mode": "keyboardMouse",
+      "controller": "提供体感输入的手柄；标准轴向示例，需按设备核对",
+      "description": "左摇杆移动、右摇杆转向、按住 LT 启用体感。包含开火、瞄准、换弹、交互等基础动作。",
+      "tags": [
+        "键鼠映射",
+        "按住瞄准",
+        "基础动作"
+      ],
+      "notes": "尚未经过完整游戏验证，不代表官方默认布局。请逐项核对游戏键鼠按键，特别是技能、治疗和装备；轴向或灵敏度不合适时请先调整。",
+      "author": "JSM Studio",
+      "updatedAt": "2026-10-25",
+      "verified": false,
+      "sha256": "138c812011d40031e65421ee73643a642c803b36e7bd4a65af6b95191c2c9b39"
+    },
+    {
+      "id": "delta-force-apex6",
+      "name": "三角洲行动 · Apex 6 Pro 轴向示例",
+      "game": "三角洲行动",
+      "file": "profiles/delta-force-apex6.txt",
+      "mode": "keyboardMouse",
+      "controller": "Flydigi Apex 6 Pro · 2.4G / XInput / 第三方接管 · X/Z 轴向",
+      "description": "采用已有反馈正常的 X/Z 体感鼠标轴向，搭配基础键鼠动作。便于 Apex 6 Pro 玩家继续配置。",
+      "tags": [
+        "Flydigi",
+        "Apex 6 Pro",
+        "X/Z 轴向"
+      ],
+      "notes": "轴向来自项目使用反馈，整套游戏映射尚未实战验证。需在官方工具开启第三方接管；其他模式和固件可能不同，请核对方向与游戏键位。",
+      "author": "JSM Studio",
+      "updatedAt": "2026-10-25",
+      "verified": false,
+      "sha256": "6414b9fc99d2daab7b70e65f1879677abc4233ddff2e371a772650c863124d08"
+    },
+    {
+      "id": "native-gyro-starter",
+      "name": "原生手柄 + 体感鼠标 · 起步示例",
+      "game": "通用体感示例",
+      "file": "profiles/native-gyro-starter.txt",
+      "mode": "nativeGyro",
+      "controller": "提供体感输入的手柄；需游戏支持原生手柄与鼠标同时输入",
+      "description": "保留游戏的原生手柄操作，只将体感作为鼠标视角输入。适合已确认支持混合输入的游戏。",
+      "tags": [
+        "混合输入",
+        "体感鼠标",
+        "通用示例"
+      ],
+      "notes": "仅适用于支持手柄与鼠标同时输入的游戏。若视角卡顿或输入模式反复切换，应改用完整键鼠映射。默认始终启用体感，轴向与灵敏度需自行核对。",
+      "author": "JSM Studio",
+      "updatedAt": "2026-10-25",
+      "verified": false,
+      "sha256": "07ec15c0c6b76c3874da7b643877fee065205e97ed37ff3fbcec80ee48dadf4a"
+    }
+  ]
+}
