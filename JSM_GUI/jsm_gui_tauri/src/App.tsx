@@ -643,6 +643,7 @@ function App() {
                 onCounterOsMouseSpeedChange={handleCounterOsMouseSpeedChange}
                 onOpenCalibration={handleOpenCalibration}
                 onOpenRwcGuide={() => setIsRwcGuideModalOpen(true)}
+                onAdjustSensitivity={() => setGyroSubTab('sensitivity')}
                 hasPendingChanges={hasPendingChanges}
                 onApply={handleApplyWithFinalize}
                 onCancel={handleCancel}

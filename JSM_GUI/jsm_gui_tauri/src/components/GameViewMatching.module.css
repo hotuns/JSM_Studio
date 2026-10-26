@@ -1,0 +1,14 @@
+.simple { border: 1px solid var(--border-1); background: var(--bg-2); border-radius: 8px; padding: 16px; }
+.simple h4 { font-size: 14px; color: var(--text-strong); margin: 0 0 8px; }
+.simple p, .advanced p, .steps { font-size: 12px; color: var(--text-muted); line-height: 1.8; }
+.simple button { font-size: 12px; margin-top: 6px; }
+.advanced { margin-top: 16px; border-top: 1px solid var(--border-1); padding-top: 14px; }
+.advanced summary { cursor: pointer; font-size: 13px; color: var(--text-strong); padding: 5px 0; }
+.advanced summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.example { width: 100%; max-width: 600px; border-collapse: collapse; font-size: 12px; margin: 16px 0 8px; }
+.example caption { text-align: left; color: var(--text-strong); margin-bottom: 10px; }
+.example th, .example td { padding: 9px 12px; border: 1px solid var(--border-1); text-align: left; }
+.example th { background: var(--bg-input); color: var(--text-mid); }
+.note { padding: 12px; border-left: 2px solid var(--accent); background: var(--bg-2); }
+.steps { padding-left: 22px; }.steps li + li { margin-top: 6px; }
+.command { display: block; font-size: 10px; color: var(--text-muted); margin: 3px 0; overflow-wrap: anywhere; }

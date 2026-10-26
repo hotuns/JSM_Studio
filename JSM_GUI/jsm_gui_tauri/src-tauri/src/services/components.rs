@@ -86,6 +86,27 @@ pub struct ComponentsStatus {
 fn has(list: &[String], path: &str) -> bool {
     list.iter().any(|p| p.eq_ignore_ascii_case(path))
 }
+// Tauri can resolve bundled executables with a verbatim Windows path, while
+// HidHide's app-list converts them back to DOS/UNC paths. Normalize applications
+// only: HID device instance IDs must retain their original spelling.
+fn application_path(path: &str) -> String {
+    let path = path.replace('/', "\\");
+    if path
+        .get(..8)
+        .is_some_and(|prefix| prefix.eq_ignore_ascii_case(r"\\?\UNC\"))
+    {
+        format!(r"\\{}", &path[8..])
+    } else if path.starts_with(r"\\?\") || path.starts_with(r"\??\") {
+        path[4..].to_string()
+    } else {
+        path
+    }
+}
+fn has_application(list: &[String], path: &str) -> bool {
+    let expected = application_path(path);
+    list.iter()
+        .any(|entry| application_path(entry).eq_ignore_ascii_case(&expected))
+}
 fn push_unique(list: &mut Vec<String>, value: String) {
     if !has(list, &value) {
         list.push(value);
@@ -450,9 +471,7 @@ pub(super) fn driver(_: &str) -> DriverInfo {
 
 fn status_inner(app: &AppHandle) -> Result<ComponentsStatus, String> {
     let backend = runtime::read_backend_choice(app)?;
-    let engine = runtime::jsm_executable_path(app, &backend)?
-        .to_string_lossy()
-        .to_string();
+    let engine = application_path(&runtime::jsm_executable_path(app, &backend)?.to_string_lossy());
     let cli = cli_path();
     let owned = load_owned(app)?;
     let mut result = ComponentsStatus {
@@ -477,7 +496,7 @@ fn status_inner(app: &AppHandle) -> Result<ComponentsStatus, String> {
                 result.control_available = true;
                 result.cloak_enabled = s.cloak;
                 result.inverse = s.inverse;
-                result.engine_allowed = !s.inverse && has(&s.apps, &engine);
+                result.engine_allowed = !s.inverse && has_application(&s.apps, &engine);
                 result.hidden_count = s.hidden.len();
                 for group in &s.groups {
                     for d in group.devices.iter().filter(|d| physical(d)) {
@@ -568,7 +587,7 @@ pub fn manage(
             if !engine.is_file() {
                 return Err("JoyShockMapper executable is missing".into());
             }
-            let engine = engine.to_string_lossy().to_string();
+            let engine = application_path(&engine.to_string_lossy());
             let paths = if action == "hide" {
                 device_paths(find_device(&before, device_id)?, xinput)?
             } else {
@@ -578,13 +597,13 @@ pub fn manage(
             for backend in ["SDL", "legacy"] {
                 if let Ok(path) = runtime::jsm_executable_path(app, backend) {
                     if path.is_file() {
-                        push_unique(&mut engines, path.to_string_lossy().to_string());
+                        push_unique(&mut engines, application_path(&path.to_string_lossy()));
                     }
                 }
             }
             for path in engines {
-                if !has(&before.apps, &path) {
-                    push_unique(&mut owned.apps, path.clone());
+                if !has_application(&before.apps, &path) && !has_application(&owned.apps, &path) {
+                    owned.apps.push(path.clone());
                 }
                 args.extend(["--app-reg".into(), path]);
             }
@@ -599,7 +618,7 @@ pub fn manage(
             save_owned(app, &owned)?;
             run_cli(&cli, &args)?;
             let after = snapshot(&cli)?;
-            if after.inverse || !has(&after.apps, &engine) {
+            if after.inverse || !has_application(&after.apps, &engine) {
                 return Err(
                     "HidHide did not confirm JSM access. Refresh or restore Studio rules.".into(),
                 );
@@ -677,6 +696,40 @@ mod tests {
         assert_eq!(s.groups[0].friendly_name, "测试手柄");
         assert!(has(&s.apps, r"c:\工具\joyshockmapper.exe"));
         assert_eq!(s.hidden.len(), 1);
+    }
+    #[test]
+    fn confirms_verbatim_engine_paths_against_hidhide_dos_output() {
+        let s = parse_snapshot(&inventory()).unwrap();
+        let engine = r"\\?\C:\工具\JoyShockMapper.exe";
+        assert!(
+            !has(&s.apps, engine),
+            "Regression: the former literal comparison failed"
+        );
+        assert!(has_application(&s.apps, engine));
+        assert_eq!(application_path(engine), r"C:\工具\JoyShockMapper.exe");
+        assert!(has_application(
+            &[engine.into()],
+            r"c:/工具/joyshockmapper.exe"
+        ));
+        assert!(has_application(&s.apps, r"\??\C:\工具\JoyShockMapper.exe"));
+        assert!(!has_application(&s.apps, r"\\?\D:\工具\JoyShockMapper.exe"));
+        assert!(!has_application(&s.apps, r"C:\其他\JoyShockMapper.exe"));
+    }
+    #[test]
+    fn normalizes_unc_applications_without_changing_device_identity_matching() {
+        let dos = r"\\server\share\JSM Studio\JoyShockMapper.exe";
+        let extended = r"\\?\UNC\server\share\JSM Studio\JoyShockMapper.exe";
+        assert_eq!(application_path(extended), dos);
+        assert!(has_application(&[dos.into()], extended));
+        assert!(has_application(&[extended.into()], dos));
+        assert!(!has_application(
+            &[dos.into()],
+            r"\\other\share\JSM Studio\JoyShockMapper.exe"
+        ));
+        assert!(!has(
+            &[r"HID\VID_1234&PID_5678\one".into()],
+            r"\\?\HID\VID_1234&PID_5678\one"
+        ));
     }
     #[test]
     fn rejects_incomplete_status_instead_of_assuming_safe_defaults() {

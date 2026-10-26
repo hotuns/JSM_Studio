@@ -9,6 +9,7 @@ import { controllerLabel, formatVidPid } from '../utils/controllers'
 import styles from './Gyro.module.css'
 import { MotionLabel, MotionSection } from './MotionHelp'
 import motionStyles from './MotionControls.module.css'
+import matchingStyles from './GameViewMatching.module.css'
 
 const TICK_TIME_OPTIONS = [
   { value: '1', label: '1 ms' },
@@ -59,6 +60,7 @@ type GyroBehaviorControlsProps = {
   onCounterOsMouseSpeedChange: (enabled: boolean) => void
   onOpenCalibration?: () => void
   onOpenRwcGuide?: () => void
+  onAdjustSensitivity?: () => void
   hasPendingChanges: boolean
   onApply: () => void
   onCancel: () => void
@@ -89,6 +91,7 @@ export function GyroBehaviorControls({
   onCounterOsMouseSpeedChange,
   onOpenCalibration,
   onOpenRwcGuide,
+  onAdjustSensitivity,
   hasPendingChanges,
   onApply,
   onCancel,
@@ -185,36 +188,56 @@ export function GyroBehaviorControls({
         </label>
       </div>
       </MotionSection>
-      <MotionSection title={t('motion.calibration')} description={t('motion.calibrationDesc')}>
-      {(onOpenCalibration || onOpenRwcGuide) && (
-        <div className="flex-inputs">
-          {onOpenRwcGuide && (
-            <button type="button" className="primary-btn full-width-btn" onClick={onOpenRwcGuide} disabled={isCalibrating}>
-              {t('gyro.easyCalibrationMethod')}
-            </button>
-          )}
-          {onOpenCalibration && (
-            <button type="button" className="secondary-btn full-width-btn" onClick={onOpenCalibration} disabled={isCalibrating}>
-              {t('gyro.manualCalibration')}
-            </button>
-          )}
+      <MotionSection title={t('motion.gameMatching')} description={t('motion.gameMatchingDesc')}>
+        <div className={matchingStyles.simple}>
+          <h4>{t('motion.directTuning')}</h4><p>{t('motion.directTuningDesc')}</p>
+          {onAdjustSensitivity && <button type="button" className="secondary-btn" disabled={isCalibrating} onClick={onAdjustSensitivity}>{t('motion.adjustSensitivity')}</button>}
         </div>
-      )}
-      <div className="flex-inputs">
-        <label>
-          <MotionLabel title={t('gyro.realWorldCalibration')} topic="realWorldCalibration" />
-          <input
-            type="number"
-            step="0.1"
-            value={sensitivity.realWorldCalibration ?? ''}
-            onChange={(e) => onRealWorldCalibrationChange(e.target.value)}
-          />
-        </label>
-        <label>
-          <MotionLabel title={t('gyro.inGameSensitivity')} topic="inGameSensitivity" />
-          <input type="number" step="0.1" value={sensitivity.inGameSens ?? ''} onChange={(e) => onInGameSensChange(e.target.value)} />
-        </label>
-      </div>
+        <details className={matchingStyles.advanced}>
+          <summary>{t('motion.preciseMatching')}</summary>
+          <p>{t('motion.preciseMatchingDesc')}</p>
+          <table className={matchingStyles.example}>
+            <caption>{t('motion.matchExample')}</caption>
+            <thead><tr><th scope="col">{t('motion.matchMultiplier')}</th><th scope="col">{t('motion.matchControllerAngle')}</th><th scope="col">{t('motion.matchGameAngle')}</th></tr></thead>
+            <tbody>{[1, 2, 4].map(multiplier => <tr key={multiplier}><td>{multiplier}×</td><td>45°</td><td>{45 * multiplier}°</td></tr>)}</tbody>
+          </table>
+          <p>{t('motion.matchExampleHint')}</p>
+          <p className={matchingStyles.note}>{t('motion.notStationary')}</p>
+          <ol className={matchingStyles.steps}>
+            <li>{t('motion.matchStep1')}</li><li>{t('motion.matchStep2')}</li><li>{t('motion.matchStep3')}</li>
+          </ol>
+          {(onOpenCalibration || onOpenRwcGuide) && (
+            <div className="flex-inputs">
+              {onOpenRwcGuide && (
+                <button type="button" className="primary-btn full-width-btn" onClick={onOpenRwcGuide} disabled={isCalibrating}>
+                  {t('gyro.easyCalibrationMethod')}
+                </button>
+              )}
+              {onOpenCalibration && (
+                <button type="button" className="secondary-btn full-width-btn" onClick={onOpenCalibration} disabled={isCalibrating}>
+                  {t('gyro.manualCalibration')}
+                </button>
+              )}
+            </div>
+          )}
+          <div className="flex-inputs">
+            <label>
+              <MotionLabel title={t('gyro.realWorldCalibration')} topic="realWorldCalibration" /><small className={matchingStyles.command}>REAL_WORLD_CALIBRATION</small>
+              <input
+                type="number"
+                step="0.1"
+                value={sensitivity.realWorldCalibration ?? ''}
+                onChange={(e) => onRealWorldCalibrationChange(e.target.value)}
+              />
+            </label>
+            <label>
+              <MotionLabel title={t('gyro.inGameSensitivity')} topic="inGameSensitivity" /><small className={matchingStyles.command}>IN_GAME_SENS</small>
+              <input type="number" step="0.1" value={sensitivity.inGameSens ?? ''} onChange={(e) => onInGameSensChange(e.target.value)} />
+            </label>
+          </div>
+        </details>
+      </MotionSection>
+      <MotionSection title={t('motion.calibration')} description={t('motion.calibrationDesc')}>
       <div className="flex-inputs">
         <label>
           <div className="label-row">
