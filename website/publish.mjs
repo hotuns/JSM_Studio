@@ -22,13 +22,13 @@ if (!existsSync(path.join(checkout, '.git'))) {
   if (remote) { git(['fetch', 'origin', 'gh-pages']); git(['reset', '--hard', 'FETCH_HEAD']) }
 }
 // The dedicated checkout contains only files produced by this publisher.
-for (const name of ['index.html', 'style.css', 'app.js', 'mark.svg']) cpSync(path.join(source, name), path.join(checkout, name))
+for (const name of ['index.html', 'style.css', 'app.js', 'i18n.js', 'translations.js', 'mark.svg']) cpSync(path.join(source, name), path.join(checkout, name))
 cpSync(path.join(source, 'screenshots'), path.join(checkout, 'screenshots'), { recursive: true })
 cpSync(path.join(root, 'community-configs'), path.join(checkout, 'community-configs'), { recursive: true })
 writeFileSync(path.join(checkout, '.nojekyll'), '')
 writeFileSync(path.join(checkout, '.gitattributes'), '* -text\n')
 writeFileSync(path.join(checkout, 'README.md'), '# JSM Studio public website\n\nGenerated from website/ and community-configs/ in the JSM Studio source workspace.\n')
-const expected = new Set(['.git', '.gitattributes', '.nojekyll', 'README.md', 'index.html', 'style.css', 'app.js', 'mark.svg', 'community-configs', 'screenshots'])
+const expected = new Set(['.git', '.gitattributes', '.nojekyll', 'README.md', 'index.html', 'style.css', 'app.js', 'i18n.js', 'translations.js', 'mark.svg', 'community-configs', 'screenshots'])
 for (const name of readdirSync(checkout)) if (!expected.has(name)) throw Error(`Unexpected deployment file: ${name}`)
 if (prepareOnly) { console.log(JSON.stringify({ checkout, prepared: true })); process.exit(0) }
 git(['add', '--all'])
