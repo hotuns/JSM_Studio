@@ -10,14 +10,14 @@ import { WEBSITE_URL } from '../community/catalog'
 import styles from './SettingsPage.module.css'
 import driverManifest from '../../src-tauri/drivers/manifest.json'
 
-type Props = { virtualType: VirtualControllerType; warnings: VirtualControllerWarning[]; onVirtualChange: (value: VirtualControllerType) => void; onMappings: () => void; onDevices: () => void; onFolder: () => void; onCreateVirtual: (type: 'XBOX' | 'DS4') => Promise<string>; onLibrary: () => void; disabled?: boolean }
+type Props = { virtualType: VirtualControllerType; warnings: VirtualControllerWarning[]; onVirtualChange: (value: VirtualControllerType) => void; onMappings: () => void; onDevices: () => void; onFolder: () => void; onCreateVirtual: (type: 'XBOX' | 'DS4') => void; onLibrary: () => void; disabled?: boolean }
 const LINKS = { hidhide: 'https://github.com/nefarius/HidHide/releases/latest', vigem: 'https://github.com/nefarius/ViGEmBus/releases/latest', hideHelp: 'https://docs.nefarius.at/projects/HidHide/Simple-Setup-Guide/', vigemHelp: 'https://docs.nefarius.at/projects/ViGEm/How-to-Install/', releases: 'https://github.com/hotuns/JSM_Studio/releases', feedback: 'https://github.com/hotuns/JSM_Studio/issues' }
 export function SettingsPage(props: Props) {
   const { t } = useTranslation()
   const [status, setStatus] = useState<ComponentsStatus | null>(null)
   const [busy, setBusy] = useState(false), [error, setError] = useState(''), [message, setMessage] = useState('')
   const [selected, setSelected] = useState(''), [xinput, setXinput] = useState(false)
-  const [created, setCreated] = useState('')
+  const [nativeOffer, setNativeOffer] = useState<'XBOX' | 'DS4' | null>(null)
   const [installingDriver, setInstallingDriver] = useState<'hidhide' | 'vigem' | null>(null)
   const [backend, setBackend] = useState<BackendChoice | null>(null), [backendDraft, setBackendDraft] = useState<BackendChoice>('SDL')
   const lock = useRef(false), mounted = useRef(true)
@@ -51,12 +51,10 @@ export function SettingsPage(props: Props) {
     } catch (e) { if (mounted.current) setError(String(e instanceof Error ? e.message : e)) }
     finally { lock.current = false; if (mounted.current) setBusy(false) }
   }
-  const createVirtual = async (type: 'XBOX' | 'DS4') => {
+  const createVirtual = (type: 'XBOX' | 'DS4') => {
     if (lock.current || props.disabled) return
-    lock.current = true; setBusy(true); setError(''); setCreated('')
-    try { const name = await props.onCreateVirtual(type); if (mounted.current) setCreated(name) }
-    catch (e) { if (mounted.current) setError(String(e instanceof Error ? e.message : e)) }
-    finally { lock.current = false; if (mounted.current) setBusy(false) }
+    setNativeOffer(null)
+    props.onCreateVirtual(type)
   }
   const open = async (url: string) => { try { await desktopBridge.openExternal(url) } catch (e) { setError(String(e)) } }
   const installDriver = async (kind: 'hidhide' | 'vigem') => {
@@ -113,12 +111,17 @@ export function SettingsPage(props: Props) {
     </section>
     <section className={styles.section}>
       <div className={styles.heading}><div><h2>{s('virtual')}</h2><p>{s('virtualHint')}</p></div></div>
-      <label className={styles.field}>{s('output')}<select aria-label={s('output')} value={props.virtualType} disabled={props.disabled} onChange={e => props.onVirtualChange(e.target.value as VirtualControllerType)}><option value="NONE">{s('none')}</option><option value="XBOX" disabled={status?.vigem.status !== 'running'}>{s('xbox')}</option><option value="DS4" disabled={status?.vigem.status !== 'running'}>{s('ds4')}</option></select></label>
+      <label className={styles.field}>{s('output')}<select aria-label={s('output')} value={nativeOffer ?? props.virtualType} disabled={props.disabled} onChange={e => { const value = e.target.value as VirtualControllerType; if (value === 'NONE') { setNativeOffer(null); props.onVirtualChange(value) } else setNativeOffer(value) }}><option value="NONE">{s('none')}</option><option value="XBOX" disabled={status?.vigem.status !== 'running'}>{s('xbox')}</option><option value="DS4" disabled={status?.vigem.status !== 'running'}>{s('ds4')}</option></select></label>
+      {nativeOffer && <div className={styles.notice}><strong>{t('profileCreation.offer')}</strong><p>{t('profileCreation.offerHint')}</p><div className={styles.actions}>
+        <button className="primary-btn" disabled={blocked} onClick={() => createVirtual(nativeOffer)}>{t('profileCreation.createNative')}</button>
+        <button className="secondary-btn" disabled={blocked} onClick={() => { props.onVirtualChange(nativeOffer); setNativeOffer(null) }}>{t('profileCreation.outputOnly')}</button>
+        <button className="secondary-btn" disabled={blocked} onClick={() => setNativeOffer(null)}>{t('common.cancel')}</button>
+      </div></div>}
       {status?.vigem.status !== 'running' && <p className={styles.notice}>{s('needVigem')}</p>}
       {props.warnings.map((warning, i) => <p className={styles.notice} key={i}>{warning.kind === 'modeRequired' ? t('keymap.virtualControllerWarningModeRequired') : t('keymap.virtualControllerWarningSchemeMismatch', { detected: t(`keymap.virtualControllerType_${warning.detectedType}`), current: t(`keymap.virtualControllerType_${props.virtualType}`) })}</p>)}
       <p>{s('axisTip')}</p><div className={styles.actions}><button className="secondary-btn" onClick={props.onMappings}>{s('configure')}</button><button className="secondary-btn" onClick={() => { void tool('gamepads') }}>{s('testGamepad')}</button></div>
       <h3>{s('starter')}</h3><p>{s('starterHint')}</p><div className={styles.actions}>{(['XBOX', 'DS4'] as const).map(type => <button key={type} className="secondary-btn" disabled={blocked || status?.vigem.status !== 'running'} onClick={() => { void createVirtual(type) }}>{s(type === 'XBOX' ? 'newXbox' : 'newDs4')}</button>)}</div>
-      {created && <div className={styles.success} role="status"><p>{s('created', { name: created })}</p><button className="secondary-btn" onClick={props.onLibrary}>{s('library')}</button></div>}
+
     </section>
     <section className={styles.section}>
       <div className={styles.heading}><div><h2>{s('updates')}</h2><p>{s('version', { version })}</p></div><button className="secondary-btn" disabled={update.busy || update.phase === 'ready'} onClick={() => { void update.check() }}>{s('check')}</button></div>

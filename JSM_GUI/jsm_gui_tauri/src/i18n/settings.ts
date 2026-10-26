@@ -1,7 +1,7 @@
 export const settingsZh = {
   installDriver: '安装驱动', driverInstalled: '已安装', installingDriver: '正在安装…', bundledVersion: '内置安装包 v{{version}}', installerCancelled: '已取消安装，可以稍后重试。', installerFinished: '安装程序已完成，已重新检测驱动。如需重启，请先保存配置，再重启 Windows。', installerRestart: '驱动安装完成，需要重启 Windows 后生效。请先保存配置，软件不会自动重启电脑。',
   officialTool: '打开官方配置工具', testGamepad: 'Windows 手柄测试',
-  starter: '快速创建基础配置', starterHint: '创建一份独立配置，将常用按键、两个摇杆和模拟扳机映射到虚拟手柄，体感默认关闭。当前配置和未保存编辑保持不变。', newXbox: '新建 Xbox 基础配置', newDs4: '新建 DS4 基础配置', created: '已保存 {{name}}，请到配置库加载并应用。', library: '前往配置库',
+  starter: '快速创建基础配置', starterHint: '创建一份独立配置，将常用按键、两个摇杆和模拟扳机映射到虚拟手柄，体感默认关闭。可选择仅保存或加载到编辑器，确认后再应用。', newXbox: '新建 Xbox 基础配置', newDs4: '新建 DS4 基础配置', created: '已保存 {{name}}，请到配置库加载并应用。', library: '前往配置库',
   refresh: '重新检测', detecting: '正在检测…', components: '驱动组件', componentsHint: '按需安装。普通键鼠映射不需要 ViGEmBus；避免原始手柄重复输入时才需要 HidHide。',
   running: '驱动已运行', missing: '未安装', stopped: '已安装 · 未运行', unknown: '状态未知', unsupported: '不支持的平台',
   hidhideDesc: '隐藏原始手柄，让游戏只接收映射后的输入。', vigemDesc: '让 JSM 输出虚拟 Xbox 360 或 DS4 手柄。',

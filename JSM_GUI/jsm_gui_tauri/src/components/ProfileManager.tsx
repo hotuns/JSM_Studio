@@ -14,7 +14,7 @@ type ProfileManagerProps = {
   libraryLoading?: boolean
   editedProfileNames: Record<string, string>
   onProfileNameChange: (originalName: string, value: string) => void
-  onRenameProfile: (originalName: string) => void
+  onRenameProfile: (originalName: string) => Promise<boolean>
   onDeleteProfile: (name: string) => void
   onAddProfile: () => void
   onLoadLibraryProfile: (name: string) => void
@@ -43,12 +43,21 @@ export function ProfileManager({
   const fileInputRef = useRef<HTMLInputElement | null>(null)
   const [query, setQuery] = useState('')
   const [editingProfile, setEditingProfile] = useState<string | null>(null)
+  const [renaming, setRenaming] = useState(false)
+  const renameLock = useRef(false)
+  const submitRename = async (name: string) => {
+    const value = (editedProfileNames[name] ?? name).trim()
+    if (renameLock.current || !value || value === name) return
+    renameLock.current = true; setRenaming(true)
+    try { if (await onRenameProfile(name)) setEditingProfile(null) }
+    finally { renameLock.current = false; setRenaming(false) }
+  }
   const filteredProfiles = libraryProfiles.filter(name => name.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()))
   const [confirmingProfile, setConfirmingProfile] = useState<string | null>(null)
 
   useEffect(() => {
-    setConfirmingProfile(null)
-    setEditingProfile(null)
+    setConfirmingProfile(name => name && libraryProfiles.includes(name) ? name : null)
+    setEditingProfile(name => name && libraryProfiles.includes(name) ? name : null)
   }, [libraryProfiles])
 
   return (
@@ -113,19 +122,21 @@ export function ProfileManager({
                 <div className={styles.profileLibraryName}>
                   <span className={styles.profileIcon}><StudioIcon name="profiles" size={22} /></span>
                   {editingProfile === profileName ? <input autoFocus aria-label={t('studio.rename')}
-                    type="text" maxLength={80} value={editedProfileNames[profileName] ?? profileName}
+                    type="text" maxLength={80} disabled={renaming} value={editedProfileNames[profileName] ?? profileName}
                     onChange={event => onProfileNameChange(profileName, event.target.value)}
                     onKeyDown={event => {
+                      if (event.nativeEvent.isComposing || renaming) return
+                      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 's') { event.preventDefault(); void submitRename(profileName); return }
                       if (event.key === 'Escape') { onProfileNameChange(profileName, profileName); setEditingProfile(null) }
-                      if (event.key === 'Enter' && (editedProfileNames[profileName] ?? profileName).trim()) onRenameProfile(profileName)
+                      if (event.key === 'Enter') { event.preventDefault(); void submitRename(profileName) }
                     }} /> : <strong className={styles.profileNameText}>{profileName}</strong>}
                   {currentProfileName === profileName && <span className={styles.profileLibraryActiveBadge}>{t('profiles.active')}</span>}
                 </div>
                 <div className={styles.profileLibraryButtons}>
                   {editingProfile === profileName ? <>
-                    <button type="button" className="primary-btn" onClick={() => onRenameProfile(profileName)}
-                      disabled={!(editedProfileNames[profileName] ?? profileName).trim() || (editedProfileNames[profileName] ?? profileName).trim() === profileName}>{t('common.save')}</button>
-                    <button type="button" className="ghost-btn" onClick={() => { onProfileNameChange(profileName, profileName); setEditingProfile(null) }}>{t('common.cancel')}</button>
+                    <button type="button" className="primary-btn" onClick={() => { void submitRename(profileName) }}
+                      disabled={renaming || !(editedProfileNames[profileName] ?? profileName).trim() || (editedProfileNames[profileName] ?? profileName).trim() === profileName}>{t('profileCreation.saveName')}</button>
+                    <button type="button" className="ghost-btn" disabled={renaming} onClick={() => { onProfileNameChange(profileName, profileName); setEditingProfile(null) }}>{t('common.cancel')}</button>
                   </> : <button type="button" className="ghost-btn" onClick={() => setEditingProfile(profileName)}>{t('studio.rename')}</button>}
                   {confirmingProfile === profileName ? (
                     <>

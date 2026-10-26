@@ -368,7 +368,7 @@ export const desktopBridge: DesktopBridge = {
   },
   async renameLibraryProfile(oldName, newName) {
     if (isTauriWindow()) {
-      return invokeTauri<NamedProfile>('library_rename_profile', { old_name: oldName, new_name: newName }).catch(() => null)
+      return invokeTauri<NamedProfile>('library_rename_profile', { oldName, newName })
     }
     return (await getElectronAPI()?.renameLibraryProfile?.(oldName, newName)) ?? null
   },

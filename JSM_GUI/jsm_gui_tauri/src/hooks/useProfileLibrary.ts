@@ -229,41 +229,38 @@ export function useProfileLibrary({
   ])
 
   const handleRenameProfile = useCallback(
-    async (originalName: string) => {
+    async (originalName: string): Promise<boolean> => {
       const pendingName = (editedLibraryNames[originalName] ?? originalName).trim()
       if (!pendingName) {
         const message = t('messages.emptyProfileName')
         setStatusMessage(message)
         showToast(message, 'error')
         clearStatusLater()
-        return
+        return false
       }
       try {
         const result = await desktopBridge.renameLibraryProfile(originalName, pendingName)
-        if (result) {
-          if (currentLibraryProfile === originalName) {
-            setCurrentLibraryProfile(result.name ?? originalName)
-            setActiveProfilePath(result.path ?? activeProfilePath)
-            if (result.content !== undefined) {
-              resetPendingSensitivityChanges()
-              setConfigText(result.content)
-              setSavedConfig(result.content)
-            }
-          }
-          setEditedLibraryNames(prev => {
-            const next = { ...prev }
-            delete next[originalName]
-            next[result.name ?? originalName] = result.name ?? originalName
-            return next
-          })
-          refreshLibraryProfiles()
+        if (!result) throw new Error('Could not rename profile')
+        if (currentLibraryProfile === originalName) {
+          setCurrentLibraryProfile(result.name ?? originalName)
+          setActiveProfilePath(result.path ?? activeProfilePath)
         }
+        setEditedLibraryNames(prev => {
+          const next = { ...prev }
+          delete next[originalName]
+          next[result.name ?? originalName] = result.name ?? originalName
+          return next
+        })
+        await refreshLibraryProfiles()
+        showToast(t('profileCreation.renamed', { name: result.name ?? pendingName }))
+        return true
       } catch (err) {
         console.error('Failed to rename profile', err)
         const message = t('messages.renameProfileFailed')
         setStatusMessage(message)
         showToast(message, 'error')
         clearStatusLater()
+        return false
       }
     },
     [
@@ -272,8 +269,6 @@ export function useProfileLibrary({
       currentLibraryProfile,
       editedLibraryNames,
       refreshLibraryProfiles,
-      resetPendingSensitivityChanges,
-      setConfigText,
       setStatusMessage,
       t,
     ]
@@ -435,6 +430,21 @@ export function useProfileLibrary({
     }
   }
 
+  const handleCreatePreset = async (name: string, content: string, load: boolean) => {
+    const normalized = serializeConfig(parseConfigText(ensureHeaderLines(content)))
+    const result = await desktopBridge.createSavedProfile(name, normalized)
+    if (!result?.name || !result.path) throw new Error(t('messages.createProfileFailed'))
+    await refreshLibraryProfiles()
+    if (load) {
+      resetPendingSensitivityChanges()
+      setCurrentLibraryProfile(result.name)
+      setActiveProfilePath(result.path)
+      setConfigText(normalized)
+      setSavedConfig(normalized)
+    }
+    showToast(t('studio.gameSavedOffline', { name: result.name }))
+  }
+
   return {
     savedConfig,
     saveConfig,
@@ -450,6 +460,7 @@ export function useProfileLibrary({
     handleLoadProfileFromLibrary,
     handleLibraryProfileNameChange,
     handleCreateProfile,
+    handleCreatePreset,
     handleRenameProfile,
     handleDeleteLibraryProfile,
     handleImportProfile,

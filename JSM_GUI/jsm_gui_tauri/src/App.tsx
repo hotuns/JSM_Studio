@@ -1,4 +1,5 @@
-import { createVirtualProfile } from './utils/virtualProfile'
+import { CreateProfileDialog } from './components/CreateProfileDialog'
+import type { ProfileTemplate } from './utils/profileTemplates'
 import { StudioShell, type StudioPage } from './components/StudioShell'
 import { StudioOverview } from './components/StudioOverview'
 import { GameProfilesPage } from './components/GameProfilesPage'
@@ -275,7 +276,7 @@ function App() {
     applyConfig,
     handleLoadProfileFromLibrary,
     handleLibraryProfileNameChange,
-    handleCreateProfile,
+    handleCreatePreset,
     handleCreateGameProfile,
     savedConfig,
     saveConfig,
@@ -291,6 +292,7 @@ function App() {
     setStatusMessage,
     resetPendingSensitivityChanges: resetPendingSensitivityChanges,
   })
+  const [newProfile, setNewProfile] = useState<{ template: ProfileTemplate; scheme?: 'XBOX' | 'DS4' } | null>(null)
   const hasUnsavedChanges = configText !== savedConfig || hasPendingSensitivityChanges
   const handleCancel = () => { resetPendingSensitivityChanges(); setConfigText(savedConfig) }
   const handleSaveWithFinalize = async () => {
@@ -558,12 +560,7 @@ function App() {
         <SettingsPage virtualType={virtualControllerType} warnings={virtualControllerWarnings}
           onVirtualChange={handleVirtualControllerTypeChange} disabled={isCalibrating || runtimeMappingBusy || recalibrating}
           onMappings={() => setPrimaryTab('keybinds')} onDevices={() => setPrimaryTab('controllerStatus')} onFolder={handleOpenConfigDirectory}
-          onLibrary={() => setPrimaryTab('profiles')} onCreateVirtual={async type => {
-            const result = await desktopBridge.createSavedProfile(type === 'XBOX' ? 'Xbox Virtual' : 'DS4 Virtual', createVirtualProfile(type))
-            if (!result?.name || !result.path) throw new Error(t('studio.saveFailed'))
-            await refreshLibraryProfiles()
-            return result.name
-          }} />
+          onLibrary={() => setPrimaryTab('profiles')} onCreateVirtual={type => setNewProfile({ template: 'native', scheme: type })} />
       </Suspense>
     }
     if (primaryTab === 'games') {
@@ -608,7 +605,7 @@ function App() {
                 onProfileNameChange={handleLibraryProfileNameChange}
                 onRenameProfile={handleRenameProfile}
                 onDeleteProfile={handleDeleteLibraryProfile}
-                onAddProfile={handleCreateProfile}
+                onAddProfile={() => setNewProfile({ template: 'empty' })}
                 onLoadLibraryProfile={handleLoadProfileFromLibrary}
                 onCopyActiveProfile={handleCopyActiveProfile}
               />
@@ -915,6 +912,7 @@ function App() {
         interactionLocked={gameCreating}
         hasUnsavedChanges={hasUnsavedChanges} onSave={handleSaveWithFinalize}
         profile={currentLibraryProfile} profiles={libraryProfiles ?? []} onSelectProfile={handleLoadProfileFromLibrary}
+        onNewProfile={() => setNewProfile({ template: 'empty' })}
         mappingEnabled={mappingEnabled} runtimeBusy={runtimeMappingBusy || recalibrating || gameCreating}
         isCalibrating={isCalibrating} countdown={countdown} deviceCount={sample?.devices?.length ?? 0}
         sampleHz={telemetryValues.sampleHz} hasPendingChanges={hasPendingChanges} statusMessage={statusMessage}
@@ -925,6 +923,13 @@ function App() {
         onApply={handleApplyWithFinalize} onCancel={handleCancel}>
         {renderPrimaryContent()}
       </StudioShell>
+      {newProfile && <CreateProfileDialog initialTemplate={newProfile.template} initialScheme={newProfile.scheme}
+        hasUnsavedChanges={hasUnsavedChanges} onClose={() => setNewProfile(null)}
+        onCreate={async (name, text, load) => {
+          setGameCreating(true)
+          try { await handleCreatePreset(name, text, load); if (load) setPrimaryTab('keybinds') }
+          finally { setGameCreating(false) }
+        }} />}
       {isConfigDrawerOpen && (
         <div
           ref={configWindowRef}

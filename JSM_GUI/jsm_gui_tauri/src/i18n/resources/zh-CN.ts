@@ -1,3 +1,4 @@
+import { profileCreationZh } from '../profileCreation'
 import { settingsZh } from '../settings'
 import { communityZh } from '../community'
 import { cursorSwitchZh } from '../cursorSwitch'
@@ -5,6 +6,7 @@ import { studioZh } from '../studio'
 import { motionZh } from '../motion'
 
 export const zhCN = {
+  profileCreation: profileCreationZh,
   settings: settingsZh,
   communityProfiles: communityZh,
   studio: studioZh,

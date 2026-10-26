@@ -1,3 +1,4 @@
+import { profileCreationEn } from '../profileCreation'
 import { settingsEn } from '../settings'
 import { communityEn } from '../community'
 import { cursorSwitchEn } from '../cursorSwitch'
@@ -5,6 +6,7 @@ import { studioEn } from '../studio'
 import { motionEn } from '../motion'
 
 export const en = {
+  profileCreation: profileCreationEn,
   settings: settingsEn,
   communityProfiles: communityEn,
   studio: studioEn,

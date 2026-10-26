@@ -12,7 +12,7 @@ const pages: StudioPage[] = ['overview', 'games', 'controllerStatus', 'gyro', 'k
 
 type StudioShellProps = {
   page: StudioPage; onNavigate: (page: StudioPage) => void; children: ReactNode
-  profile: string | null; profiles: string[]; onSelectProfile: (name: string) => void
+  profile: string | null; profiles: string[]; onSelectProfile: (name: string) => void; onNewProfile?: () => void
   mappingEnabled: boolean; runtimeBusy: boolean; isCalibrating: boolean; countdown: number | null
   deviceCount: number; sampleHz: string; hasPendingChanges: boolean; statusMessage?: string | null
   onToggleOutput: () => void; onCalibrate: () => void; onOpenSource: () => void
@@ -106,7 +106,7 @@ export function StudioShell(props: StudioShellProps) {
     </aside>
     <div className={styles.workspace}>
       <header className={styles.toolbar} data-capture-ignore="true">
-        <label className={styles.profileSelect}><StudioIcon name="profiles" size={18} /><span>{t('studio.profile')}</span>
+        <div className={styles.profileTools}><label className={styles.profileSelect}><StudioIcon name="profiles" size={18} /><span>{t('studio.profile')}</span>
           <select aria-label={t('studio.profile')} value={props.profile ?? ''} disabled={props.isCalibrating || busy || props.interactionLocked}
             onChange={event => { if (event.target.value) props.onSelectProfile(event.target.value) }}>
             <option value="" disabled>{t('studio.noProfile')}</option>
@@ -114,6 +114,7 @@ export function StudioShell(props: StudioShellProps) {
           </select>
           {props.hasPendingChanges && <span className={styles.dirtyDot} title={t('studio.pending')} />}
         </label>
+        {props.onNewProfile && <button type="button" className="secondary-btn" disabled={props.isCalibrating || props.runtimeBusy || busy || props.interactionLocked} onClick={props.onNewProfile}>{t('profileCreation.title')}</button>}</div>
         <div className={styles.toolbarActions}>
           <button type="button" className={`${styles.outputButton} ${props.mappingEnabled ? styles.outputEnabled : ''}`}
             aria-pressed={props.mappingEnabled} disabled={props.runtimeBusy || props.isCalibrating || busy}
