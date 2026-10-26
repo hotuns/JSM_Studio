@@ -9,11 +9,11 @@ import { Card } from './Card'
 import { ControllerStatusSvg } from './ControllerStatusSvg'
 import styles from './ControllerStatusPage.module.css'
 
-const HIDHIDE_RELEASES_URL = 'https://github.com/nefarius/HidHide/releases/latest'
 
 type ControllerStatusPageProps = {
   devices?: TelemetryDevice[]
   ignoredDevices?: string[]
+  onSettings?: () => void
 }
 
 type ControllerStatusDeviceCardProps = {
@@ -296,55 +296,11 @@ function ControllerConnectionStatusPanel({ connectedDevices, priority = false }:
   )
 }
 
-function HidHidePanel() {
+export function ControllerStatusPage({ devices, ignoredDevices, onSettings }: ControllerStatusPageProps) {
   const { t } = useTranslation()
-  return (
-    <Card className={`${styles.pageCard} ${styles.hidHideCard}`}>
-      <div className={styles.hidHideHeader}>
-        <div className={styles.hidHideHeading}>
-          <h2>{t('controllerStatus.hidHideTitle')}</h2>
-        </div>
-        <button
-          type="button"
-          className="secondary-btn"
-          onClick={() => void desktopBridge.openExternal(HIDHIDE_RELEASES_URL)
-            .catch(error => showToast(t('messages.hidHideOpenFailed', { error: getErrorMessage(error) }), 'error'))}
-        >
-          {t('controllerStatus.hidHideDownloadButton')}
-        </button>
-      </div>
-      <p>{t('controllerStatus.hidHideDescription')}</p>
-    </Card>
-  )
-}
-
-export function ControllerStatusPage({
-  devices,
-  ignoredDevices,
-}: ControllerStatusPageProps) {
-  const hasConnectedDevices = Boolean(devices?.length)
-
-  if (!hasConnectedDevices) {
-    return (
-      <div className={styles.page}>
-        <div className={styles.controlGrid}>
-          <ControllerConnectionStatusPanel connectedDevices={devices} priority />
-          <HidHidePanel />
-        </div>
-      </div>
-    )
-  }
-
-  return (
-    <div className={styles.page}>
-      <div className={styles.controlGrid}>
-        <ControllerConnectionStatusPanel connectedDevices={devices} />
-        <HidHidePanel />
-      </div>
-
-      {devices?.map(device => (
-        <ControllerStatusDeviceCard key={device.handle} device={device} ignoredDevices={ignoredDevices} />
-      ))}
-    </div>
-  )
+  return <div className={styles.page}>
+    <ControllerConnectionStatusPanel connectedDevices={devices} priority={!devices?.length} />
+    {devices?.map(device => <ControllerStatusDeviceCard key={device.handle} device={device} ignoredDevices={ignoredDevices} />)}
+    <Card className={styles.pageCard}><div className={styles.connectionHeader}><div><h2>{t('settings.components')}</h2><p>{t('settings.componentsHint')}</p></div><button type="button" className="secondary-btn" onClick={onSettings}>{t('studio.settings')}</button></div></Card>
+  </div>
 }

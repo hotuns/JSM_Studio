@@ -1,3 +1,4 @@
+import { isGameMetadataComment } from '../games/gameMetadataFormat'
 import {
   BUMPER_BUTTONS,
   CENTER_BUTTONS,
@@ -255,6 +256,11 @@ export function parseConfigText(text: string): ParsedConfig {
       const keyOnly = rawKey?.trim()
 
       if (!keyOnly) return
+      // Portable Studio game metadata is an engine-ignored comment.
+      if (isGameMetadataComment(line)) {
+        directives.push({ line })
+        return
+      }
       if (keyOnly.startsWith('#')) {
         return
       }

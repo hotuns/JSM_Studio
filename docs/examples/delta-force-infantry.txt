@@ -1,0 +1,59 @@
+# JSM_STUDIO_GAME {"version":2,"gameName":"三角洲行动","template":"delta-force-infantry","mode":"keyboardMouse"}
+# JSM_STUDIO_ACTION {"id":"forward","zh":"前进","en":"Move forward","group":"move","key":"W","button":"LUP","gesture":"press","modifier":"","confirmed":false}
+# JSM_STUDIO_ACTION {"id":"back","zh":"后退","en":"Move backward","group":"move","key":"S","button":"LDOWN","gesture":"press","modifier":"","confirmed":false}
+# JSM_STUDIO_ACTION {"id":"left","zh":"向左移动","en":"Move left","group":"move","key":"A","button":"LLEFT","gesture":"press","modifier":"","confirmed":false}
+# JSM_STUDIO_ACTION {"id":"right","zh":"向右移动","en":"Move right","group":"move","key":"D","button":"LRIGHT","gesture":"press","modifier":"","confirmed":false}
+# JSM_STUDIO_ACTION {"id":"sprint","zh":"冲刺","en":"Sprint","group":"move","key":"LSHIFT","button":"L3","gesture":"press","modifier":"","confirmed":false}
+# JSM_STUDIO_ACTION {"id":"jump","zh":"跳跃 / 翻越","en":"Jump / vault","group":"move","key":"SPACE","button":"S","gesture":"press","modifier":"","confirmed":false}
+# JSM_STUDIO_ACTION {"id":"crouch","zh":"蹲下 / 滑铲","en":"Crouch / slide","group":"move","key":"C","button":"E","gesture":"press","modifier":"","confirmed":false}
+# JSM_STUDIO_ACTION {"id":"prone","zh":"卧倒","en":"Prone","group":"move","key":"Z","button":"E","gesture":"hold","modifier":"","confirmed":false}
+# JSM_STUDIO_ACTION {"id":"fire","zh":"开火","en":"Fire","group":"combat","key":"LMOUSE","button":"ZR","gesture":"press","modifier":"","confirmed":false}
+# JSM_STUDIO_ACTION {"id":"aim","zh":"瞄准","en":"Aim down sights","group":"combat","key":"RMOUSE","button":"ZL","gesture":"press","modifier":"","confirmed":false}
+# JSM_STUDIO_ACTION {"id":"reload","zh":"换弹","en":"Reload","group":"combat","key":"R","button":"W","gesture":"press","modifier":"","confirmed":false}
+# JSM_STUDIO_ACTION {"id":"interact","zh":"交互 / 拾取","en":"Interact / pick up","group":"combat","key":"F","button":"W","gesture":"hold","modifier":"","confirmed":false}
+# JSM_STUDIO_ACTION {"id":"weapon","zh":"切换武器","en":"Switch weapon","group":"combat","key":"SCROLLDOWN","button":"N","gesture":"press","modifier":"","confirmed":false}
+# JSM_STUDIO_ACTION {"id":"melee","zh":"近战","en":"Melee","group":"combat","key":"V","button":"R3","gesture":"press","modifier":"","confirmed":false}
+# JSM_STUDIO_ACTION {"id":"gadget","zh":"投掷 / 装备","en":"Throw / equipment","group":"equipment","key":"G","button":"R","gesture":"press","modifier":"","confirmed":false}
+# JSM_STUDIO_ACTION {"id":"ability","zh":"干员技能","en":"Operator ability","group":"equipment","key":"E","button":"L","gesture":"press","modifier":"","confirmed":false}
+# JSM_STUDIO_ACTION {"id":"heal","zh":"治疗","en":"Heal","group":"equipment","key":"H","button":"UP","gesture":"press","modifier":"","confirmed":false}
+# JSM_STUDIO_ACTION {"id":"ping","zh":"标记","en":"Ping","group":"equipment","key":"MMOUSE","button":"RIGHT","gesture":"press","modifier":"","confirmed":false}
+# JSM_STUDIO_ACTION {"id":"inventory","zh":"背包","en":"Inventory","group":"menu","key":"TAB","button":"DOWN","gesture":"press","modifier":"","confirmed":false}
+# JSM_STUDIO_ACTION {"id":"map","zh":"地图","en":"Map","group":"menu","key":"M","button":"-","gesture":"press","modifier":"","confirmed":false}
+# JSM_STUDIO_ACTION {"id":"menu","zh":"暂停 / 返回","en":"Pause / back","group":"menu","key":"ESC","button":"+","gesture":"press","modifier":"","confirmed":false}
+
+RESET_MAPPINGS
+AUTOCONNECT = ON
+TELEMETRY_ENABLED = ON
+TELEMETRY_PORT = 8974
+GYRO_SPACE = LOCAL
+GYRO_OUTPUT = MOUSE
+GYRO_SENS = 1 1
+MOUSE_X_FROM_GYRO_AXIS = Y
+MOUSE_Y_FROM_GYRO_AXIS = X
+GYRO_ON = ZL
+LEFT_STICK_MODE = NO_MOUSE
+RIGHT_STICK_MODE = AIM
+STICK_SENS = 180 180
+STICK_POWER = 1.5
+HOLD_PRESS_TIME = 0.22
+ZL_MODE = NO_FULL
+ZR_MODE = NO_FULL
+LUP = W
+LDOWN = S
+LLEFT = A
+LRIGHT = D
+L3 = LSHIFT
+S = SPACE
+E = C Z
+ZR = LMOUSE
+ZL = RMOUSE
+W = R F
+N = SCROLLDOWN
+R3 = V
+R = G
+L = E
+UP = H
+RIGHT = MMOUSE
+DOWN = TAB
+- = M
++ = ESC

@@ -1,12 +1,12 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "JSM Studio",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "identifier": "com.hotuns.jsmstudio",
   "build": {
-    "beforeDevCommand": "npm run build:sidecars && npm run dev:web",
+    "beforeDevCommand": "npm run verify:drivers && npm run build:sidecars && npm run dev:web",
     "devUrl": "http://127.0.0.1:1420",
-    "beforeBuildCommand": "npm run build:sidecars && npm run build:web",
+    "beforeBuildCommand": "npm run verify:drivers && npm run build:sidecars && npm run build:web",
     "frontendDist": "../dist"
   },
   "app": {
@@ -30,7 +30,8 @@
       "icons/icon.ico"
     ],
     "resources": {
-      "bin": "bin"
+      "bin": "bin",
+      "drivers": "drivers"
     },
     "targets": "all"
   },

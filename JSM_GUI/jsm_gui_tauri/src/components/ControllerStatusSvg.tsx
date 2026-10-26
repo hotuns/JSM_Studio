@@ -93,23 +93,23 @@ const BACK_INPUT_TITLES: Record<PaddleCommand, string> = {
   RSL: 'Secondary right back paddle / Joy-Con R SL',
 }
 
-// Original generic artwork with an Xbox-style asymmetric stick layout.
+// Unbranded front-view line artwork; coordinates retain the live input hit targets.
 const GENERIC_PATHS = {
-  shell: 'M235 185 C180 185 145 225 125 300 L55 605 C35 705 90 765 155 735 L345 655 C375 620 410 610 445 610 H675 C710 610 745 625 775 655 L960 735 C1025 765 1085 705 1060 605 L990 300 C970 225 935 185 880 185 Z',
-  leftGrip: 'M135 370 L88 610 C73 670 95 701 124 692 L292 565',
-  rightGrip: 'M980 370 L1027 610 C1042 670 1020 701 991 692 L823 565',
-  leftTrigger: 'M230 30 H330 Q350 30 350 50 V105 H210 V50 Q210 30 230 30 Z',
-  rightTrigger: 'M785 30 H885 Q905 30 905 50 V105 H765 V50 Q765 30 785 30 Z',
-  leftBumper: 'M202 125 H358 Q378 125 378 145 V167 H182 V145 Q182 125 202 125 Z',
-  rightBumper: 'M757 125 H913 Q933 125 933 145 V167 H737 V145 Q737 125 757 125 Z',
-  dpadUp: 'M388 424 H432 V472 L410 493 L388 472 Z',
-  dpadDown: 'M388 586 H432 V538 L410 517 L388 538 Z',
-  dpadLeft: 'M329 483 V527 H377 L398 505 L377 483 Z',
-  dpadRight: 'M491 483 V527 H443 L422 505 L443 483 Z',
-  view: 'M463 336 H507 Q521 336 521 350 V360 Q521 374 507 374 H463 Q449 374 449 360 V350 Q449 336 463 336 Z',
-  menu: 'M608 336 H652 Q666 336 666 350 V360 Q666 374 652 374 H608 Q594 374 594 360 V350 Q594 336 608 336 Z',
-  share: 'M526 398 H589 Q603 398 603 412 V422 Q603 436 589 436 H526 Q512 436 512 422 V412 Q512 398 526 398 Z',
-  mic: 'M535 462 H580 Q592 462 592 474 V480 Q592 492 580 492 H535 Q523 492 523 480 V474 Q523 462 535 462 Z',
+  shell: 'M184 140 C169 149 112 292 70 452 C41 557 58 622 112 650 C139 664 171 663 194 649 L324 576 Q339 567 359 567 H753 Q772 567 789 576 L919 649 C958 674 1002 653 1030 622 C1070 577 1080 539 1064 473 C1038 354 992 211 942 141 C932 127 919 119 901 113 L767 87 L737 104 H394 L359 84 C300 86 235 104 184 140 Z',
+  leftGrip: 'M184 140 C231 122 296 121 359 120 H755 C822 120 884 125 940 143',
+  rightGrip: 'M418 104 L414 120 M705 104 L707 120 M469 109 H491 M499 107 V113 M506 107 V113 M513 107 V113',
+  leftTrigger: 'M204 104 L240 40 Q250 27 277 27 Q291 27 298 40 L314 72 C269 77 234 88 204 104 Z',
+  rightTrigger: 'M813 72 L828 39 Q834 24 855 26 Q881 27 890 40 L925 104 C890 87 852 78 813 72 Z',
+  leftBumper: 'M185 138 Q210 86 359 67 L393 88 H418 L414 120 H394 L359 94 Q256 94 194 146 Q179 154 185 138 Z',
+  rightBumper: 'M705 88 H737 L767 67 Q890 73 935 131 Q948 149 932 147 Q873 108 767 94 L738 120 H707 Z',
+  dpadUp: 'M399 432 V404 Q399 393 411 392 H437 Q449 393 449 404 V432 Z',
+  dpadDown: 'M399 480 H449 V508 Q449 519 437 520 H411 Q399 519 399 508 Z',
+  dpadLeft: 'M399 432 H371 Q349 432 348 444 V468 Q349 480 371 480 H399 Z',
+  dpadRight: 'M449 432 H477 Q499 432 500 444 V468 Q499 480 477 480 H449 Z',
+  view: 'M482 276 A24 24 0 1 1 482 324 A24 24 0 1 1 482 276 Z',
+  menu: 'M642 276 A24 24 0 1 1 642 324 A24 24 0 1 1 642 276 Z',
+  share: 'M545 339 H579 Q591 339 591 350 V358 Q591 369 579 369 H545 Q533 369 533 358 V350 Q533 339 545 339 Z',
+  mic: 'M539 406 H585 Q597 406 597 418 V424 Q597 436 585 436 H539 Q527 436 527 424 V418 Q527 406 539 406 Z',
 } as const
 
 const join = (...parts: Array<string | false | null | undefined>) => parts.filter(Boolean).join(' ')
@@ -170,6 +170,8 @@ function ShellArtwork() {
       <path className={styles.shell} d={GENERIC_PATHS.shell} />
       <path className={styles.shellLine} d={GENERIC_PATHS.leftGrip} />
       <path className={styles.shellLine} d={GENERIC_PATHS.rightGrip} />
+      <circle className={styles.detailLine} cx={424} cy={456} r={77} />
+      <rect className={styles.detailLine} x={402} y={435} width={44} height={42} rx={3} />
     </g>
   )
 }
@@ -251,8 +253,14 @@ function PathButton({
         x={labelX}
         y={labelY}
       >
-        {label}
+        {label === '▱' ? '' : label}
       </text>
+      {label === '▱' && (
+        <g className={join(styles.buttonIcon, (selected || pressed) && styles.buttonIconActive)} aria-hidden="true">
+          <rect x={labelX - 12} y={labelY - 9} width={19} height={14} rx={1} />
+          <rect x={labelX - 5} y={labelY - 3} width={19} height={14} rx={1} />
+        </g>
+      )}
     </g>
   )
 }
@@ -354,7 +362,7 @@ function Stick({
   title,
 }: StickProps) {
   const knobX = cx + clamp(x, -1, 1) * 27
-  const knobY = cy + clamp(-y, -1, 1) * 27
+  const knobY = cy + 16 + clamp(-y, -1, 1) * 27
 
   return (
     <g className={join(muted && styles.sideMuted, onSelect && styles.interactive)} onClick={onSelect}>
@@ -363,9 +371,10 @@ function Stick({
         className={join(styles.stickBase, bound && styles.stickBaseBound, selected && styles.stickBaseSelected)}
         cx={cx}
         cy={cy}
-        r={87}
+        r={76}
       />
-      <circle className={join(styles.stickRing, bound && styles.stickRingBound)} cx={cx} cy={cy} r={57} />
+      <circle className={join(styles.stickRing, bound && styles.stickRingBound)} cx={cx} cy={cy} r={64} />
+      <circle className={styles.stickRing} cx={knobX} cy={knobY - 8} r={55} />
       <circle
         className={join(
           styles.stickKnob,
@@ -374,7 +383,7 @@ function Stick({
         )}
         cx={knobX}
         cy={knobY}
-        r={38}
+        r={40}
       />
     </g>
   )
@@ -419,7 +428,7 @@ export function ControllerStatusSvg({
     <div className={styles.visualizer}>
       <svg
         className={styles.controllerSvg}
-        viewBox="0 0 1117 795"
+        viewBox={visiblePaddleCommands.length ? "0 0 1117 780" : "0 0 1117 700"}
         role="img"
         aria-label="Generic gamepad with Xbox-style asymmetric sticks"
       >
@@ -427,12 +436,12 @@ export function ControllerStatusSvg({
 
         <TriggerPath
           d={GENERIC_PATHS.leftTrigger}
-          fillX={225}
-          fillY={85}
-          fillWidth={110}
+          fillX={245}
+          fillY={55}
+          fillWidth={42}
           label={leftTriggerLabel}
-          labelX={280}
-          labelY={58}
+          labelX={270}
+          labelY={46}
           value={leftTrigger}
           muted={!hasLeftSide}
           bound={leftTriggerBound}
@@ -445,8 +454,9 @@ export function ControllerStatusSvg({
         <PathButton
           d={GENERIC_PATHS.leftBumper}
           label="LB"
-          labelX={280}
-          labelY={146}
+          compact
+          labelX={270}
+          labelY={107}
           pressed={pressed.has('L')}
           muted={!hasLeftSide}
           bound={boundCommands?.has('L')}
@@ -457,12 +467,12 @@ export function ControllerStatusSvg({
 
         <TriggerPath
           d={GENERIC_PATHS.rightTrigger}
-          fillX={780}
-          fillY={85}
-          fillWidth={110}
+          fillX={837}
+          fillY={55}
+          fillWidth={42}
           label={rightTriggerLabel}
-          labelX={835}
-          labelY={58}
+          labelX={860}
+          labelY={46}
           value={rightTrigger}
           muted={!hasRightSide}
           bound={rightTriggerBound}
@@ -475,8 +485,9 @@ export function ControllerStatusSvg({
         <PathButton
           d={GENERIC_PATHS.rightBumper}
           label="RB"
-          labelX={835}
-          labelY={146}
+          compact
+          labelX={860}
+          labelY={107}
           pressed={pressed.has('R')}
           muted={!hasRightSide}
           bound={boundCommands?.has('R')}
@@ -488,7 +499,7 @@ export function ControllerStatusSvg({
         <g className={join(!hasLeftSide && styles.sideMuted)}>
           <PathButton
             d={GENERIC_PATHS.dpadUp}
-            label="U"
+            label=""
             labelX={410}
             labelY={450}
             pressed={pressed.has('UP')}
@@ -499,7 +510,7 @@ export function ControllerStatusSvg({
           />
           <PathButton
             d={GENERIC_PATHS.dpadLeft}
-            label="L"
+            label=""
             labelX={355}
             labelY={505}
             pressed={pressed.has('LEFT')}
@@ -510,7 +521,7 @@ export function ControllerStatusSvg({
           />
           <PathButton
             d={GENERIC_PATHS.dpadRight}
-            label="R"
+            label=""
             labelX={465}
             labelY={505}
             pressed={pressed.has('RIGHT')}
@@ -521,7 +532,7 @@ export function ControllerStatusSvg({
           />
           <PathButton
             d={GENERIC_PATHS.dpadDown}
-            label="D"
+            label=""
             labelX={410}
             labelY={560}
             pressed={pressed.has('DOWN')}
@@ -532,9 +543,9 @@ export function ControllerStatusSvg({
           />
           <PathButton
             d={GENERIC_PATHS.view}
-            label="View"
-            labelX={485}
-            labelY={355}
+            label="▱"
+            labelX={482}
+            labelY={300}
             pressed={pressed.has('-')}
             compact
             bound={boundCommands?.has('-')}
@@ -547,9 +558,9 @@ export function ControllerStatusSvg({
         <PathButton
           d={GENERIC_PATHS.share}
           compact
-          label="Share"
-          labelX={557.5}
-          labelY={417}
+          label="↑"
+          labelX={562}
+          labelY={354}
           pressed={pressed.has('CAPTURE')}
           muted={!hasAnySide}
           bound={boundCommands?.has('CAPTURE')}
@@ -560,8 +571,8 @@ export function ControllerStatusSvg({
 
         <g className={join(!hasRightSide && styles.sideMuted)}>
           <ButtonBubble
-            cx={875}
-            cy={260}
+            cx={830}
+            cy={228}
             radius={34.957}
             label="Y"
             pressed={pressed.has('N')}
@@ -571,8 +582,8 @@ export function ControllerStatusSvg({
             title="North face button"
           />
           <ButtonBubble
-            cx={945}
-            cy={330}
+            cx={900}
+            cy={298}
             radius={34.957}
             label="B"
             pressed={pressed.has('E')}
@@ -582,8 +593,8 @@ export function ControllerStatusSvg({
             title="East face button"
           />
           <ButtonBubble
-            cx={875}
-            cy={400}
+            cx={830}
+            cy={360}
             radius={34.957}
             label="A"
             pressed={pressed.has('S')}
@@ -593,8 +604,8 @@ export function ControllerStatusSvg({
             title="South face button"
           />
           <ButtonBubble
-            cx={805}
-            cy={330}
+            cx={760}
+            cy={298}
             radius={34.957}
             label="X"
             pressed={pressed.has('W')}
@@ -605,9 +616,9 @@ export function ControllerStatusSvg({
           />
           <PathButton
             d={GENERIC_PATHS.menu}
-            label="Menu"
-            labelX={630}
-            labelY={355}
+            label="≡"
+            labelX={642}
+            labelY={300}
             pressed={pressed.has('+')}
             compact
             bound={boundCommands?.has('+')}
@@ -618,8 +629,8 @@ export function ControllerStatusSvg({
         </g>
 
         <Stick
-          cx={280}
-          cy={330}
+          cx={292}
+          cy={298}
           x={leftStickX}
           y={leftStickY}
           pressed={pressed.has('L3')}
@@ -634,8 +645,8 @@ export function ControllerStatusSvg({
           title="Left stick"
         />
         <Stick
-          cx={720}
-          cy={505}
+          cx={698}
+          cy={450}
           x={rightStickX}
           y={rightStickY}
           pressed={pressed.has('R3')}
@@ -671,10 +682,10 @@ export function ControllerStatusSvg({
         })}
 
         <ButtonBubble
-          cx={557.5}
-          cy={268}
-          radius={32}
-          label="⌂"
+          cx={562}
+          cy={200}
+          radius={24}
+          label=""
           pressed={pressed.has('HOME')}
           muted={!hasRightSide}
           bound={boundCommands?.has('HOME')}
@@ -686,8 +697,8 @@ export function ControllerStatusSvg({
           <PathButton
             d={GENERIC_PATHS.mic}
             label="MIC"
-            labelX={557.5}
-            labelY={477}
+            labelX={562}
+            labelY={421}
             pressed={pressed.has('MIC')}
             muted={!hasRightSide}
             compact

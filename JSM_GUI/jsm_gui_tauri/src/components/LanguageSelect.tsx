@@ -4,17 +4,18 @@ import { type AppLanguage } from '../i18n/language'
 
 type LanguageSelectProps = {
   className?: string
+  showIcon?: boolean
 }
 
 const LANGUAGE_OPTIONS: AppLanguage[] = ['en', 'zh-CN']
 
-export function LanguageSelect({ className = '' }: LanguageSelectProps) {
+export function LanguageSelect({ className = '', showIcon = true }: LanguageSelectProps) {
   const { t } = useTranslation()
   const { language, setLanguage } = useAppLanguage()
 
   return (
     <label className={className}>
-      <span className="language-select-icon" aria-hidden="true">
+      {showIcon && <span className="language-select-icon" aria-hidden="true">
         <svg viewBox="0 0 24 24" focusable="false">
           <path d="M4 5h10" />
           <path d="M9 3v2" />
@@ -23,7 +24,7 @@ export function LanguageSelect({ className = '' }: LanguageSelectProps) {
           <path d="M13 19l4-9 4 9" />
           <path d="M14.4 16h5.2" />
         </svg>
-      </span>
+      </span>}
       <select
         className="app-select"
         aria-label={t('language.label')}

@@ -5,7 +5,7 @@ type Theme = 'dark' | 'light'
 const STORAGE_KEY = 'jsm-theme'
 
 export function useTheme() {
-  const [theme, setTheme] = useState<Theme>('dark')
+  const [theme, setTheme] = useState<Theme>('light')
 
   const apply = useCallback((next: Theme, broadcast = true) => {
     setTheme(next)
@@ -18,7 +18,7 @@ export function useTheme() {
 
   useEffect(() => {
     const stored = (localStorage.getItem(STORAGE_KEY) as Theme | null)
-    const initial = stored ?? 'dark'
+    const initial = stored === 'dark' ? 'dark' : 'light'
     apply(initial, false)
 
     const onStorage = (event: StorageEvent) => {

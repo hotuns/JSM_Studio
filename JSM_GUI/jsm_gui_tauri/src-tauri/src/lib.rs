@@ -18,17 +18,24 @@ pub fn run() {
                 eprintln!("Failed to initialize Tauri runtime files: {error}");
             }
             telemetry::start(app.handle().clone(), state.clone());
+            services::cursor_switch::start(app.handle().clone(), state.clone());
             if let Err(error) = jsm_process::launch_jsm(&app.handle(), &state) {
                 eprintln!("Failed to auto-launch JoyShockMapper from Tauri: {error}");
             }
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
+            commands::get_components_status,
+            commands::install_driver,
+            commands::open_component_tool,
+            commands::manage_hidhide,
             commands::launch_jsm,
             commands::terminate_jsm,
             commands::minimize_temporarily,
             commands::apply_profile,
             commands::get_runtime_mapping_state,
+            commands::get_cursor_switch_state,
+            commands::save_cursor_switch_settings,
             commands::set_mapping_enabled,
             commands::set_autoload_enabled,
             commands::list_autoload_rules,
@@ -43,6 +50,7 @@ pub fn run() {
             commands::get_active_profile,
             commands::activate_library_profile,
             commands::library_create_profile,
+            commands::library_create_saved_profile,
             commands::library_rename_profile,
             commands::library_delete_profile,
             commands::library_copy_active_profile,

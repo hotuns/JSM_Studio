@@ -1,6 +1,14 @@
+import { settingsEn } from '../settings'
+import { communityEn } from '../community'
+import { cursorSwitchEn } from '../cursorSwitch'
+import { studioEn } from '../studio'
 import { motionEn } from '../motion'
 
 export const en = {
+  settings: settingsEn,
+  communityProfiles: communityEn,
+  studio: studioEn,
+  cursorSwitch: cursorSwitchEn,
   motion: motionEn,
   common: {
     appName: 'JSM Studio',
@@ -105,7 +113,6 @@ export const en = {
       touchpad: 'Touchpad',
       sticks: 'Sticks',
       controllerStatus: 'Controller Status',
-      documentation: 'JSM Documentation',
     },
     tabs: {
       status: 'Status',
@@ -163,7 +170,7 @@ export const en = {
   },
   autoload: {
     title: 'Auto switch',
-    description: 'Bind game executable names to profiles. JoyShockMapper switches when that .exe becomes the foreground window.',
+    description: 'Use a global cursor profile based on system cursor visibility, or configure per-application switching.',
     toggleLabel: 'Switch by game',
     toggleDescription: 'Uses JSM AUTOLOAD. Keep mapping enabled for these rules to take effect.',
     enabled: 'Enabled',
@@ -188,14 +195,6 @@ export const en = {
     selectProfile: 'Select profile',
     advancedNote: 'Hand-written AutoLoad file',
     refresh: 'Refresh',
-  },
-  help: {
-    title: 'JSM Documentation',
-    searchDocumentation: 'Search documentation',
-    searchPlaceholder: 'Search commands, settings, topics…',
-    findStatusMatches: '{{current}} / {{total}} matches',
-    findStatusNoMatches: 'No matches',
-    findStatusTypeToFind: 'Type to find in documentation',
   },
   profiles: {
     unsavedChangesWarning: 'Unsaved changes on current profile',

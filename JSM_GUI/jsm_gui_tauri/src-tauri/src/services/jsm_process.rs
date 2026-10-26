@@ -92,6 +92,8 @@ pub fn launch_jsm(app: &AppHandle, state: &AppState) -> Result<(), String> {
         }
     };
 
+    state.engine_revision.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+    *state.applied_profile.lock().map_err(|_| "Profile lock poisoned".to_string())? = None;
     process_state.child = Some(child);
     #[cfg(target_os = "windows")]
     {
@@ -112,6 +114,7 @@ pub fn terminate_jsm(app: &AppHandle, state: &AppState) -> Result<(), String> {
         process_state.child.take()
     };
 
+    state.engine_revision.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
     if let Some(mut child) = child {
         let _ = child.kill();
         let _ = child.wait();

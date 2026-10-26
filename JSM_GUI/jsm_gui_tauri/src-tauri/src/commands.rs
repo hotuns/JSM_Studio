@@ -8,6 +8,45 @@ use crate::{
 };
 
 type CommandResult<T> = Result<T, String>;
+#[tauri::command]
+pub async fn install_driver(
+    app: AppHandle,
+    kind: String,
+) -> CommandResult<crate::services::installers::InstallResult> {
+    tauri::async_runtime::spawn_blocking(move || crate::services::installers::install(&app, &kind))
+        .await
+        .map_err(|e| e.to_string())?
+}
+#[tauri::command]
+pub fn open_component_tool(kind: String) -> CommandResult<()> {
+    crate::services::components::open_tool(&kind)
+}
+#[tauri::command]
+pub async fn get_components_status(
+    app: AppHandle,
+) -> CommandResult<crate::services::components::ComponentsStatus> {
+    tauri::async_runtime::spawn_blocking(move || crate::services::components::get_status(&app))
+        .await
+        .map_err(|e| e.to_string())?
+}
+#[tauri::command]
+pub async fn manage_hidhide(
+    app: AppHandle,
+    action: String,
+    device_id: Option<String>,
+    xinput: Option<bool>,
+) -> CommandResult<crate::services::components::ComponentsStatus> {
+    tauri::async_runtime::spawn_blocking(move || {
+        crate::services::components::manage(
+            &app,
+            &action,
+            device_id.as_deref().unwrap_or(""),
+            xinput.unwrap_or(false),
+        )
+    })
+    .await
+    .map_err(|e| e.to_string())?
+}
 const PROFILE_INJECTION_ATTEMPTS: usize = 3;
 const PROFILE_INJECTION_RETRY_DELAY_MS: u64 = 150;
 const CONTROLLER_LIST_ATTEMPTS: usize = 5;
@@ -103,6 +142,10 @@ pub fn launch_jsm(
     state: State<'_, AppState>,
     calibration_seconds: Option<u32>,
 ) -> CommandResult<()> {
+    let _engine_gate = state
+        .engine_gate
+        .lock()
+        .map_err(|_| "Engine lock poisoned".to_string())?;
     if let Some(seconds) = calibration_seconds {
         runtime::write_calibration_seconds(&app, seconds)?;
     }
@@ -111,6 +154,10 @@ pub fn launch_jsm(
 
 #[tauri::command]
 pub fn terminate_jsm(app: AppHandle, state: State<'_, AppState>) -> CommandResult<()> {
+    let _engine_gate = state
+        .engine_gate
+        .lock()
+        .map_err(|_| "Engine lock poisoned".to_string())?;
     jsm_process::terminate_jsm(&app, state.inner())
 }
 
@@ -137,9 +184,23 @@ pub fn apply_profile(
     profile_path: Option<String>,
     text: String,
 ) -> CommandResult<ApplyProfileResult> {
+    let _engine_gate = state
+        .engine_gate
+        .lock()
+        .map_err(|_| "Engine lock poisoned".to_string())?;
     let path = runtime::write_active_profile(&app, profile_path.as_deref(), &text)?;
     let runtime_state = runtime::get_runtime_mapping_state(&app)?;
     if !runtime_state.mapping_enabled {
+        state
+            .engine_revision
+            .fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+        state
+            .calibration_profile_active
+            .store(false, std::sync::atomic::Ordering::SeqCst);
+        *state
+            .applied_profile
+            .lock()
+            .map_err(|_| "Profile lock poisoned".to_string())? = Some((path.clone(), text.clone()));
         return Ok(ApplyProfileResult {
             restarted: false,
             path: Some(path),
@@ -162,11 +223,37 @@ pub fn apply_profile(
         restarted = true;
     }
 
+    *state
+        .applied_profile
+        .lock()
+        .map_err(|_| "Profile lock poisoned".to_string())? = Some((path.clone(), text.clone()));
+    state
+        .engine_revision
+        .fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+    state
+        .calibration_profile_active
+        .store(false, std::sync::atomic::Ordering::SeqCst);
     Ok(ApplyProfileResult {
         restarted,
         path: Some(path),
         mapping_enabled: true,
     })
+}
+
+#[tauri::command]
+pub fn get_cursor_switch_state(
+    state: State<'_, AppState>,
+) -> CommandResult<crate::services::cursor_switch::CursorSwitchState> {
+    crate::services::cursor_switch::get_state(state.inner())
+}
+
+#[tauri::command]
+pub fn save_cursor_switch_settings(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    settings: crate::services::cursor_switch::CursorSwitchSettings,
+) -> CommandResult<crate::services::cursor_switch::CursorSwitchState> {
+    crate::services::cursor_switch::save_settings(&app, state.inner(), settings)
 }
 
 #[tauri::command]
@@ -180,7 +267,18 @@ pub fn set_mapping_enabled(
     state: State<'_, AppState>,
     enabled: bool,
 ) -> CommandResult<runtime::RuntimeMappingState> {
+    let _engine_gate = state
+        .engine_gate
+        .lock()
+        .map_err(|_| "Engine lock poisoned".to_string())?;
     let runtime_state = runtime::set_mapping_enabled(&app, enabled)?;
+    state
+        .engine_revision
+        .fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+    *state
+        .applied_profile
+        .lock()
+        .map_err(|_| "Profile lock poisoned".to_string())? = None;
     apply_runtime_mapping_state(&app, state.inner(), &runtime_state)?;
     Ok(runtime_state)
 }
@@ -191,9 +289,16 @@ pub fn set_autoload_enabled(
     state: State<'_, AppState>,
     enabled: bool,
 ) -> CommandResult<runtime::RuntimeMappingState> {
+    let _engine_gate = state
+        .engine_gate
+        .lock()
+        .map_err(|_| "Engine lock poisoned".to_string())?;
     let runtime_state = runtime::set_autoload_enabled(&app, enabled)?;
     if jsm_process::is_running(state.inner())? {
-        let command = if runtime_state.mapping_enabled && runtime_state.autoload_enabled {
+        let command = if runtime_state.mapping_enabled
+            && runtime_state.autoload_enabled
+            && !crate::services::cursor_switch::get_state(state.inner())?.override_active
+        {
             "AUTOLOAD = ON"
         } else {
             "AUTOLOAD = OFF"
@@ -285,6 +390,10 @@ pub fn recalibrate_gyro(
     app: AppHandle,
     state: State<'_, AppState>,
 ) -> CommandResult<SimpleSuccessResult> {
+    let _engine_gate = state
+        .engine_gate
+        .lock()
+        .map_err(|_| "Engine lock poisoned".to_string())?;
     runtime::ensure_required_files(&app)?;
     let success =
         jsm_process::inject_console_command(&app, state.inner(), runtime::CALIBRATION_COMMAND)?;
@@ -350,6 +459,16 @@ pub fn activate_library_profile(app: AppHandle, name: String) -> CommandResult<N
 }
 
 #[tauri::command]
+pub fn library_create_saved_profile(
+    app: AppHandle,
+    name: String,
+    content: String,
+) -> CommandResult<NamedProfile> {
+    let (path, content) = runtime::create_saved_library_profile(&app, &name, &content)?;
+    Ok(named_profile(path, content))
+}
+
+#[tauri::command]
 pub fn library_create_profile(
     app: AppHandle,
     preferred_base_name: Option<String>,
@@ -393,6 +512,10 @@ pub fn load_calibration_preset(
     app: AppHandle,
     state: State<'_, AppState>,
 ) -> CommandResult<CalibrationPresetLoadResult> {
+    let _engine_gate = state
+        .engine_gate
+        .lock()
+        .map_err(|_| "Engine lock poisoned".to_string())?;
     runtime::ensure_required_files(&app)?;
     let (active_profile, _) = runtime::get_active_profile(&app)?;
     let success = if runtime::calibration_preset_exists(&app)? {
@@ -404,6 +527,14 @@ pub fn load_calibration_preset(
     } else {
         false
     };
+    if success {
+        state
+            .engine_revision
+            .fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+    }
+    state
+        .calibration_profile_active
+        .store(success, std::sync::atomic::Ordering::SeqCst);
     Ok(CalibrationPresetLoadResult {
         success,
         active_profile: Some(active_profile),
@@ -436,6 +567,10 @@ pub fn run_calibration_command(
     state: State<'_, AppState>,
     command: String,
 ) -> CommandResult<CalibrationCommandResult> {
+    let _engine_gate = state
+        .engine_gate
+        .lock()
+        .map_err(|_| "Engine lock poisoned".to_string())?;
     runtime::ensure_required_files(&app)?;
     let result = jsm_process::run_console_command_with_output(&app, state.inner(), &command)?;
     Ok(CalibrationCommandResult {
@@ -615,6 +750,10 @@ pub fn set_backend_choice(
     state: State<'_, AppState>,
     choice: String,
 ) -> CommandResult<SetBackendChoiceResult> {
+    let _engine_gate = state
+        .engine_gate
+        .lock()
+        .map_err(|_| "Engine lock poisoned".to_string())?;
     if choice != "SDL" && choice != "legacy" {
         let backend = runtime::read_backend_choice(&app)?;
         return Ok(SetBackendChoiceResult {

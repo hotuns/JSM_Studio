@@ -1,96 +1,16 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { desktopBridge } from '../platform/desktopBridge'
+import { useSoftwareUpdate } from '../hooks/useSoftwareUpdate'
 import styles from './Misc.module.css'
 
-type UpdateState =
-  | { phase: 'idle' }
-  | { phase: 'available'; version: string }
-  | { phase: 'downloading' }
-  | { phase: 'error' }
-  | { phase: 'ready' }
-
-export function UpdateBanner() {
+export function UpdateBanner({ onSettings }: { onSettings: () => void }) {
   const { t } = useTranslation()
-  const [update, setUpdate] = useState<UpdateState>({ phase: 'idle' })
-  const [dismissed, setDismissed] = useState(false)
-  const [progress, setProgress] = useState(0)
-
-  useEffect(() => {
-    const removeAvailable = desktopBridge.onUpdateAvailable((version) => {
-      setUpdate({ phase: 'available', version })
-      setDismissed(false)
-    })
-    const removeProgress = desktopBridge.onUpdateDownloadProgress((percent) => {
-      setProgress(percent)
-    })
-    const removeDownloaded = desktopBridge.onUpdateDownloaded(() => {
-      setUpdate({ phase: 'ready' })
-    })
-    const checkTimer = window.setTimeout(() => {
-      void desktopBridge.checkForUpdates()
-    }, 1500)
-    return () => {
-      window.clearTimeout(checkTimer)
-      removeAvailable?.()
-      removeProgress?.()
-      removeDownloaded?.()
-    }
-  }, [])
-
-  if (update.phase === 'idle' || dismissed) return null
-
-  return (
-    <div className={styles.updateBanner}>
-      {update.phase === 'available' && (
-        <>
-          <span>{t('update.available', { version: update.version })}</span>
-          <div className={styles.updateBannerActions}>
-            <button
-              type="button"
-              className="primary-btn"
-              onClick={() => {
-                setUpdate({ phase: 'downloading' })
-                void desktopBridge.downloadUpdate().catch(error => {
-                  console.error('Failed to download JSM Studio update', error)
-                  setUpdate({ phase: 'error' })
-                })
-              }}
-            >
-              {t('update.downloadNow')}
-            </button>
-            <button type="button" className="ghost-btn" onClick={() => setDismissed(true)}>
-              {t('common.later')}
-            </button>
-          </div>
-        </>
-      )}
-      {update.phase === 'downloading' && <span>{t('update.downloading', { percent: progress })}</span>}
-      {update.phase === 'error' && (
-        <>
-          <span>{t('update.failed')}</span>
-          <button type="button" className="ghost-btn" onClick={() => setDismissed(true)}>
-            {t('common.later')}
-          </button>
-        </>
-      )}
-      {update.phase === 'ready' && (
-        <>
-          <span>{t('update.ready')}</span>
-          <button
-            type="button"
-            className="primary-btn"
-            onClick={() => {
-              void desktopBridge.installUpdate().catch(error => {
-                console.error('Failed to install JSM Studio update', error)
-                setUpdate({ phase: 'error' })
-              })
-            }}
-          >
-            {t('update.restartNow')}
-          </button>
-        </>
-      )}
-    </div>
-  )
+  const update = useSoftwareUpdate(true)
+  const [dismissed, setDismissed] = useState<string | null>(null)
+  if (!['available', 'downloading', 'ready', 'installing'].includes(update.phase) || dismissed === update.version) return null
+  return <div className={styles.updateBanner} role="status">
+    <span>{t(update.phase === 'available' ? 'update.available' : update.phase === 'ready' || update.phase === 'installing' ? 'update.ready' : 'update.downloading', { version: update.version, percent: update.percent })}</span>
+    <div className={styles.updateBannerActions}><button type="button" className="secondary-btn" onClick={onSettings}>{t('studio.settings')}</button>
+      <button type="button" className="ghost-btn" onClick={() => setDismissed(update.version)}>{t('common.later')}</button></div>
+  </div>
 }

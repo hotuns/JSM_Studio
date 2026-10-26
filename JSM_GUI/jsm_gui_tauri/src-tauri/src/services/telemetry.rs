@@ -87,6 +87,7 @@ pub fn emit_calibration_status(
 }
 
 pub fn stop_calibration_countdown(app: &AppHandle, state: &AppState) -> Result<(), String> {
+    state.calibrating.store(false, Ordering::SeqCst);
     state.calibration_generation.fetch_add(1, Ordering::SeqCst);
     emit_calibration_status(
         app,
@@ -107,6 +108,7 @@ pub fn start_calibration_countdown(
     }
 
     let generation = state.calibration_generation.fetch_add(1, Ordering::SeqCst) + 1;
+    state.calibrating.store(true, Ordering::SeqCst);
     emit_calibration_status(
         &app,
         CalibrationStatusPayload {
@@ -132,6 +134,7 @@ pub fn start_calibration_countdown(
                     },
                 );
             } else {
+                state.calibrating.store(false, Ordering::SeqCst);
                 let _ = emit_calibration_status(
                     &app,
                     CalibrationStatusPayload {

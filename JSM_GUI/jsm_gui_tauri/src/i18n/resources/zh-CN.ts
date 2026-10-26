@@ -1,6 +1,14 @@
+import { settingsZh } from '../settings'
+import { communityZh } from '../community'
+import { cursorSwitchZh } from '../cursorSwitch'
+import { studioZh } from '../studio'
 import { motionZh } from '../motion'
 
 export const zhCN = {
+  settings: settingsZh,
+  communityProfiles: communityZh,
+  studio: studioZh,
+  cursorSwitch: cursorSwitchZh,
   motion: motionZh,
   common: {
     appName: 'JSM Studio',
@@ -105,7 +113,6 @@ export const zhCN = {
       touchpad: '触摸板',
       sticks: '摇杆',
       controllerStatus: '手柄状态',
-      documentation: 'JSM 文档',
     },
     tabs: {
       status: '状态',
@@ -163,7 +170,7 @@ export const zhCN = {
   },
   autoload: {
     title: '自动切换',
-    description: '把游戏的 exe 进程名绑定到配置。当前台窗口切到该 exe 时，JoyShockMapper 会自动切换配置。',
+    description: '按系统光标状态切换全局光标配置，也可设置按程序自动切换。',
     toggleLabel: '按游戏自动切换',
     toggleDescription: '使用 JSM 原生 AUTOLOAD。需要保持映射开启，规则才会生效。',
     enabled: '已开启',
@@ -188,14 +195,6 @@ export const zhCN = {
     selectProfile: '选择配置',
     advancedNote: '手写 AutoLoad 文件',
     refresh: '刷新',
-  },
-  help: {
-    title: 'JSM 文档',
-    searchDocumentation: '搜索文档',
-    searchPlaceholder: '搜索命令、设置、主题…',
-    findStatusMatches: '{{current}} / {{total}} 个匹配',
-    findStatusNoMatches: '没有匹配项',
-    findStatusTypeToFind: '输入内容以在文档中查找',
   },
   profiles: {
     unsavedChangesWarning: '当前配置有未保存更改',

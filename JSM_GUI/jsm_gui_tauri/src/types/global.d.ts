@@ -1,6 +1,12 @@
 declare interface Window {
   __TAURI_INTERNALS__?: unknown
   electronAPI?: {
+    installDriver?: (kind: 'hidhide' | 'vigem') => Promise<{ cancelled: boolean; rebootRequired: boolean; exitCode: number }>
+    openComponentTool?: (kind: 'hidhide' | 'gamepads') => Promise<void>
+    getComponentsStatus?: () => Promise<import('../platform/desktopBridge').ComponentsStatus>
+    manageHidHide?: (action: 'hide' | 'show' | 'allow' | 'restore', deviceId?: string, xinput?: boolean) => Promise<import('../platform/desktopBridge').ComponentsStatus>
+    getCursorSwitchState?: () => Promise<import('../platform/desktopBridge').CursorSwitchState>
+    saveCursorSwitchSettings?: (settings: import('../platform/desktopBridge').CursorSwitchSettings) => Promise<import('../platform/desktopBridge').CursorSwitchState>
     launchJSM: (calibrationSeconds?: number) => Promise<void>
     terminateJSM: () => Promise<void>
     minimizeTemporarily: () => Promise<void>
@@ -16,6 +22,7 @@ declare interface Window {
     getActiveProfile?: () => Promise<{ path: string; name: string; content: string }>
     activateLibraryProfile?: (name: string) => Promise<{ path: string; name: string; content: string }>
     createLibraryProfile?: (preferredBaseName?: string) => Promise<{ path: string; name: string; content: string }>
+    createSavedProfile?: (name: string, content: string) => Promise<{ path: string; name: string; content: string }>
     copyActiveProfile?: () => Promise<{ path: string; name: string; content: string }>
     renameLibraryProfile?: (oldName: string, newName: string) => Promise<{ path: string; name: string; content: string }>
     loadCalibrationPreset?: () => Promise<{ success: boolean; activeProfile?: string; calibrationProfile?: string }>

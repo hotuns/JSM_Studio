@@ -1,13 +1,15 @@
 .page { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
 .heading h1 { margin: 0 0 8px; font-size: 25px; }
 .heading p, .description { color: var(--text-mid); font-size: 13px; line-height: 1.7; margin: 0; font-weight: 400; }
-.nav { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
-.nav button { display: flex; align-items: center; gap: 12px; text-align: left; padding: 15px; border: 1px solid var(--border-1); border-radius: 12px; background: var(--bg-1); color: var(--text-mid); cursor: pointer; }
-.nav button[aria-current='page'] { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 8%, var(--bg-1)); color: var(--text-strong); }
+.nav { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 5px; padding: 6px; border: 1px solid var(--border-1); border-radius: 9px; background: var(--bg-2); }
+.nav button { display: flex; align-items: center; gap: 12px; text-align: left; padding: 12px 15px; border: 0; border-radius: 5px; background: transparent; color: var(--text-mid); cursor: pointer; }
+.nav button[aria-current='page'] { background: color-mix(in srgb, var(--accent) 9%, transparent); color: var(--accent); }
 .nav button:hover { background: var(--bg-btn-hover); }
-.number { color: var(--accent); font-size: 18px; font-variant-numeric: tabular-nums; }
+.number { color: var(--text-muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+.nav button[aria-current='page'] .number { color: var(--accent); }
 .nav strong, .nav small { display: block; }
-.nav small { margin-top: 5px; font-size: 12px; color: var(--text-muted); font-weight: 400; }
+.nav strong { font-size: 12px; font-weight: 600; }
+.nav small { margin-top: 4px; font-size: 11px; color: var(--text-muted); font-weight: 400; }
 .panel { display: flex; flex-direction: column; gap: 18px; }
 .panel > h2 { margin-bottom: 0; }
 .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; gap: 16px; }

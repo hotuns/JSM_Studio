@@ -1,5 +1,5 @@
 use std::{
-    sync::{atomic::AtomicU64, Arc, Mutex},
+    sync::{atomic::{AtomicBool, AtomicU64}, Arc, Mutex},
     time::Instant,
 };
 
@@ -158,6 +158,12 @@ impl Default for TelemetryState {
 
 #[derive(Clone)]
 pub struct AppState {
+    pub engine_gate: Arc<Mutex<()>>,
+    pub engine_revision: Arc<AtomicU64>,
+    pub applied_profile: Arc<Mutex<Option<(String, String)>>>,
+    pub calibrating: Arc<AtomicBool>,
+    pub calibration_profile_active: Arc<AtomicBool>,
+    pub cursor_switch: Arc<Mutex<super::cursor_switch::CursorSwitchState>>,
     pub process: Arc<Mutex<ProcessState>>,
     pub telemetry: Arc<Mutex<TelemetryState>>,
     pub calibration_generation: Arc<AtomicU64>,
@@ -166,6 +172,12 @@ pub struct AppState {
 impl Default for AppState {
     fn default() -> Self {
         Self {
+            engine_gate: Arc::new(Mutex::new(())),
+            engine_revision: Arc::new(AtomicU64::new(0)),
+            applied_profile: Arc::new(Mutex::new(None)),
+            calibrating: Arc::new(AtomicBool::new(false)),
+            calibration_profile_active: Arc::new(AtomicBool::new(false)),
+            cursor_switch: Arc::new(Mutex::new(super::cursor_switch::CursorSwitchState::default())),
             process: Arc::new(Mutex::new(ProcessState::default())),
             telemetry: Arc::new(Mutex::new(TelemetryState::default())),
             calibration_generation: Arc::new(AtomicU64::new(0)),

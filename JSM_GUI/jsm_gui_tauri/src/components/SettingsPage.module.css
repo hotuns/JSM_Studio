@@ -1,0 +1,19 @@
+.page { display:grid; gap:22px; color:var(--text-strong); font-size:13px; }
+.section { padding:24px; background:var(--bg-2); border:1px solid var(--border-1); border-radius:12px; min-width:0; }
+.heading,.actions,.statusLine,.preferences { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+.heading { align-items:flex-start; margin-bottom:16px; } .heading h2 { font-size:19px; margin:0 0 7px; font-weight:650; } .heading p { margin:0; max-width:730px; }
+.page p { color:var(--text-muted); line-height:1.8; } .page small { color:var(--text-muted); line-height:1.7; }
+.drivers { display:grid; grid-template-columns:1fr 1fr; gap:16px; } .driver { border:1px solid var(--border-1); border-radius:9px; padding:20px; background:var(--bg-1); }
+.driver h3 { margin:0; font-size:17px; } .driver .actions { justify-content:flex-start; margin-top:18px; } .driver small { display:block; margin-top:12px; }
+.badge { display:inline-flex; padding:5px 8px; border:1px solid var(--border-1); border-radius:5px; font-size:11px; color:var(--text-muted); background:var(--bg-1-5); }
+.badge[data-ready=true] { color:var(--accent); } .statusLine { justify-content:flex-start; margin:12px 0; }
+.field { display:grid; gap:8px; margin:20px 0; max-width:780px; } .field select { width:100%; padding:11px 12px; border-radius:7px; border:1px solid var(--border-1); background:var(--bg-input); color:var(--text-strong); font:inherit; }
+.check { display:flex; align-items:center; gap:9px; margin:16px 0 7px; } .check input { accent-color:var(--accent); }
+.notice,.error,.success { padding:14px 16px; background:var(--bg-1); border:1px solid var(--border-1); border-left:3px solid var(--accent); border-radius:7px; line-height:1.8; margin:14px 0; overflow-wrap:anywhere; }
+.notice { border-left-color:#b79550; } .error { border-left-color:#c96565; color:#cf7171; } .page .success { color:var(--text-strong); }
+.path { display:block; font-size:11px; color:var(--text-muted); overflow-wrap:anywhere; background:var(--bg-1); padding:10px 12px; border-radius:5px; }
+.page details { margin:14px 0; } .page summary { cursor:pointer; color:var(--text-muted); }
+.page .actions { justify-content:flex-start; } .page button { min-height:34px; font-size:12px; } .updateStatus { font-size:16px; margin:20px 0 14px; }
+.progress { width:100%; height:7px; accent-color:var(--accent); margin:8px 0 16px; } .runtimeGrid { display:grid; grid-template-columns:1fr 1fr; gap:24px; }
+.preferences { justify-content:flex-start; margin:16px 0; } .preferences > div { display:flex; align-items:center; gap:12px; }
+@media(max-width:1050px) { .drivers,.runtimeGrid { grid-template-columns:1fr; } }

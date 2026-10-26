@@ -4,6 +4,10 @@
   gap: 0.7rem;
 }
 
+.externalTools { border: 1px solid var(--border-1); border-radius: 8px; background: var(--bg-2); }
+.externalTools summary { padding: 14px 20px; color: var(--text-muted); cursor: pointer; font-size: 12px; }
+.externalTools > :global(.app-card) { border: 0; border-top: 1px solid var(--border-1); border-radius: 0 0 8px 8px; }
+
 .pageCard,
 .deviceCard {
   display: flex;

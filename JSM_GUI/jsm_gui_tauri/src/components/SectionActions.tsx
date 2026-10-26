@@ -1,3 +1,5 @@
+import { useContext } from 'react'
+import { WorkspaceActionsContext } from './WorkspaceActionsContext'
 import { useTranslation } from 'react-i18next'
 
 type SectionActionsProps = {
@@ -24,6 +26,9 @@ export function SectionActions({
   pendingMessage,
 }: SectionActionsProps) {
   const { t } = useTranslation()
+
+  const centralized = useContext(WorkspaceActionsContext)
+  if (centralized) return null
 
   return (
     <div className={className}>

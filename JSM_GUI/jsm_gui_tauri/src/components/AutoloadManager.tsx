@@ -1,3 +1,4 @@
+import { CursorSwitchPanel } from './CursorSwitchPanel'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { desktopBridge, type AutoloadRule } from '../platform/desktopBridge'
@@ -5,6 +6,7 @@ import { showToast } from '../utils/toast'
 import styles from './AutoloadManager.module.css'
 
 type AutoloadManagerProps = {
+  onRefreshProfiles?: () => Promise<unknown>
   libraryProfiles: string[]
   autoloadEnabled: boolean
   runtimeBusy: boolean
@@ -13,6 +15,7 @@ type AutoloadManagerProps = {
 }
 
 export function AutoloadManager({
+  onRefreshProfiles,
   libraryProfiles,
   autoloadEnabled,
   runtimeBusy,
@@ -121,6 +124,7 @@ export function AutoloadManager({
           </button>
         </div>
 
+        <CursorSwitchPanel profiles={libraryProfiles} onRefresh={onRefreshProfiles} />
         <section className={styles.switchPanel}>
           <div>
             <div className={styles.switchTitle}>{t('autoload.toggleLabel')}</div>

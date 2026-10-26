@@ -1,4 +1,16 @@
 export type BackendChoice = 'SDL' | 'legacy'
+export type DriverInfo = { status: 'missing' | 'running' | 'stopped' | 'unknown' | 'unsupported'; error: string | null }
+export type ComponentsStatus = {
+  supported: boolean; hidhide: DriverInfo; vigem: DriverInfo; cliAvailable: boolean; controlAvailable: boolean
+  cloakEnabled: boolean; inverse: boolean; engineAllowed: boolean; enginePath: string; hiddenCount: number
+  managedCount: number; error: string | null
+  devices: { id: string; name: string; description: string; listed: boolean; managed: boolean; xinputAvailable: boolean; sharedFunctions: number }[]
+}
+export type CursorSwitchSettings = { enabled: boolean; profileName: string; hiddenProfileName: string }
+export type CursorSwitchState = {
+  settings: CursorSwitchSettings; supported: boolean; cursorVisible: boolean | null; activeProfile?: string | null
+  overrideActive: boolean; returnProfile: string | null; lastError: string | null
+}
 
 export type CalibrationStatus = {
   calibrating: boolean
@@ -62,6 +74,12 @@ export type ReconnectControllersResult = {
 type Unsubscribe = () => void
 
 export interface DesktopBridge {
+  installDriver: (kind: 'hidhide' | 'vigem') => Promise<{ cancelled: boolean; rebootRequired: boolean; exitCode: number }>
+  openComponentTool: (kind: 'hidhide' | 'gamepads') => Promise<void>
+  getComponentsStatus: () => Promise<ComponentsStatus>
+  manageHidHide: (action: 'hide' | 'show' | 'allow' | 'restore', deviceId?: string, xinput?: boolean) => Promise<ComponentsStatus>
+  getCursorSwitchState: () => Promise<CursorSwitchState>
+  saveCursorSwitchSettings: (settings: CursorSwitchSettings) => Promise<CursorSwitchState>
   launchJSM: (calibrationSeconds?: number) => Promise<void>
   terminateJSM: () => Promise<void>
   minimizeTemporarily: () => Promise<void>
@@ -83,6 +101,7 @@ export interface DesktopBridge {
   getActiveProfile: () => Promise<NamedProfile | null>
   activateLibraryProfile: (name: string) => Promise<NamedProfile | null>
   createLibraryProfile: (preferredBaseName?: string) => Promise<NamedProfile | null>
+  createSavedProfile: (name: string, content: string) => Promise<NamedProfile | null>
   copyActiveProfile: () => Promise<NamedProfile | null>
   renameLibraryProfile: (oldName: string, newName: string) => Promise<NamedProfile | null>
   loadCalibrationPreset: () => Promise<CalibrationPresetLoadResult>
@@ -96,7 +115,7 @@ export interface DesktopBridge {
   onUpdateAvailable: (callback: (version: string) => void) => Unsubscribe
   onUpdateDownloaded: (callback: () => void) => Unsubscribe
   onUpdateDownloadProgress: (callback: (percent: number) => void) => Unsubscribe
-  checkForUpdates: () => Promise<void>
+  checkForUpdates: () => Promise<{ supported: boolean; version: string | null }>
   downloadUpdate: () => Promise<void>
   installUpdate: () => Promise<void>
   onTelemetrySample: (callback: (payload: unknown) => void) => Unsubscribe
@@ -172,6 +191,40 @@ const listenTauri = <T>(eventName: string, callback: (payload: T) => void): Unsu
 }
 
 export const desktopBridge: DesktopBridge = {
+  async installDriver(kind) {
+    if (isTauriWindow()) return invokeTauri('install_driver', { kind })
+    const api = getElectronAPI()
+    if (!api?.installDriver) throw new Error('Driver installation requires the Windows desktop app')
+    return api.installDriver(kind)
+  },
+  async openComponentTool(kind) {
+    if (isTauriWindow()) return invokeTauri<void>('open_component_tool', { kind })
+    const api = getElectronAPI()
+    if (!api?.openComponentTool) throw new Error('Windows component tools are unavailable')
+    await api.openComponentTool(kind)
+  },
+  async getComponentsStatus() {
+    if (isTauriWindow()) return invokeTauri<ComponentsStatus>('get_components_status')
+    const result = await getElectronAPI()?.getComponentsStatus?.()
+    if (!result) throw new Error('Component detection is available in the Windows desktop app')
+    return result
+  },
+  async manageHidHide(action, deviceId, xinput = false) {
+    if (isTauriWindow()) return invokeTauri<ComponentsStatus>('manage_hidhide', { action, deviceId, xinput })
+    const result = await getElectronAPI()?.manageHidHide?.(action, deviceId, xinput)
+    if (!result) throw new Error('HidHide control is unavailable')
+    return result
+  },
+  async getCursorSwitchState() {
+    if (isTauriWindow()) return invokeTauri<CursorSwitchState>('get_cursor_switch_state')
+    return (await getElectronAPI()?.getCursorSwitchState?.()) ?? { settings: { enabled: false, profileName: '', hiddenProfileName: '' }, supported: false, cursorVisible: null, overrideActive: false, returnProfile: null, lastError: null }
+  },
+  async saveCursorSwitchSettings(settings) {
+    if (isTauriWindow()) return invokeTauri<CursorSwitchState>('save_cursor_switch_settings', { settings })
+    const result = await getElectronAPI()?.saveCursorSwitchSettings?.(settings)
+    if (!result) throw new Error('Cursor switching is unavailable')
+    return result
+  },
   async launchJSM(calibrationSeconds = 5) {
     if (isTauriWindow()) {
       await invokeTauri<void>('launch_jsm', { calibration_seconds: calibrationSeconds })
@@ -297,9 +350,13 @@ export const desktopBridge: DesktopBridge = {
     }
     return (await getElectronAPI()?.activateLibraryProfile?.(name)) ?? null
   },
+  async createSavedProfile(name, content) {
+    if (isTauriWindow()) return invokeTauri<NamedProfile>('library_create_saved_profile', { name, content })
+    return (await getElectronAPI()?.createSavedProfile?.(name, content)) ?? null
+  },
   async createLibraryProfile(preferredBaseName) {
     if (isTauriWindow()) {
-      return invokeTauri<NamedProfile>('library_create_profile', { preferred_base_name: preferredBaseName }).catch(() => null)
+      return invokeTauri<NamedProfile>('library_create_profile', { preferredBaseName }).catch(() => null)
     }
     return (await getElectronAPI()?.createLibraryProfile?.(preferredBaseName)) ?? null
   },
@@ -386,17 +443,13 @@ export const desktopBridge: DesktopBridge = {
     return getElectronAPI()?.onUpdateDownloadProgress?.(callback) ?? noop
   },
   async checkForUpdates() {
-    if (!isTauriWindow()) return
-
-    try {
+    if (!isTauriWindow()) return { supported: false, version: null }
       const { check } = await import('@tauri-apps/plugin-updater')
       pendingTauriUpdate = await check()
       if (pendingTauriUpdate) {
         notifyTauriUpdateAvailable(pendingTauriUpdate.version)
       }
-    } catch (error) {
-      console.warn('Failed to check for JSM Studio updates', error)
-    }
+      return { supported: true, version: pendingTauriUpdate?.version ?? null }
   },
   async downloadUpdate() {
     if (isTauriWindow()) {

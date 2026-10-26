@@ -1,0 +1,25 @@
+/* Studio's shared desktop design tokens. Existing controls consume these too. */
+:root, :root[data-theme='dark'] {
+  --bg-0: #0e1219; --bg-1: #141a24; --bg-1-5: #18202c; --bg-2: #171e29;
+  --bg-input: #101722; --bg-btn: #202a39; --bg-btn-hover: #2a374a;
+  --bg-btn-primary: #426edd; --text-strong: #e9edf5; --text-mid: #aab6c8;
+  --text-muted: #8896ab; --text-dim: #78879e; --border-1: #2a3546;
+  --border-strong: #7296ed; --accent: #5c87ee; --accent-primary: #426edd; --btn-primary-text: #fff;
+  --canvas-grid-x: transparent; --canvas-grid-y: transparent; --shell-scroll-grid-x: transparent;
+  --shell-scroll-grid-y: transparent; --sidebar-bg: #131924; --toolbar-bg: #141a24;
+  --canvas-gradient: var(--bg-0); --topbar-bg: var(--bg-1); --inset-highlight: transparent;
+}
+:root[data-theme='light'] {
+  --bg-0: #f4f6f9; --bg-1: #f8fafc; --bg-1-5: #eef2f7; --bg-2: #fff;
+  --bg-input: #fff; --bg-btn: #f0f3f8; --bg-btn-hover: #e8edf5; --bg-btn-primary: #315fd1;
+  --text-strong: #202c40; --text-mid: #526079; --text-muted: #69788e; --text-dim: #75839a;
+  --border-1: #e0e5ed; --border-strong: #7296ed; --accent: #315fd1; --accent-primary: #315fd1;
+  --btn-primary-text: #fff; --sidebar-bg: #f9fafc; --toolbar-bg: #fff;
+}
+body { background: var(--bg-0); }
+button, input, select, textarea { font: inherit; }
+button:focus-visible, summary:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+kbd { font-family: inherit; font-size: 10px; font-weight: 500; border: 1px solid currentColor; border-radius: 4px; padding: 1px 4px; opacity: .65; white-space: nowrap; }
+
+.studio-profile-tools { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 18px; justify-content: flex-end; }
+.studio-profile-tools button { font-size: 11px; }

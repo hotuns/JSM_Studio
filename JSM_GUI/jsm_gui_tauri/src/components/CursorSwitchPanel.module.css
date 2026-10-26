@@ -1,0 +1,12 @@
+.panel { border: 1px solid var(--border-1); border-radius: 10px; padding: 18px; margin-bottom: 18px; background: var(--bg-1); }
+.heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; }
+.heading h4 { margin: 0 0 8px; font-size: 15px; color: var(--text-strong); }
+.heading p, .hint { color: var(--text-muted); font-size: 12px; line-height: 1.7; margin: 6px 0; }
+.toggle { display: flex; align-items: center; gap: 8px; white-space: nowrap; color: var(--text-strong); font-size: 12px; }
+.toggle input { accent-color: var(--accent); }
+.controls { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; margin: 16px 0; }
+.controls label { flex: 1; min-width: 180px; display: grid; gap: 8px; color: var(--text-mid); font-size: 12px; }
+.controls select { width: 100%; padding: 9px; color: var(--text-strong); background: var(--bg-input); border: 1px solid var(--border-1); border-radius: 6px; }
+.controls button { min-height: 35px; font-size: 12px; }
+.status { display: flex; flex-wrap: wrap; gap: 8px 18px; color: var(--text-mid); font-size: 12px; padding: 12px 0; border-top: 1px solid var(--border-1); }
+.error { color: #c45b4c; font-size: 12px; overflow-wrap: anywhere; }

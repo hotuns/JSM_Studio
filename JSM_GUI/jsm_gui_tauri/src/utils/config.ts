@@ -1,3 +1,6 @@
+import { isGameMetadataComment } from '../games/gameMetadataFormat'
+import { readGameProfile } from '../games/gameProfiles'
+
 const REQUIRED_HEADER_LINES = [
   { pattern: /^RESET_MAPPINGS\b/i, value: 'RESET_MAPPINGS' },
   { pattern: /^AUTOCONNECT\b/i, value: 'AUTOCONNECT = ON' },
@@ -36,9 +39,13 @@ export const ensureHeaderLines = (text: string) => {
 }
 
 export const sanitizeImportedConfig = (rawText: string) => {
+  // A portable Studio profile already separates actions (comments) from commands.
+  // Keep its complete settings, including calibration-related sensitivity flags.
+  if (readGameProfile(rawText)) return ensureHeaderLines(rawText)
   const withoutComments = rawText
     .split(/\r?\n/)
     .map(line => {
+      if (isGameMetadataComment(line)) return line.trim()
       const hashIndex = line.indexOf('#')
       const withoutHash = hashIndex >= 0 ? line.slice(0, hashIndex) : line
       return withoutHash.trim()

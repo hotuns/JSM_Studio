@@ -1,5 +1,6 @@
 use std::{
     fs,
+    io::Write,
     path::{Path, PathBuf},
 };
 
@@ -211,6 +212,26 @@ pub fn load_library_profile(app: &AppHandle, name: &str) -> Result<String, Strin
     let safe_name = sanitize_profile_name(name);
     let path = library_profile_path(app, &safe_name)?;
     fs::read_to_string(path).map_err(|error| format!("Failed to load profile: {error}"))
+}
+
+pub fn create_saved_library_profile(
+    app: &AppHandle,
+    name: &str,
+    content: &str,
+) -> Result<(String, String), String> {
+    ensure_library_dir(app)?;
+    let unique_name = generate_unique_profile_name(app, Some(name))?;
+    let relative = relative_profile_path_from_name(&unique_name);
+    let absolute = absolute_profile_path(app, &relative)?;
+    let mut file = fs::OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .open(absolute)
+        .map_err(|error| format!("Failed to create profile: {error}"))?;
+    file.write_all(content.as_bytes())
+        .map_err(|error| format!("Failed to save profile: {error}"))?;
+    // Saving an offline preset must not select it or rewrite engine startup state.
+    Ok((relative, content.to_string()))
 }
 
 pub fn create_library_profile(
@@ -917,7 +938,7 @@ fn default_runtime_mapping_state(app: &AppHandle) -> Result<RuntimeMappingState,
     })
 }
 
-fn read_runtime_mapping_state(app: &AppHandle) -> Result<RuntimeMappingState, String> {
+pub(crate) fn read_runtime_mapping_state(app: &AppHandle) -> Result<RuntimeMappingState, String> {
     let path = gui_state_file(app)?;
     let raw = match fs::read_to_string(path) {
         Ok(value) => value,

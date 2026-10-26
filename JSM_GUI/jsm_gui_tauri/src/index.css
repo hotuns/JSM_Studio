@@ -5,6 +5,7 @@
 @import './styles/panels.css';
 @import './styles/overlays.css';
 @import './styles/utilities.css';
+@import './styles/studio.css';
 
 :root {
   color-scheme: dark;

@@ -28,6 +28,7 @@ export function useProfileLibrary({
   resetPendingSensitivityChanges,
 }: UseProfileLibraryParams) {
   const { t } = useTranslation()
+  const [savedConfig, setSavedConfig] = useState('')
   const [libraryProfiles, setLibraryProfiles] = useState<string[]>([])
   const [isLibraryLoading, setIsLibraryLoading] = useState(false)
   const [editedLibraryNames, setEditedLibraryNames] = useState<Record<string, string>>({})
@@ -46,6 +47,7 @@ export function useProfileLibrary({
         resetPendingSensitivityChanges()
         setConfigText(result.content ?? '')
         setAppliedConfig(result.content ?? '')
+        setSavedConfig(result.content ?? '')
         setCurrentLibraryProfile(result.name ?? null)
         setActiveProfilePath(result.path ?? '')
       }
@@ -100,6 +102,7 @@ export function useProfileLibrary({
       try {
         const targetPath = options?.profilePathOverride ?? activeProfilePath
         const result = await desktopBridge.applyProfile(targetPath, normalizedConfig)
+        if (!result) throw new Error('Could not apply profile')
         if (result?.path) {
           setActiveProfilePath(result.path)
         }
@@ -113,12 +116,15 @@ export function useProfileLibrary({
         setStatusMessage(appliedMessage)
         showToast(appliedMessage)
         setAppliedConfig(normalizedConfig)
+        setSavedConfig(normalizedConfig)
         clearStatusLater()
+        return true
       } catch (err) {
         console.error(err)
         const message = t('messages.applyKeymapFailed')
         setStatusMessage(message)
         showToast(message, 'error')
+        return false
       }
     },
     [
@@ -144,7 +150,7 @@ export function useProfileLibrary({
           const profilePath = result.path ?? ''
           resetPendingSensitivityChanges()
           setConfigText(profileContent)
-          setAppliedConfig(profileContent)
+          setSavedConfig(profileContent)
           setCurrentLibraryProfile(profileName)
           setActiveProfilePath(profilePath)
           await applyConfig({
@@ -169,7 +175,6 @@ export function useProfileLibrary({
       clearStatusLater,
       refreshLibraryProfiles,
       resetPendingSensitivityChanges,
-      setAppliedConfig,
       setConfigText,
       setStatusMessage,
       t,
@@ -192,7 +197,7 @@ export function useProfileLibrary({
         const profilePath = result.path ?? ''
         resetPendingSensitivityChanges()
         setConfigText(profileContent)
-        setAppliedConfig(profileContent)
+        setSavedConfig(profileContent)
         setCurrentLibraryProfile(profileName)
         setActiveProfilePath(profilePath)
         setEditedLibraryNames(prev => ({
@@ -217,7 +222,6 @@ export function useProfileLibrary({
     clearStatusLater,
     refreshLibraryProfiles,
     resetPendingSensitivityChanges,
-    setAppliedConfig,
     setConfigText,
     setStatusMessage,
     t,
@@ -243,7 +247,7 @@ export function useProfileLibrary({
             if (result.content !== undefined) {
               resetPendingSensitivityChanges()
               setConfigText(result.content)
-              setAppliedConfig(result.content)
+              setSavedConfig(result.content)
             }
           }
           setEditedLibraryNames(prev => {
@@ -269,7 +273,6 @@ export function useProfileLibrary({
       editedLibraryNames,
       refreshLibraryProfiles,
       resetPendingSensitivityChanges,
-      setAppliedConfig,
       setConfigText,
       setStatusMessage,
       t,
@@ -295,7 +298,7 @@ export function useProfileLibrary({
             resetPendingSensitivityChanges()
             setCurrentLibraryProfile(fallback.name ?? null)
             setConfigText(fallback.content ?? '')
-            setAppliedConfig(fallback.content ?? '')
+            setSavedConfig(fallback.content ?? '')
             setActiveProfilePath(fallback.path ?? '')
             await applyConfig({
               profileNameOverride: fallback.name ?? unsavedProfileLabel,
@@ -320,7 +323,7 @@ export function useProfileLibrary({
             resetPendingSensitivityChanges()
             setCurrentLibraryProfile(null)
             setConfigText('')
-            setAppliedConfig('')
+            setSavedConfig('')
             setActiveProfilePath('')
             await applyConfig({ profileNameOverride: unsavedProfileLabel, textOverride: '', profilePathOverride: '' })
           }
@@ -344,7 +347,6 @@ export function useProfileLibrary({
       handleLoadProfileFromLibrary,
       refreshLibraryProfiles,
       resetPendingSensitivityChanges,
-      setAppliedConfig,
       setConfigText,
       setStatusMessage,
       t,
@@ -385,7 +387,7 @@ export function useProfileLibrary({
         const profileName = result.name ?? t('profiles.defaultProfileBaseName')
         resetPendingSensitivityChanges()
         setConfigText(result.content ?? '')
-        setAppliedConfig(result.content ?? '')
+        setSavedConfig(result.content ?? '')
         setCurrentLibraryProfile(profileName)
         setActiveProfilePath(result.path ?? '')
         const message = t('messages.profileCopied', { profileName })
@@ -403,9 +405,39 @@ export function useProfileLibrary({
       clearStatusLater()
     }
     return null
-  }, [clearStatusLater, refreshLibraryProfiles, resetPendingSensitivityChanges, setAppliedConfig, setConfigText, setStatusMessage, t])
+  }, [clearStatusLater, refreshLibraryProfiles, resetPendingSensitivityChanges, setConfigText, setStatusMessage, t])
+
+  const saveConfig = async (text: string) => {
+    if (!currentLibraryProfile) throw new Error('Select a profile before saving')
+    const normalized = serializeConfig(parseConfigText(ensureHeaderLines(text)))
+    setConfigText(normalized)
+    resetPendingSensitivityChanges()
+    const saved = await desktopBridge.saveLibraryProfile(currentLibraryProfile, normalized)
+    if (!saved) throw new Error('Could not save profile')
+    setSavedConfig(normalized)
+    showToast(t('studio.fileSaved'))
+  }
+
+  const handleCreateGameProfile = async (name: string, content: string, applyNow = false) => {
+    const normalized = serializeConfig(parseConfigText(ensureHeaderLines(content)))
+    const result = await desktopBridge.createSavedProfile(name, normalized)
+    if (!result?.name || !result.path) throw new Error('Could not save game profile')
+    await refreshLibraryProfiles()
+    if (applyNow) {
+      resetPendingSensitivityChanges()
+      setCurrentLibraryProfile(result.name)
+      setActiveProfilePath(result.path)
+      setConfigText(normalized)
+      setSavedConfig(normalized)
+      await applyConfig({ textOverride: normalized, profileNameOverride: result.name, profilePathOverride: result.path })
+    } else {
+      showToast(t('studio.gameSavedOffline', { name: result.name }))
+    }
+  }
 
   return {
+    savedConfig,
+    saveConfig,
     libraryProfiles,
     isLibraryLoading,
     editedLibraryNames,
@@ -422,6 +454,7 @@ export function useProfileLibrary({
     handleDeleteLibraryProfile,
     handleImportProfile,
     handleCopyActiveProfile,
+    handleCreateGameProfile,
     setEditedLibraryNames,
     refreshActiveProfile,
   }

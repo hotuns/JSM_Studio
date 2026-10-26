@@ -1,8 +1,9 @@
+import { createVirtualProfile } from './utils/virtualProfile'
+import { StudioShell, type StudioPage } from './components/StudioShell'
+import { StudioOverview } from './components/StudioOverview'
+import { GameProfilesPage } from './components/GameProfilesPage'
 import motionStyles from './components/MotionControls.module.css'
 import './App.css'
-import { version as APP_VERSION } from '../package.json'
-import sideNavStyles from './components/SideNav.module.css'
-import { ThemeToggle } from './components/ThemeToggle'
 import { Suspense, lazy, useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useTelemetry } from './hooks/useTelemetry'
@@ -17,13 +18,11 @@ import { ToastHost } from './components/ToastHost'
 import { desktopBridge } from './platform/desktopBridge'
 import { updateKeymapEntry } from './utils/keymap'
 import { showToast } from './utils/toast'
-import { LanguageSelect } from './components/LanguageSelect'
 
 
-type PrimaryTab = 'gyro' | 'keybinds' | 'touchpad' | 'controllerStatus' | 'help'
+type PrimaryTab = StudioPage
 type GyroSubTab = 'behavior' | 'sensitivity' | 'noise'
 const QQ_GROUP_URL = 'https://qm.qq.com/q/OyPvwoBSkU'
-const QQ_GROUP_NUMBER = '855488128'
 
 const asNumber = (value: unknown) => (typeof value === 'number' ? value : undefined)
 const formatNumber = (value: number | undefined, digits = 2) =>
@@ -86,6 +85,11 @@ const ConfigEditor = lazy(async () => {
   return { default: module.ConfigEditor }
 })
 
+const CommunityProfilesPage = lazy(async () => {
+  const module = await import('./components/CommunityProfilesPage')
+  return { default: module.CommunityProfilesPage }
+})
+
 const ProfileManager = lazy(async () => {
   const module = await import('./components/ProfileManager')
   return { default: module.ProfileManager }
@@ -96,9 +100,9 @@ const AutoloadManager = lazy(async () => {
   return { default: module.AutoloadManager }
 })
 
-const HelpDocsPage = lazy(async () => {
-  const module = await import('./components/HelpDocsPage')
-  return { default: module.HelpDocsPage }
+const SettingsPage = lazy(async () => {
+  const module = await import('./components/SettingsPage')
+  return { default: module.SettingsPage }
 })
 
 const UpdateBanner = lazy(async () => {
@@ -123,89 +127,11 @@ const LazyPanelFallback = ({ title, compact = false }: LazyPanelFallbackProps) =
   </div>
 )
 
-type PrimaryNavProps = {
-  primaryTab: PrimaryTab
-  setPrimaryTab: (tab: PrimaryTab) => void
-  includeHelp?: boolean
-}
-
-const PrimaryNav = ({ primaryTab, setPrimaryTab, includeHelp = false }: PrimaryNavProps) => {
-  const { t } = useTranslation()
-  const controls: { tab: PrimaryTab; label: string }[] = [
-    { tab: 'gyro', label: 'app.nav.motionControl' },
-    { tab: 'keybinds', label: 'app.nav.keybinds' },
-    { tab: 'touchpad', label: 'app.nav.touchpad' },
-  ]
-
-  return (
-    <div className={sideNavStyles.navGroup}>
-      <div className={sideNavStyles.navSection}>
-        <div className={sideNavStyles.navSectionLabel}>{t('app.nav.dashboardGroup')}</div>
-        <button
-          className={`${sideNavStyles.navItem} ${primaryTab === 'controllerStatus' ? sideNavStyles.active : ''}`}
-          onClick={() => setPrimaryTab('controllerStatus')}
-        >
-          {t('app.nav.controllerStatus')}
-        </button>
-      </div>
-      <div className={sideNavStyles.navSection}>
-        <div className={sideNavStyles.navSectionLabel}>{t('app.nav.controlsGroup')}</div>
-        {controls.map(({ tab, label }) => (
-          <button
-            key={tab}
-            className={`${sideNavStyles.navItem} ${primaryTab === tab ? sideNavStyles.active : ''}`}
-            onClick={() => setPrimaryTab(tab)}
-          >
-            {t(label)}
-          </button>
-        ))}
-      </div>
-      {includeHelp && (
-        <button
-          className={`${sideNavStyles.navItem} ${primaryTab === 'help' ? sideNavStyles.active : ''}`}
-          onClick={() => setPrimaryTab('help')}
-        >
-          {t('app.nav.documentation')}
-        </button>
-      )}
-    </div>
-  )
-}
-
-const CommunityNavButton = () => {
-  const { t } = useTranslation()
-
-  return (
-    <button
-      type="button"
-      className={sideNavStyles.navFooterAction}
-      onClick={() => {
-        void desktopBridge.openExternal(QQ_GROUP_URL)
-      }}
-    >
-      <span className={sideNavStyles.navFooterLinkTitle}>{t('common.joinQqGroup')}</span>
-      <span className={sideNavStyles.navFooterLinkMeta}>{t('common.qqGroupNumber', { number: QQ_GROUP_NUMBER })}</span>
-    </button>
-  )
-}
-
-type NavSettingsProps = {
-  compactThemeToggle?: boolean
-}
-
-const NavSettings = ({ compactThemeToggle = false }: NavSettingsProps) => (
-  <div className={sideNavStyles.navSettings}>
-    <LanguageSelect className={sideNavStyles.navLanguageSelect} />
-    <ThemeToggle compact={compactThemeToggle} className={sideNavStyles.navThemeToggle} />
-  </div>
-)
-
 function App() {
   const { t } = useTranslation()
   const { sample, isCalibrating, countdown } = useTelemetry()
   const [statusMessage, setStatusMessage] = useState<string | null>(null)
   const [recalibrating, setRecalibrating] = useState(false)
-  const [isProfileModalOpen, setProfileModalOpen] = useState(false)
   const [isAutoloadModalOpen, setAutoloadModalOpen] = useState(false)
   const [isRwcGuideModalOpen, setIsRwcGuideModalOpen] = useState(false)
   const [isConfigDrawerOpen, setConfigDrawerOpen] = useState(false)
@@ -214,8 +140,9 @@ function App() {
   const [mappingEnabled, setMappingEnabled] = useState(true)
   const [autoloadEnabled, setAutoloadEnabled] = useState(true)
   const [runtimeMappingBusy, setRuntimeMappingBusy] = useState(false)
+  const [gameCreating, setGameCreating] = useState(false)
   const [calibrationTurns, setCalibrationTurns] = useState('1')
-  const [primaryTab, setPrimaryTab] = useState<PrimaryTab>('controllerStatus')
+  const [primaryTab, setPrimaryTab] = useState<PrimaryTab>('overview')
   const [gyroSubTab, setGyroSubTab] = useState<GyroSubTab>('behavior')
   const [selectedMappingCommand, setSelectedMappingCommand] = useState<string | null>('N')
   const configWindowRef = useRef<HTMLDivElement | null>(null)
@@ -255,6 +182,7 @@ function App() {
     touchStickAxisValue,
     touchpadWarnings,
     hasPendingChanges,
+    hasPendingSensitivityChanges,
     handleSensitivityModeshiftButtonChange,
     handleThresholdChange,
     handleCutoffSpeedChange,
@@ -299,7 +227,6 @@ function App() {
     handleSigmoidMidChange,
     handleSigmoidWidthChange,
     handleModeSelection,
-    handleCancel,
     handleFaceButtonBindingChange,
     handleModifierChange,
     handleSpecialActionAssignment,
@@ -349,10 +276,14 @@ function App() {
     handleLoadProfileFromLibrary,
     handleLibraryProfileNameChange,
     handleCreateProfile,
+    handleCreateGameProfile,
+    savedConfig,
+    saveConfig,
     handleRenameProfile,
     handleDeleteLibraryProfile,
     handleImportProfile,
     handleCopyActiveProfile,
+    refreshLibraryProfiles,
   } = useProfileLibrary({
     configText,
     setConfigText,
@@ -360,6 +291,12 @@ function App() {
     setStatusMessage,
     resetPendingSensitivityChanges: resetPendingSensitivityChanges,
   })
+  const hasUnsavedChanges = configText !== savedConfig || hasPendingSensitivityChanges
+  const handleCancel = () => { resetPendingSensitivityChanges(); setConfigText(savedConfig) }
+  const handleSaveWithFinalize = async () => {
+    try { await saveConfig(finalizePendingValues?.() ?? configText) }
+    catch (error) { console.error(error); showToast(t('studio.saveFailed'), 'error') }
+  }
   const {
     isCalibrationModalOpen,
     calibrationCounterOs,
@@ -431,46 +368,15 @@ function App() {
 
   useEffect(() => {
     const handleFocusIn = (event: FocusEvent) => {
-      const target = event.target as HTMLElement
-      const isTextInput = (el: HTMLInputElement) => {
-        const excluded = ['checkbox', 'radio', 'range', 'file', 'color', 'button', 'submit', 'reset']
-        return !excluded.includes(el.type)
-      }
-      if (target instanceof HTMLInputElement) {
-        if (target.disabled || target.readOnly || !isTextInput(target)) return
-        requestAnimationFrame(() => target.select())
-      } else if (target instanceof HTMLTextAreaElement) {
-        if (target.disabled || target.readOnly) return
-        const skipAutoSelect = target.closest('.config-panel')
-        if (skipAutoSelect) return
+      const target = event.target
+      // Make numeric tuning quick without overriding caret placement in search,
+      // profile names or the source editor. Keep native slider keyboard access.
+      if (target instanceof HTMLInputElement && target.type === 'number' && !target.disabled && !target.readOnly) {
         requestAnimationFrame(() => target.select())
       }
     }
     window.addEventListener('focusin', handleFocusIn)
     return () => window.removeEventListener('focusin', handleFocusIn)
-  }, [])
-
-  useEffect(() => {
-    const applyRangeTabIndex = (root: ParentNode | undefined | null) => {
-      if (!root) return
-      root.querySelectorAll<HTMLInputElement>('input[type="range"]').forEach(el => {
-        if (el.tabIndex !== -1) {
-          el.tabIndex = -1
-        }
-      })
-    }
-    applyRangeTabIndex(document.body)
-    const observer = new MutationObserver(mutations => {
-      mutations.forEach(mutation => {
-        mutation.addedNodes.forEach(node => {
-          if (node instanceof HTMLElement || node instanceof DocumentFragment) {
-            applyRangeTabIndex(node)
-          }
-        })
-      })
-    })
-    observer.observe(document.body, { childList: true, subtree: true })
-    return () => observer.disconnect()
   }, [])
 
   useEffect(() => {
@@ -514,9 +420,9 @@ function App() {
   const handleApplyWithFinalize = () => {
     const nextText = finalizePendingValues ? finalizePendingValues() : undefined
     if (nextText !== undefined) {
-      applyConfig({ textOverride: nextText })
+      return applyConfig({ textOverride: nextText })
     } else {
-      applyConfig()
+      return applyConfig()
     }
   }
 
@@ -540,7 +446,7 @@ function App() {
     setRuntimeMappingBusy(true)
     try {
       if (nextEnabled && hasPendingChanges) {
-        await applyConfig()
+        if (!await applyConfig()) return
       }
       const nextState = await desktopBridge.setMappingEnabled(nextEnabled)
       setMappingEnabled(nextState.mappingEnabled)
@@ -646,88 +552,72 @@ function App() {
     </nav>
   )
 
-  const renderUtilityBar = () => (
-    <div className="utility-bar">
-      <div className={`utility-mapping-switch ${mappingEnabled ? 'is-enabled' : 'is-paused'}`}>
-        <label className={`mapping-toggle-control ${mappingEnabled ? 'is-enabled' : 'is-paused'}`}>
-          <input
-            type="checkbox"
-            checked={mappingEnabled}
-            disabled={runtimeMappingBusy}
-            aria-label={t('app.profileSummary.mappingOutput')}
-            onChange={() => {
-              void handleToggleMappingEnabled()
-            }}
-          />
-          <span className="mapping-toggle-slider" aria-hidden="true" />
-          <span className="mapping-toggle-state">
-            {mappingEnabled ? t('app.profileSummary.mappingOutputOn') : t('app.profileSummary.mappingOutputPaused')}
-          </span>
-        </label>
-      </div>
-
-      <div className="utility-profile-group">
-        <div className="utility-title">{t('app.profileSummary.title')}</div>
-        <label className="utility-profile-select">
-          <select
-            className="app-select"
-            disabled={isCalibrating}
-            value={currentLibraryProfile ?? ''}
-            onChange={event => {
-              const name = event.target.value
-              if (!name) return
-              handleLoadProfileFromLibrary(name)
-            }}
-          >
-            <option value="" disabled>
-              {t('app.profileSummary.selectProfile')}
-            </option>
-            {(libraryProfiles ?? []).map(name => (
-              <option key={name} value={name}>
-                {name}
-              </option>
-            ))}
-          </select>
-        </label>
-      </div>
-
-      <div className="utility-actions">
-        <button className="secondary-btn" onClick={() => setAutoloadModalOpen(true)}>
-          {t('app.profileSummary.autoloadManager')}
-        </button>
-        <button className="secondary-btn" onClick={() => setProfileModalOpen(true)}>
-          {t('app.profileSummary.manageProfiles')}
-        </button>
-        <button className="secondary-btn" onClick={handleOpenConfigDirectory}>
-          {t('app.profileSummary.openConfigDirectory')}
-        </button>
-        <button
-          className="secondary-btn"
-          onClick={() => {
-            setConfigWindowPosition(null)
-            setConfigDrawerOpen(true)
-          }}
-        >
-          {t('app.profileSummary.openSourceConfig')}
-        </button>
-        {isCalibrating ? (
-          <span className="calibration-pill calibration-pill-inline utility-calibration-pill">
-            {t('app.recalibration.calibratingCountdown', { seconds: countdown ?? '-' })}
-          </span>
-        ) : (
-          <button className="primary-btn" onClick={handleRecalibrate} disabled={recalibrating}>
-            {recalibrating ? t('app.recalibration.recalibrating') : t('app.recalibration.recalibrateGyro')}
-          </button>
-        )}
-      </div>
-    </div>
-  )
-
   const renderPrimaryContent = () => {
+    if (primaryTab === 'settings') {
+      return <Suspense fallback={<LazyPanelFallback title={t('studio.settings')} />}>
+        <SettingsPage virtualType={virtualControllerType} warnings={virtualControllerWarnings}
+          onVirtualChange={handleVirtualControllerTypeChange} disabled={isCalibrating || runtimeMappingBusy || recalibrating}
+          onMappings={() => setPrimaryTab('keybinds')} onDevices={() => setPrimaryTab('controllerStatus')} onFolder={handleOpenConfigDirectory}
+          onLibrary={() => setPrimaryTab('profiles')} onCreateVirtual={async type => {
+            const result = await desktopBridge.createSavedProfile(type === 'XBOX' ? 'Xbox Virtual' : 'DS4 Virtual', createVirtualProfile(type))
+            if (!result?.name || !result.path) throw new Error(t('studio.saveFailed'))
+            await refreshLibraryProfiles()
+            return result.name
+          }} />
+      </Suspense>
+    }
+    if (primaryTab === 'games') {
+      return <GameProfilesPage configText={configText} onChange={setConfigText} profileName={currentLibraryProfile}
+        sample={sample} hasPendingChanges={hasUnsavedChanges} isCalibrating={isCalibrating || gameCreating}
+        onLibrary={() => setPrimaryTab('profiles')}
+        onCreate={async (name, text, applyNow) => { setGameCreating(true); try { await handleCreateGameProfile(name, text, applyNow); if (!applyNow) setPrimaryTab('profiles') } finally { setGameCreating(false) } }}
+        onAdvanced={() => setPrimaryTab('keybinds')} onSource={() => { setConfigWindowPosition(null); setConfigDrawerOpen(true) }} onGyro={() => setPrimaryTab('gyro')} />
+    }
+    if (primaryTab === 'overview') {
+      return <StudioOverview sample={sample} profile={currentLibraryProfile} sensitivity={sensitivity}
+        sampleHz={telemetryValues.sampleHz} mappingEnabled={mappingEnabled} onNavigate={setPrimaryTab} />
+    }
+    if (primaryTab === 'communityProfiles') {
+      return <Suspense fallback={<LazyPanelFallback title={t('studio.communityProfiles')} />}>
+        <CommunityProfilesPage disabled={isCalibrating} onLibrary={() => setPrimaryTab('profiles')}
+          onImport={async (name, text) => {
+            const result = await desktopBridge.createSavedProfile(name, text)
+            if (!result?.name || !result.path) throw new Error(t('studio.saveFailed'))
+            await refreshLibraryProfiles()
+            return result.name
+          }} />
+      </Suspense>
+    }
+    if (primaryTab === 'profiles') {
+      return <div className="studio-profiles-page">
+        <div className="studio-profile-tools">
+          <button type="button" className="secondary-btn" onClick={() => setPrimaryTab('communityProfiles')}>{t('studio.communityProfiles')}</button>
+          <button type="button" className="secondary-btn" onClick={() => setAutoloadModalOpen(true)}>{t('studio.autoload')}</button>
+          <button type="button" className="secondary-btn" onClick={handleOpenConfigDirectory}>{t('studio.folder')}</button>
+        </div>
+        <Suspense fallback={<LazyPanelFallback title={t('studio.profiles')} />}>
+              <ProfileManager
+                currentProfileName={currentLibraryProfile}
+                hasPendingChanges={hasUnsavedChanges}
+                isCalibrating={isCalibrating}
+                profileApplied={configText === appliedConfig}
+                onImportProfile={handleImportProfile}
+                libraryProfiles={libraryProfiles}
+                libraryLoading={isLibraryLoading}
+                editedProfileNames={editedLibraryNames}
+                onProfileNameChange={handleLibraryProfileNameChange}
+                onRenameProfile={handleRenameProfile}
+                onDeleteProfile={handleDeleteLibraryProfile}
+                onAddProfile={handleCreateProfile}
+                onLoadLibraryProfile={handleLoadProfileFromLibrary}
+                onCopyActiveProfile={handleCopyActiveProfile}
+              />
+        </Suspense>
+      </div>
+    }
     if (primaryTab === 'gyro') {
       return (
         <div className={motionStyles.page}>
-          <header className={motionStyles.heading}><h1>{t('motion.title')}</h1><p>{t('motion.intro')}</p></header>
           {renderGyroNav()}
           {gyroSubTab === 'behavior' && (
             <Suspense fallback={<LazyPanelFallback title={t('app.tabs.gyroBehavior')} />}>
@@ -1004,56 +894,37 @@ function App() {
 
     if (primaryTab === 'controllerStatus') {
       return (
-        <ControllerStatusPage
+        <ControllerStatusPage onSettings={() => setPrimaryTab('settings')}
           devices={sample?.devices}
           ignoredDevices={ignoredGyroDevices}
         />
       )
     }
 
-    if (primaryTab === 'help') {
-      return (
-        <Suspense fallback={<LazyPanelFallback title={t('app.nav.documentation')} />}>
-          <HelpDocsPage />
-        </Suspense>
-      )
-    }
 
     return null
   }
 
   return (
-    <div className="app-shell">
+    <>
       <ToastHost />
       <Suspense fallback={null}>
-        <UpdateBanner />
+        <UpdateBanner onSettings={() => setPrimaryTab('settings')} />
       </Suspense>
-      {/* Desktop sidebar */}
-      <aside className={sideNavStyles.sideNav}>
-        <div className={sideNavStyles.navBrand}>{t('common.appName')}</div>
-        <PrimaryNav primaryTab={primaryTab} setPrimaryTab={setPrimaryTab} includeHelp />
-        <div className={sideNavStyles.navFooter}>
-          <CommunityNavButton />
-          <NavSettings />
-          <div className={sideNavStyles.navVersion}>v{APP_VERSION}</div>
-        </div>
-      </aside>
-      {/* Narrow-width sticky header */}
-      <div className="responsive-header">
-        <div className={sideNavStyles.navHeaderRow}>
-          <div>
-            <div className={sideNavStyles.navBrand}>{t('common.appName')}</div>
-            <PrimaryNav primaryTab={primaryTab} setPrimaryTab={setPrimaryTab} includeHelp />
-          </div>
-          <NavSettings compactThemeToggle />
-        </div>
-      </div>
-      <div className="shell-main">
-        {renderUtilityBar()}
-        <div className="shell-scroll"><div className="content-grid">
-          <main className="main-pane">{renderPrimaryContent()}</main>
-        </div></div>
-      </div>
+      <StudioShell page={primaryTab} onNavigate={page => { if (!gameCreating) setPrimaryTab(page) }}
+        interactionLocked={gameCreating}
+        hasUnsavedChanges={hasUnsavedChanges} onSave={handleSaveWithFinalize}
+        profile={currentLibraryProfile} profiles={libraryProfiles ?? []} onSelectProfile={handleLoadProfileFromLibrary}
+        mappingEnabled={mappingEnabled} runtimeBusy={runtimeMappingBusy || recalibrating || gameCreating}
+        isCalibrating={isCalibrating} countdown={countdown} deviceCount={sample?.devices?.length ?? 0}
+        sampleHz={telemetryValues.sampleHz} hasPendingChanges={hasPendingChanges} statusMessage={statusMessage}
+        onToggleOutput={() => { void handleToggleMappingEnabled() }} onCalibrate={handleRecalibrate}
+        onOpenSource={() => { setConfigWindowPosition(null); setConfigDrawerOpen(true) }}
+        onOpenFolder={handleOpenConfigDirectory} onAutoload={() => setAutoloadModalOpen(true)}
+        onCommunity={() => { void desktopBridge.openExternal(QQ_GROUP_URL) }}
+        onApply={handleApplyWithFinalize} onCancel={handleCancel}>
+        {renderPrimaryContent()}
+      </StudioShell>
       {isConfigDrawerOpen && (
         <div
           ref={configWindowRef}
@@ -1205,39 +1076,10 @@ function App() {
           />
         </Suspense>
       )}
-      {isProfileModalOpen && (
-        <div className="modal-overlay">
-          <div className="modal-card profile-modal">
-            <div className="modal-header">
-              <h3>{t('app.profilesModal.title')}</h3>
-              <button className="ghost-btn" onClick={() => setProfileModalOpen(false)}>
-                {t('common.close')}
-              </button>
-            </div>
-            <Suspense fallback={<LazyPanelFallback title={t('app.profilesModal.title')} compact />}>
-              <ProfileManager
-                currentProfileName={currentLibraryProfile}
-                hasPendingChanges={hasPendingChanges}
-                isCalibrating={isCalibrating}
-                profileApplied={configText === appliedConfig}
-                onImportProfile={handleImportProfile}
-                libraryProfiles={libraryProfiles}
-                libraryLoading={isLibraryLoading}
-                editedProfileNames={editedLibraryNames}
-                onProfileNameChange={handleLibraryProfileNameChange}
-                onRenameProfile={handleRenameProfile}
-                onDeleteProfile={handleDeleteLibraryProfile}
-                onAddProfile={handleCreateProfile}
-                onLoadLibraryProfile={handleLoadProfileFromLibrary}
-                onCopyActiveProfile={handleCopyActiveProfile}
-              />
-            </Suspense>
-          </div>
-        </div>
-      )}
       {isAutoloadModalOpen && (
         <Suspense fallback={<LazyPanelFallback title={t('autoload.title')} compact />}>
           <AutoloadManager
+            onRefreshProfiles={refreshLibraryProfiles}
             libraryProfiles={libraryProfiles}
             autoloadEnabled={autoloadEnabled}
             runtimeBusy={runtimeMappingBusy}
@@ -1246,7 +1088,7 @@ function App() {
           />
         </Suspense>
       )}
-    </div>
+    </>
   )
 }
 

@@ -178,30 +178,39 @@
   opacity: 0.28;
 }
 
-:global(:root[data-theme='light']) .shell {
-  fill: #d8e1ea;
-  stroke: color-mix(in srgb, var(--accent-primary) 30%, var(--border-1));
-  filter: drop-shadow(0 12px 18px rgba(74, 92, 110, 0.18));
-}
 
-:global(:root[data-theme='light']) .shellLine {
-  stroke: color-mix(in srgb, var(--accent-primary) 28%, var(--border-1));
-  filter: drop-shadow(0 8px 14px rgba(74, 92, 110, 0.14));
+/* Neutral technical linework follows the reference in either application theme. */
+.shell {
+  fill: var(--bg-panel, var(--bg-input));
+  stroke: var(--text-strong);
+  stroke-width: 1.8;
+  filter: none;
 }
+.shellLine, .detailLine {
+  fill: none;
+  stroke: var(--text-muted);
+  stroke-width: 1;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+  filter: none;
+}
+.control, .triggerTrack, .stickBase, .stickRing, .stickKnob {
+  fill: var(--bg-panel, var(--bg-input));
+  stroke: var(--text-muted);
+  stroke-width: 1.1;
+}
+.controlText { fill: var(--text-strong); font-family: system-ui, sans-serif; font-size: 54px; font-weight: 500; }
+.controlTextCompact { font-size: 30px; }
+.triggerLabel { font-size: 19px; font-weight: 500; }
+.paddleText { font-size: 18px; }
+.controlBound, .triggerTrackBound, .stickBaseBound, .stickRingBound { stroke: var(--telemetry-green); }
+.controlSelected, .controlPressed, .triggerTrackSelected, .stickBaseSelected, .stickKnobSelected, .stickKnobPressed {
+  fill: color-mix(in srgb, var(--accent) 20%, var(--bg-input));
+  stroke: var(--accent);
+}
+.controlTextSelected, .controlTextPressed { fill: var(--accent); }
 
-:global(:root[data-theme='light']) .centerPanel,
-:global(:root[data-theme='light']) .triggerTrack,
-:global(:root[data-theme='light']) .control,
-:global(:root[data-theme='light']) .stickBase {
-  fill: #eef3f7;
-  stroke: color-mix(in srgb, var(--accent) 36%, var(--border-1));
-}
-
-:global(:root[data-theme='light']) .stickRing {
-  fill: #e2eaf1;
-}
-
-:global(:root[data-theme='light']) .stickKnob {
-  fill: #263746;
-  stroke: color-mix(in srgb, var(--accent) 40%, var(--border-1));
-}
+.buttonIcon { fill: var(--bg-panel, var(--bg-input)); stroke: var(--text-strong); stroke-width: 1; vector-effect: non-scaling-stroke; pointer-events: none; }
+.buttonIconActive { stroke: var(--accent); }

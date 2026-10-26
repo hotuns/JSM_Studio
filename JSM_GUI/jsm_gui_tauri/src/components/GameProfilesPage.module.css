@@ -1,0 +1,53 @@
+.page, .wizard { display: grid; gap: 18px; color: var(--text-strong); font-size: 13px; }
+.toolbar, .toolbar > div, .wizardHeader, .wizardFooter, .filters, .dialog header, .dialog footer { display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+.page button, .wizard button, .dialog button { min-height: 34px; font-size: 12px; }
+.panel, .tableCard, .preview, .gameHeader, .empty { background: var(--bg-2); border: 1px solid var(--border-1); border-radius: 12px; padding: 22px; }
+.panel { line-height: 1.7; }
+.panel h2, .gameHeader h2, .wizard h2 { font-size: 20px; margin: 0 0 8px; }
+.hint, .panel p, .gameHeader p { color: var(--text-muted); font-size: 12px; line-height: 1.7; }
+.notice, .warning { padding: 14px 18px; margin: 0; border: 1px solid var(--border-1); border-left: 3px solid var(--accent); border-radius: 8px; background: var(--bg-1); line-height: 1.7; }
+.warning { border-left-color: #c68a32; }
+.gameHeader { display: flex; gap: 18px; align-items: center; }
+.gameHeader h2 { margin: 4px 0; } .gameHeader p { margin: 0; }
+.gameMark { width: 54px; height: 54px; display: grid; place-items: center; background: var(--bg-1-5); color: var(--accent); border: 1px solid var(--border-1); border-radius: 12px; font-size: 21px; font-weight: 750; flex-shrink: 0; letter-spacing: -2px; }
+.progress { margin-left: auto; display: grid; gap: 5px; text-align: right; } .progress strong { font-size: 24px; } .progress small, .progress span { color: var(--text-muted); font-size: 12px; font-weight: 400; }
+.empty { padding: 44px; max-width: 780px; } .empty h2 { margin-top: 22px; } .empty p { max-width: 620px; line-height: 1.8; }
+.actionLayout { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 18px; align-items: start; }
+.tableCard { padding: 0; overflow: hidden; } .tableScroll { overflow-x: auto; }
+.filters { padding: 16px; border-bottom: 1px solid var(--border-1); } .filters input { min-width: 120px; flex: 1; }
+.page input, .page select, .wizard input, .wizard select, .dialog input, .dialog select { border: 1px solid var(--border-1); border-radius: 6px; background: var(--bg-input); color: var(--text-strong); padding: 9px 10px; font: inherit; min-width: 0; }
+.page input:focus-visible, .page select:focus-visible, .wizard input:focus-visible, .wizard select:focus-visible, .dialog input:focus-visible, .dialog select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.page table, .wizard table { border-collapse: collapse; width: 100%; text-align: left; font-size: 12px; }
+.page th, .wizard th { color: var(--text-muted); font-size: 11px; font-weight: 500; background: var(--bg-1); padding: 12px 14px; white-space: nowrap; }
+.page td, .wizard td { border-top: 1px solid var(--border-1); padding: 10px 14px; }
+.page td button, .wizard td button { border: 0; padding: 4px 0; background: none; color: var(--text-strong); text-align: left; cursor: pointer; min-height: 28px; }
+.rowActions { display: flex; align-items: center; gap: 12px; white-space: nowrap; }
+.rowActions > span { font-size: 11px; color: var(--text-muted); }
+.page td .deleteButton, .wizard td .deleteButton { color: #c55252; }
+.page td button:disabled, .wizard td button:disabled { opacity: .45; cursor: default; }
+.page tr[data-selected=true], .wizard tr[data-selected=true] { background: var(--bg-1-5); }
+.page td kbd, .wizard td kbd { font-size: 11px; opacity: 1; color: var(--text-mid); }
+.verified, .unverified { font-size: 10px; white-space: nowrap; padding: 4px 7px; border-radius: 4px; background: var(--bg-1-5); color: var(--text-muted); }
+.verified { color: var(--accent); } .unverified { color: #a7752f; }
+.preview { position: sticky; top: 0; padding: 18px; } .preview h3 { margin: 0; font-size: 13px; } .preview select { width: 100%; }
+.steps { display: flex; gap: 0; list-style: none; margin: 0; padding: 0; border: 1px solid var(--border-1); border-radius: 9px; overflow: hidden; background: var(--bg-2); }
+.steps li { flex: 1; display: flex; align-items: center; gap: 10px; color: var(--text-muted); padding: 16px; font-size: 12px; }
+.steps li[aria-current=step] { color: var(--accent); background: var(--bg-1-5); } .steps span { border: 1px solid currentColor; border-radius: 50%; width: 22px; height: 22px; display: grid; place-items: center; flex-shrink: 0; }
+.panel > label, .dialog form > label:not(.check) { display: grid; gap: 8px; margin: 20px 0 10px; font-size: 12px; font-weight: 500; }
+.panel > label input, .panel > label select { max-width: 550px; width: 100%; box-sizing: border-box; }
+.panel fieldset { border: 0; padding: 0; margin: 24px 0; } .panel legend { margin-bottom: 12px; }
+.mode { display: flex; gap: 12px; border: 1px solid var(--border-1); padding: 16px; border-radius: 9px; margin: 10px 0; cursor: pointer; }
+.mode:has(input:checked) { border-color: var(--accent); background: var(--bg-1); } .mode span { display: grid; gap: 6px; } .mode small { color: var(--text-muted); font-size: 12px; }
+.wizardFooter { border-top: 1px solid var(--border-1); padding-top: 18px; } .wizardFooter > span { color: var(--text-muted); font-size: 12px; }
+.check { display: flex; align-items: flex-start; gap: 10px; font-size: 12px; line-height: 1.6; margin: 18px 0; } .check input { margin-top: 3px; flex-shrink: 0; accent-color: var(--accent); }
+.summary { display: grid; grid-template-columns: 140px 1fr; gap: 12px; margin: 24px 0; } .summary dt { color: var(--text-muted); } .summary dd { margin: 0; }
+.dialog { width: min(520px, calc(100vw - 64px)); max-height: 85vh; overflow: auto; border: 1px solid var(--border-1); border-radius: 14px; background: var(--bg-2); color: var(--text-strong); padding: 24px; box-shadow: 0 20px 80px #0005; font-size: 13px; }
+.dialog::backdrop { background: #0e182a88; } .dialog h2 { font-size: 20px; margin: 5px 0; } .dialog small { color: var(--text-muted); } .dialog footer { justify-content: flex-end; margin-top: 18px; } .dialog select { width: 100%; }
+.capture { position: absolute; inset: 0; z-index: 2; background: var(--bg-2); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 30px; text-align: center; line-height: 1.7; }
+@media(max-width: 1180px) { .actionLayout { grid-template-columns: minmax(0, 1fr); } .preview { position: static; display: none; } }
+@media(max-width: 760px) { .steps li { flex-direction: column; padding: 10px; gap: 5px; } .gameHeader { flex-wrap: wrap; } .panel { padding: 16px; } }
+
+.quickCapture { padding: 14px 16px; display: flex; align-items: center; gap: 14px; justify-content: space-between; background: var(--bg-1-5); border-bottom: 1px solid var(--accent); line-height: 1.7; font-size: 12px; }
+.quickCapture p { color: #c55252; margin-bottom: 0; }
+.page td .bindingButton, .wizard td .bindingButton { padding: 5px 7px; border-radius: 5px; }
+.page td .bindingButton:hover:not(:disabled), .wizard td .bindingButton:hover:not(:disabled) { background: var(--bg-btn-hover); outline: 1px solid var(--border-1); }
