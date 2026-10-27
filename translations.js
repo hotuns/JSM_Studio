@@ -162,17 +162,6 @@ export const englishProfiles = {
       "Basic actions"
     ]
   },
-  "delta-force-apex6": {
-    "name": "Delta Force · Apex 6 Pro axis example",
-    "game": "Delta Force",
-    "controller": "Flydigi Apex 6 Pro · 2.4 GHz / XInput / third-party control · X/Z axes",
-    "description": "Uses the X/Z gyro mouse axes reported to work on an Apex 6 Pro, with basic keyboard-and-mouse mappings as a starting point.",
-    "tags": [
-      "Flydigi",
-      "Apex 6 Pro",
-      "X/Z axes"
-    ]
-  },
   "native-gyro-starter": {
     "name": "Native controller + gyro mouse · Starter",
     "game": "General gyro example",

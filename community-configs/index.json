@@ -21,25 +21,6 @@
       "sha256": "138c812011d40031e65421ee73643a642c803b36e7bd4a65af6b95191c2c9b39"
     },
     {
-      "id": "delta-force-apex6",
-      "name": "三角洲行动 · Apex 6 Pro 轴向示例",
-      "game": "三角洲行动",
-      "file": "profiles/delta-force-apex6.txt",
-      "mode": "keyboardMouse",
-      "controller": "Flydigi Apex 6 Pro · 2.4G / XInput / 第三方接管 · X/Z 轴向",
-      "description": "采用已有反馈正常的 X/Z 体感鼠标轴向，搭配基础键鼠动作。便于 Apex 6 Pro 玩家继续配置。",
-      "tags": [
-        "Flydigi",
-        "Apex 6 Pro",
-        "X/Z 轴向"
-      ],
-      "notes": "轴向来自项目使用反馈，整套游戏映射尚未实战验证。需在官方工具开启第三方接管；其他模式和固件可能不同，请核对方向与游戏键位。",
-      "author": "JSM Studio",
-      "updatedAt": "2026-10-25",
-      "verified": false,
-      "sha256": "6414b9fc99d2daab7b70e65f1879677abc4233ddff2e371a772650c863124d08"
-    },
-    {
       "id": "native-gyro-starter",
       "name": "原生手柄 + 体感鼠标 · 起步示例",
       "game": "通用体感示例",
