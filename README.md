@@ -2,7 +2,7 @@
 
 [`Chinese Documentation`](./README_zh.md)
 
-> **Motion Studio public preview.** The successor uses a FlexInput core and imports JSM TXT profiles into editable Studio configurations. [Try the Motion Studio preview](https://github.com/hotuns/MotionStudio/releases/tag/v0.15.2-preview.1).
+> **Start with Motion Studio.** The successor to JSM Studio offers controller mapping and gyro aiming on Windows, and imports JSM TXT into editable profiles. [Download Motion Studio](https://github.com/hotuns/MotionStudio/releases) · [Motion Studio project](https://github.com/hotuns/MotionStudio).
 
 JSM Studio is a graphical tool for JoyShockMapper on Windows. It integrates JoyShockMapper’s gyro aiming, key mapping, config management into a single desktop application, with a link to the official HidHide download, aiming to enable users to complete common configuration tasks without using the command line.
 
@@ -17,15 +17,9 @@ developed independently, and SDL is upgraded independently when needed. Engine
 updates are integrated from source, tested, and rebuilt to preserve Studio's
 required interfaces. See the [upstream workflow](docs/joyshockmapper-upstream.md).
 
-## Download
+## Legacy JSM Studio downloads
 
-Download the latest installer from GitHub Releases:
-
-[Download Latest JSM Studio](https://github.com/hotuns/JSM_Studio/releases/latest)
-
-You can also browse the Releases list for specific versions:
-
-[All Releases](https://github.com/hotuns/JSM_Studio/releases)
+Use these releases to continue an existing JSM Studio workflow. [Download JSM Studio](https://github.com/hotuns/JSM_Studio/releases/latest) · [Legacy release history](https://github.com/hotuns/JSM_Studio/releases)
 
 Windows users usually just need the `.exe` installer from the Release assets; if you need MSI, you can download the `.msi` file as well.
 
