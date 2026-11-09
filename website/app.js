@@ -1,4 +1,4 @@
-import { initializeLanguage, translate as t, localizeProfile, getLanguage } from './i18n.js?v=20261026-2';
+import { initializeLanguage, translate as t, localizeProfile, getLanguage } from './i18n.js?v=20261109-1';
 const REPO = 'https://github.com/hotuns/JSM_Studio';
 const releaseLink = document.querySelector('#download-link');
 const releaseInfo = document.querySelector('#release-info');

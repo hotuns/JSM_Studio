@@ -2,6 +2,8 @@
 
 [`英文文档`](./README.md)
 
+> **Motion Studio 已开放预览。** 后继项目使用 FlexInput 内核，可将原有的 JSM TXT 导入为可编辑的 Studio 配置。[试用 Motion Studio 预览版](https://github.com/hotuns/MotionStudio/releases/tag/v0.15.2-preview.1)。
+
 JSM Studio 是一个面向 Windows 的 JoyShockMapper 图形化工具。它将 JoyShockMapper 的体感瞄准、按键映射和配置管理整合到一个桌面应用中，并提供 HidHide 官方下载入口，让用户通过界面完成常见配置。
 
 ![alt text](docs/1-zh.jpg)

@@ -118,6 +118,7 @@ export const english = {
   "下载 Windows 64 位安装包，开始配置你的手柄。": "Download the Windows 64-bit installer and start setting up your controller.",
   "下载最新正式版": "Download latest release",
   "全部版本 ↗": "All releases ↗",
+  "试用 Motion Studio 预览版 ↗": "Try the Motion Studio preview ↗",
   "Windows x64 · 安装包由 GitHub Releases 提供": "Windows x64 · Installers hosted on GitHub Releases",
   "平台": "Platform",
   "映射引擎": "Mapping engine",
