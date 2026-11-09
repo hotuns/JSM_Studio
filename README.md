@@ -2,6 +2,8 @@
 
 [`Chinese Documentation`](./README_zh.md)
 
+> **Motion Studio public preview.** The successor uses a FlexInput core and imports JSM TXT profiles into editable Studio configurations. [Try the Motion Studio preview](https://github.com/hotuns/MotionStudio/releases/tag/v0.15.2-preview.1).
+
 JSM Studio is a graphical tool for JoyShockMapper on Windows. It integrates JoyShockMapper’s gyro aiming, key mapping, config management into a single desktop application, with a link to the official HidHide download, aiming to enable users to complete common configuration tasks without using the command line.
 
 ![alt text](docs/1.png)
