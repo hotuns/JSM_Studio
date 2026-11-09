@@ -1,4 +1,4 @@
-import { initializeLanguage, translate as t, localizeProfile, getLanguage } from './i18n.js?v=20261109-1';
+import { initializeLanguage, translate as t, localizeProfile } from './i18n.js?v=20261109-motion';
 const REPO = 'https://github.com/hotuns/JSM_Studio';
 const releaseLink = document.querySelector('#download-link');
 const releaseInfo = document.querySelector('#release-info');
@@ -59,16 +59,14 @@ async function loadRelease() {
   } catch { /* The latest-release page remains a working fallback. */ }
 }
 function renderRelease() {
+  releaseLink.replaceChildren(document.createTextNode(t('下载旧版 JSM Studio') + ' '), make('span', '↓'));
   if (!currentRelease) {
-    releaseLink.replaceChildren(document.createTextNode(t('下载最新正式版') + ' '), make('span', '↓'));
-    releaseInfo.textContent = t('Windows x64 · 安装包由 GitHub Releases 提供');
+    releaseInfo.textContent = t('旧版 JSM Studio · Windows x64');
     return;
   }
   const { release, installer } = currentRelease;
   releaseLink.href = installer.browser_download_url;
-  const label = getLanguage() === 'en' ? `Download ${release.tag_name}` : `下载 ${release.tag_name} 正式版`;
-  releaseLink.replaceChildren(document.createTextNode(label + ' '), make('span', '↓'));
-  releaseInfo.textContent = `${release.tag_name} · Windows x64 · ${(installer.size / 1024 / 1024).toFixed(1)} MB · GitHub Releases`;
+  releaseInfo.textContent = "JSM Studio " + release.tag_name + " · Windows x64 · " + (installer.size / 1024 / 1024).toFixed(1) + " MB · GitHub Releases";
 }
 initializeLanguage(() => { renderProfiles(); renderRelease(); });
 void loadCatalog(); void loadRelease();

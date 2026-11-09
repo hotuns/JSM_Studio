@@ -2,7 +2,7 @@
 
 [`英文文档`](./README.md)
 
-> **Motion Studio 已开放预览。** 后继项目使用 FlexInput 内核，可将原有的 JSM TXT 导入为可编辑的 Studio 配置。[试用 Motion Studio 预览版](https://github.com/hotuns/MotionStudio/releases/tag/v0.15.2-preview.1)。
+> **新用户推荐使用 Motion Studio。** Motion Studio 是 JSM Studio 的后续项目，支持 Windows 上的手柄映射和体感瞄准，可将原有的 JSM TXT 导入为可编辑配置。[下载 Motion Studio](https://github.com/hotuns/MotionStudio/releases) · [Motion Studio 项目](https://github.com/hotuns/MotionStudio)
 
 JSM Studio 是一个面向 Windows 的 JoyShockMapper 图形化工具。它将 JoyShockMapper 的体感瞄准、按键映射和配置管理整合到一个桌面应用中，并提供 HidHide 官方下载入口，让用户通过界面完成常见配置。
 
@@ -14,15 +14,13 @@ JSM Studio 是一个面向 Windows 的 JoyShockMapper 图形化工具。它将 J
 
 后续维护以 `Electronicks/JoyShockMapper` 为唯一引擎上游，不再跟随 `evan1mclean/JSM_custom_curve` 的更新。已集成的自定义曲线继续保留，GUI 独立开发，SDL 按需独立升级。引擎更新通过源码集成、验证和重新构建内置运行时完成，以保留 Studio 所需接口；详见[上游维护流程](docs/joyshockmapper-upstream.md)。
 
-## 下载
+## 旧版 JSM Studio 下载
 
-从 GitHub Release 下载最新版安装包：
-
-[下载最新版 JSM Studio](https://github.com/hotuns/JSM_Studio/releases/latest)
+需要沿用原有 JSM Studio 流程的用户可以继续使用旧版安装包。[下载旧版 JSM Studio](https://github.com/hotuns/JSM_Studio/releases/latest)
 
 也可以进入 Release 列表选择具体版本：
 
-[全部 Release](https://github.com/hotuns/JSM_Studio/releases)
+[旧版历史版本](https://github.com/hotuns/JSM_Studio/releases)
 
 Windows 用户通常下载 Release 附件里的 `.exe` 安装包即可；如果需要 MSI，也可以下载 `.msi` 文件。
 
