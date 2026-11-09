@@ -1,4 +1,4 @@
-import { english, englishProfiles } from './translations.js?v=20261109-1';
+import { english, englishProfiles } from './translations.js?v=20261109-motion';
 const STORAGE_KEY = 'jsm-studio-website-language';
 let language = 'zh-CN';
 export const getLanguage = () => language;
